@@ -18,7 +18,8 @@ PlotRegion<-function(Chr=NULL,
                      peak_col="Blue",
                      exon_width=0.5,
                      utr_width=0.3,
-                     exon_col="black"){
+                     exon_col="black",
+                     ...){
 
   if (is.null(Chr) | is.null(Start) | is.null(End) | is.null(Strand)){
     stop("Need to provide Chr, Start, Stop and Strand parameters to visualize region.")
@@ -38,6 +39,8 @@ PlotRegion<-function(Chr=NULL,
   #check the bed file
   colnames(bed)[which(colnames(bed)==Target_col)]<-"target"
   bed<-checkBed(bed)
+
+  #Filter bed
   bed<-FilterBed(bed=bed,chr=as.character(seqnames(Range)),start=Start,end=End,strand=Strand,omit=omit,collapse=merge)
   print(bed)
 

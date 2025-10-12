@@ -1,5 +1,5 @@
 PlotGene<-function(bed=NULL,
-                   geneID=NA,
+                   geneID=NULL,
                    gtf=NULL,
                    species="Human",
                    TxID=NA,
@@ -10,10 +10,18 @@ PlotGene<-function(bed=NULL,
                    merge=0,
                    peaks_width=0.3,
                    utr_col="dark gray",
-                   peak_col="Blue",
+                   peak_col="purple",
                    exon_width=0.5,
                    utr_width=0.3,
-                   exon_col="black"){
+                   exon_col="black",
+                   title_size=NULL,
+                   subtitle_size=NULL,
+                   label_size=NULL,
+                   xlab_size=NULL,
+                   ...
+                   ){
+
+
 
   #check the bed file
   colnames(bed)[which(colnames(bed)==Target_col)]<-"target"
@@ -33,7 +41,8 @@ PlotGene<-function(bed=NULL,
 
   #Plotting the peak plot
   Plot<-Get_Plot_by_Gene(bed=bed,gene =Region ,rank_=Target_rank,utr_col=utr_col,peak_col=peak_col,peaks_width=peaks_width,
-                         exon_width=exon_width,utr_width=utr_width,exon_col=exon_col)
-  ggsave("~/Desktop/GAN.pdf",Plot,height=12,width=16)
+                         exon_width=exon_width,utr_width=utr_width,exon_col=exon_col, ...)
+  ggsave("~/Desktop/RNAPeaks.pdf",Plot,height=12,width=16)
   return(Plot)
 }
+
