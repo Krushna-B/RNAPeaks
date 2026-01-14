@@ -77,7 +77,7 @@ bed <- read.table("path/to/your/peaks.bed", header = FALSE, sep = "\t")
 
 # Validate the BED format
 bed <- checkBed(bed)
-Success will be marked by printing bedfile in console
+Error will be marked by error saying "Check Bed File!"
 ```
 
 An example BED file is provided in the repository under `Testing Bed/`:
@@ -131,10 +131,10 @@ result[[2]]
 result <- PlotRegion(
     bed = bed,
     gtf = gtf,
-    Chr = "17",
-    Start = 7565097,
-    End = 7590856,
-    Strand = "-"
+    Chr = "16",
+    Start = 165000,
+    End = 190000,
+    Strand = "+"
 )
 ```
 
@@ -155,7 +155,7 @@ Your BED file should contain peak/binding site data with the following columns:
 | 5 | Score (optional) |
 | 6 | Strand ("+" or "-") |
 
-The `checkBed()` function automatically validates and standardizes your BED file format.
+The `checkBed()` function automatically validates your BED file format.
 
 ### GTF Annotations
 
