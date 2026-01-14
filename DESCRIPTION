@@ -1,11 +1,31 @@
 Package: RNAPeaks
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
-Authors@R: 
+Title: Visualize RNA-Binding Protein Peaks on Gene Structures
+Version: 0.1.0
+Authors@R:
     person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+Description: Creates quality visualizations of RNA-binding protein
+    (RBP) peaks overlaid on gene structures. Supports single-gene plots,
+    multi-gene genomic region plots, and integrates with GTF annotations
+    from Ensembl via AnnotationHub.
+License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
+Imports:
+    ggplot2 (>= 3.4.0),
+    dplyr,
+    GenomicRanges,
+    IRanges,
+    S4Vectors,
+    BiocGenerics,
+    GenomeInfoDb,
+    AnnotationHub,
+    scales,
+    grid,
+    magrittr
+Suggests:
+    testthat (>= 3.0.0),
+    zoo,
+    microbenchmark,
+    ensembldb
+Config/testthat/edition: 3

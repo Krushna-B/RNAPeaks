@@ -8,8 +8,9 @@ Build_Gene_Structure <- function(gene, levels, peaks_width, exon_width, utr_widt
     Gene_strcuture_nc(gene, levels, peaks_width, exon_width, utr_width, exon_col, utr_col)
   }
 
-  Gene_Returned_From_getProteinCodingGeneStruct_OrNonCOding <<- Gene_s
-
+  if (is.null(Gene_s)) {
+    return(NULL)
+  }
 
 
   # Separate introns from the rest of the features
@@ -42,14 +43,18 @@ Gene_strcuture_nc<-function(gtf,levels,peaks_width,exon_width,utr_width,exon_col
   Intron_s<-data.frame("seqnames"=gtf$seqnames[1],"type"="intron","start"=min(gtf$start),
                        "end"=max(gtf$end),"strand"=gtf$strand[1],
                        "y_start"=exon_center-utr_width/4,"y_end"=exon_center+utr_width/4,"col"="light gray")
-  exon_test<<- gtf
-  gtf<-rbind(gtf,Intron_s)
+  gtf <- rbind(gtf, Intron_s)
   return(gtf)
 }
 
 
 #Gene Structure for protein coding genes
 Gene_strcuture_prot<-function(gtf,levels,peaks_width,exon_width,utr_width,exon_col,utr_col){
+
+  if(!("CDS" %in% gtf$type) ){
+    return(NULL)
+  }
+
   gtf<-gtf[which(gtf$type %in% c("CDS","five_prime_utr","three_prime_utr")),]
   exon_center<-levels*peaks_width+0.2+exon_width/2
 

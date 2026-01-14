@@ -22,7 +22,8 @@ Get_Plot_by_Gene<-function(bed,
     Dens<-Density(Chr=gene$seqnames[1],Start=min(gene$start),End=max(gene$end),df=bed)
   }
 
-  #Build Gene Structure and return out positions for Gene, Exons, and UTRS
+
+  # Build Gene Structure and return out positions for Gene, Exons, and UTRS
   gs <- Build_Gene_Structure(gene,
                              levels     = max(bed$rank),
                              peaks_width = peaks_width,
@@ -39,12 +40,9 @@ Get_Plot_by_Gene<-function(bed,
   introns <- Compute_Intron_Positions(gs$Gene_s, gs$Intron_s)
 
   #Gets arrow positions
-  arrow_df <- make_intron_arrows(introns$Introns_Positions,gs$Gene_s$strand[1], 20)
+  arrow_df <- make_intron_arrows(introns$Introns_Positions,gs$Gene_s$strand[1], 20,max_per_intron=3)
 
-  #Data frame with Arrow Positions
-  Arrows_Returned_From_Make_intron_arrows <<- introns
-
-  #Plot for Gene using ggplot2
+  # Plot for Gene using ggplot2
   do.call(
     Draw_Gene_Plot,
     c(

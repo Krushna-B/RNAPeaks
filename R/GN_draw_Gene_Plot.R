@@ -41,7 +41,7 @@ Draw_Gene_Plot <- function(Gene_s,
                           x_lims = NULL,
                           axis_pad_bp   = 500,               # ± window (bp)
                           axis_breaks_n = 5,
-                          subtitle_sep = " ~ ",            # ASCII-safe separator
+                          subtitle_sep = ": ",            # ASCII-safe separator
 
                           plot_right_margin = 50,
                           plot_top_margin = 30,
@@ -53,8 +53,14 @@ Draw_Gene_Plot <- function(Gene_s,
                           gene_label_size     = 5,
                           gene_label_color    = "black",
                           max_proteins = 40,
-                          protein_label_x_offset = 100
+                          protein_label_x_offset = 100,
+
+                          highlighted_region_start = NULL,
+                          highlighted_region_stop = NULL,
+                          highlighted_region_color = "pink",
+                          highlighted_region_opacity = 0.30
                           ){
+
 
 
 
@@ -95,16 +101,14 @@ Draw_Gene_Plot <- function(Gene_s,
   if (is_region_plot) {
     bed$xpos <- x_min - protein_label_x_offset
   }
-  testing_bed <<- bed
-
-  #Arrow head size
+  # Arrow head size
   arrow_head <- grid::unit(intron_arrow_len_in, "inches")
 
   #Sub Title
   chr <- as.character(Gene_s$seqnames[1])
   sub_txt <- paste0(
     "Chr ", chr, subtitle_sep,
-    scales::comma(x_min), "–", scales::comma(x_max), " bp"
+    scales::comma(x_min), "-", scales::comma(x_max), " bp"
   )
 
 
@@ -116,8 +120,6 @@ Draw_Gene_Plot <- function(Gene_s,
 
   # 5′ / 3′ tag positions
   labs <- Make_Strand_Labels(Gene_s, offset = 100)
-
-  Lables_Returned_From_MakeStrandLabelsINDrawGenePlot<<- labs
 
   # Direction for intron baseline arrows:
   Intron_s$dir_start <- ifelse(Intron_s$strand == "+", Intron_s$start, Intron_s$end)
@@ -138,7 +140,14 @@ Draw_Gene_Plot <- function(Gene_s,
     title_txt <- paste0(title_txt, " (", trans_ids[1], ")")
   }
 
-
+  #If region plot then only show positions
+  if (isTRUE(is_region_plot)) {
+    plot_title <- sub_txt
+    plot_sub   <- NULL
+  } else {
+    plot_title <- title_txt
+    plot_sub   <- sub_txt
+  }
 
 
 
@@ -158,6 +167,9 @@ Draw_Gene_Plot <- function(Gene_s,
                  lineend = "butt",
                  # arrow=arrow(type="open", length=unit(intron_arrow_len_in,"inches"))
                  ) +
+    geom_rect(data=UTRs,
+              aes(xmin=start-0.5, xmax=end+0.5, ymin=y_start, ymax=y_end),
+              fill=utr_fill, color=NA)+
 
     geom_segment(data=Arrow_df,
                  aes(x=x, xend=xend, y=y, yend=yend),
@@ -168,9 +180,7 @@ Draw_Gene_Plot <- function(Gene_s,
     geom_rect(data=Exons,
               aes(xmin=start-0.5, xmax=end+0.5, ymin=y_start, ymax=y_end),
               fill=exon_fill, color=NA) +
-    geom_rect(data=UTRs,
-              aes(xmin=start-0.5, xmax=end+0.5, ymin=y_start, ymax=y_end),
-              fill=utr_fill, color=NA)+
+
 
     #Bottom row with spaced out bp markers
     # xlim(x_min,x_max)+
@@ -186,8 +196,8 @@ Draw_Gene_Plot <- function(Gene_s,
     theme(strip.background = element_blank()) +
 
     ggtitle(
-      title_txt,
-      subtitle = sub_txt
+      plot_title,
+      subtitle = plot_sub
     ) +
 
     # Alternating background bands behind each protein row
@@ -234,7 +244,7 @@ Draw_Gene_Plot <- function(Gene_s,
 
       panel.background = element_rect(fill = "transparent",colour = NA), # or theme_blank()
       plot.background = element_rect(fill = "transparent",colour = NA),
-      plot.title = element_text(hjust=0.5,size=title_size,,color = title_color,   face = "bold")
+      plot.title = element_text(hjust=0.5,size=title_size,,color = title_color,   face = "bold.italic")
       )+
 
     # Peak rectangles for each protein row.
@@ -284,8 +294,7 @@ Draw_Gene_Plot <- function(Gene_s,
     gl$label_y <- (gl$y_start + gl$y_end) / 2
     gl$label_x <- x_min - axis_pad_bp * gene_label_x_offset
 
-    gene_lables <<- gl
-    # 5) add
+    # Add gene labels to plot
     g <- g + geom_text(
       data = gl,
       aes(x = label_x, y = label_y, label = label),
@@ -294,6 +303,16 @@ Draw_Gene_Plot <- function(Gene_s,
       color = gene_label_color
     )
   }
+  g <- add_highlight_band(
+    g,
+    hstart  = highlighted_region_start,
+    hstop   = highlighted_region_stop,
+    color   = highlighted_region_color,
+    opacity = highlighted_region_opacity,
+    x_min   = x_min,
+    x_max   = x_max,
+    axis_pad_bp = axis_pad_bp
+  )
 
 
   return(g)
@@ -321,3 +340,44 @@ Finding_Left_Margin <- function(bed,
   return (w_pt + pad_pt)
 }
 
+
+
+add_highlight_band <- function(g,
+                               hstart = NULL,
+                               hstop  = NULL,
+                               color  = "yellow",
+                               opacity = 0.15,
+                               x_min = NULL,
+                               x_max = NULL,
+                               axis_pad_bp = 0) {
+  if (is.null(hstart) || is.null(hstop) || is.null(x_min) || is.null(x_max)){
+    return(g)
+  }
+
+  hstart <- as.numeric(hstart)
+  hstop <- as.numeric(hstop)
+
+
+  if (is.na(hstart) || is.na(hstop)){
+    return(g)
+  }
+  if (hstart > hstop) { tmp <- hstart; hstart <- hstop; hstop <- tmp }
+
+
+  alpha <- max(0, min(1, as.numeric(opacity)))
+
+  clip_min <- x_min - axis_pad_bp
+  clip_max <- x_max + axis_pad_bp
+  xmin <- max(clip_min, hstart)
+  xmax <- min(clip_max, hstop)
+
+  if (xmin < xmax) {
+    g <- g + ggplot2::annotate(
+      "rect",
+      xmin = xmin, xmax = xmax,
+      ymin = -Inf, ymax = Inf,
+      fill = color, alpha = alpha
+    )
+  }
+  g
+}

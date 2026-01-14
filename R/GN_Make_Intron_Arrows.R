@@ -40,8 +40,8 @@ make_intron_arrows <- function(
   tot_use <- sum(usable)
 
   if(tot_use < 400){
-    total_arrows <- min(6L, max(1L, floor(tot_use / max(1, seg_min_bp))))
-    # total_arrows <-6
+    # total_arrows <- min(6L, max(1L, floor(tot_use / max(1, seg_min_bp))))
+     total_arrows <-6
   }
   #If there is no space total introns inputted is 0 return empty
   if (tot_use == 0 || total_arrows <= 0){
@@ -50,17 +50,17 @@ make_intron_arrows <- function(
 
   bp_per_arrow <- tot_use / total_arrows
 
-  #Gets proportional number
-  number_of_introns <- floor(usable / bp_per_arrow)
+#Gets proportional number
+number_of_introns <- floor(usable / bp_per_arrow)
 
-  #Checks that number of introns is within bounds
-  number_of_introns <- pmax(min_per_intron, pmin(max_per_intron, number_of_introns))
-  if (sum(number_of_introns) == 0) {  # ensure at least 1 if something is drawable
-    j <- which.max(usable)
-    if (usable[j] > 0){
-      number_of_introns[j] <- 1
-    }
+#Checks that number of introns is within bounds
+number_of_introns <- pmax(min_per_intron, pmin(max_per_intron, number_of_introns))
+if (sum(number_of_introns) == 0) {  # ensure at least 1 if something is drawable
+  j <- which.max(usable)
+  if (usable[j] > 0){
+    number_of_introns[j] <- 1
   }
+}
 
   #Directionality for each arrow
   dir <- if (strand == "+"){

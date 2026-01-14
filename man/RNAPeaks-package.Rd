@@ -4,12 +4,85 @@
 \name{RNAPeaks-package}
 \alias{RNAPeaks}
 \alias{RNAPeaks-package}
-\title{RNAPeaks: What the Package Does (One Line, Title Case)}
+\title{RNAPeaks: Visualize RNA-Binding Protein Peaks on Gene Structures}
 \description{
-What the package does (one paragraph).
+RNAPeaks creates publication-quality visualizations of RNA-binding protein
+(RBP) peaks overlaid on gene structures. It supports single-gene plots,
+multi-gene genomic region plots, and integrates with GTF annotations
+from Ensembl via AnnotationHub.
+}
+\section{Main Functions}{
+
+The two primary functions for generating plots are:
+
+\describe{
+\item{\code{\link{PlotGene}}}{Plot RBP peaks on a single gene structure.
+Use this when you want to visualize peaks on one specific gene.}
+\item{\code{\link{PlotRegion}}}{Plot RBP peaks across a genomic region
+containing multiple genes. Use this for broader regional views.}
+}
+}
+
+\section{Workflow}{
+
+A typical workflow involves:
+\enumerate{
+\item Load your BED file with peak data
+\item Validate it with \code{\link{checkBed}}
+\item Load GTF annotation once with \code{\link{LoadGTF}} and store locally
+(e.g., \code{gtf <- LoadGTF("Human")}; save with \code{saveRDS(gtf, "gtf.rds")}
+for future sessions)
+\item Call \code{\link{PlotGene}} or \code{\link{PlotRegion}}, passing the
+stored \code{gtf} object
+}
+}
+
+\section{Helper Functions}{
+
+\describe{
+\item{\code{\link{checkBed}}}{Validate and standardize BED file format}
+\item{\code{\link{LoadGTF}}}{Load GTF annotation from AnnotationHub. Call once
+and store the result in a local variable or save to disk with
+\code{saveRDS()} to avoid repeated downloads. Supports "Human" and "Mouse".}
+}
+}
+
+\examples{
+\dontrun{
+# Basic workflow
+library(RNAPeaks)
+
+# Load and validate BED data
+bed <- read.table("peaks.bed", header = FALSE)
+bed <- checkBed(bed)
+
+# Load GTF once and store locally (do this once per session)
+gtf <- LoadGTF(species = "Human")
+
+# Optionally save for future sessions to avoid re-downloading
+saveRDS(gtf, "human_gtf.rds")
+# In future sessions: gtf <- readRDS("human_gtf.rds")
+
+# Plot peaks on a single gene
+PlotGene(
+  bed = bed,
+  geneID = "TP53",
+  gtf = gtf
+)
+
+# Plot peaks across a genomic region
+PlotRegion(
+  bed = bed,
+  Chr = "17",
+  Start = 7565097,
+  End = 7590856,
+  Strand = "-",
+  gtf = gtf
+)
+}
+
 }
 \author{
 \strong{Maintainer}: First Last \email{first.last@example.com}
 
 }
-\keyword{internal}

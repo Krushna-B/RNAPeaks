@@ -19,15 +19,9 @@ getRegion <- function(gtf,
     return(rows)
 }
 
-    #If GTF is not provided then load it from from AnnotationHub by species
-    if (is.null(gtf) & species=="Human"){
-      #AnnotationHub::query(ah, pattern = c("Homo Sapiens","gtf"))
-      ah<-AnnotationHub::AnnotationHub()
-      gtf<-data.frame(ah[["AH110867"]])
-    } else if (is.null(gtf) & species=="Mouse"){
-      #query(ah, pattern = c("Mus musculus", "gtf"))[[1]]
-      ah<-AnnotationHub::AnnotationHub()
-      gtf<-data.frame(ah[["AH47076"]])
+    #If GTF is not provided then load it using LoadGTF
+    if (is.null(gtf)) {
+      gtf <- LoadGTF(species = species)
     }
 
 
@@ -48,8 +42,7 @@ getRegion <- function(gtf,
         })
     }
 
-    rows <-rows[rows$transcript_id %in% transcripts_keep, ,drop = FALSE]
-    transcripts <<- rows
+    rows <- rows[rows$transcript_id %in% transcripts_keep, , drop = FALSE]
     rows
   }
 
