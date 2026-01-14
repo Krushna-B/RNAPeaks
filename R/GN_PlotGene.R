@@ -103,37 +103,53 @@
 #'   \item{highlighted_region_opacity}{Opacity for highlighted region. Default: 0.30}
 #' }
 #'
-#' @return A list containing two elements: (1) A ggplot2 object of the peak
-#'   visualization, and (2) the filtered BED data frame used for plotting.
+#' @return A named list containing:
+#' \describe{
+#'   \item{plot}{A ggplot2 object of the peak visualization}
+#'   \item{csv}{The filtered BED data frame used for plotting}
+#' }
+#' Access with \code{result$plot} and \code{result$csv}.
 #'
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#'   # Recommended workflow:
-#'
-#'   # 1. Load BED file with protein binding peaks
-#'   bed <- read.table("peaks.bed", header = FALSE)
-#'
-#'   # 2. Load GTF annotation (do this once, takes time on first call)
+#'   # Load GTF annotation (do this once, takes time on first call)
 #'   gtf <- LoadGTF(species = "Human")
 #'
 #'   # Optionally save GTF for future sessions
 #'   saveRDS(gtf, "human_gtf.rds")
 #'   # Load in future sessions: gtf <- readRDS("human_gtf.rds")
 #'
-#'   # 3. Plot peaks on gene
+#'   # ----- Using included sample data -----
+#'   # sample_bed is included with the package and ready to use
 #'   result <- PlotGene(
-#'     bed = bed,
-#'     geneID = "BRCA1",
-#'     gtf = gtf,
-#'     species = "Human",
-#'     Target_col = "V4"
+#'     bed = sample_bed,
+#'     geneID = "GAPDH",
+#'     gtf = gtf
 #'   )
 #'
-#'   # Access the plot
-#'   result[[1]]
+#'   # Access results
+#'   result$plot
+#'   result$csv
+#'
+#'   # ----- Using your own BED file -----
+#'   # 1. Read your BED file
+#'   my_bed <- read.table("my_peaks.bed", header = FALSE, sep = "\t")
+#'
+#'   # 2. Check Bed file
+#'   my_bed <- checkBed(my_bed)
+#'
+#'   # 3. Plot peaks on gene
+#'   result <- PlotGene(
+#'     bed = my_bed,
+#'     geneID = "BRCA1",
+#'     gtf = gtf
 #'   )
+#'
+#'   # Access results
+#'   result$plot
+#'   result$csv
 #' }
 PlotGene <- function(bed = NULL,
                      geneID = NULL,
@@ -205,6 +221,7 @@ PlotGene <- function(bed = NULL,
   ggplot2::ggsave(RNA_Peaks_File_Path, Plot, height = 12, width = 16)
   utils::write.csv(bed, Bed_File_Path, row.names = FALSE)
 
-  Plot_and_Peaks <- list(Plot, bed)
+  Plot_and_Peaks <- list(plot = Plot, csv = bed)
   return(Plot_and_Peaks)
 }
+

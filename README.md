@@ -69,28 +69,26 @@ devtools::install("/path/to/RNAPeaks")
 library(RNAPeaks)
 ```
 
-### 2. Load Your BED File
+### 2. BED Data
+
+#### Using Included Sample Data (Recommended for Testing)
+
+RNAPeaks includes `sample_bed`, a dataset of K562 cell line RBP peaks ready to use:
 
 ```r
-# Load BED file with RBP peaks
+# sample_bed is available immediately after loading the package
+head(sample_bed)
+```
+
+#### Using Your Own BED File
+
+```r
+# Load your BED file
 bed <- read.table("path/to/your/peaks.bed", header = FALSE, sep = "\t")
 
-# Validate the BED format
+# Validate the BED format (success prints "Bed file is good.")
 bed <- checkBed(bed)
-Error will be marked by error saying "Check Bed File!"
 ```
-
-An example BED file is provided in the repository under `Testing Bed/`:
-
-```r
-# If working from the cloned repository
-bed <- read.table(
-    "Testing Bed/Sample_Bed_(All_K562_peaks).bed",
-    header = FALSE
-)
-```
-
-This sample contains K562 cell line peaks and can be used to test the package functionality.
 
 ### 3. Load GTF Annotations (One-Time Setup)
 
@@ -112,28 +110,30 @@ saveRDS(gtf, "human_gtf.rds")
 #### Plot peaks on a single gene:
 
 ```r
+# Using included sample data
 result <- PlotGene(
-    bed = bed,
-    geneID = "BRCA1",
+    bed = sample_bed,
+    geneID = "GAPDH",
     gtf = gtf
 )
 
 # Access the plot
-result[[1]]
+result$plot
 
 # Access the filtered BED data
-result[[2]]
+result$csv
 ```
 
 #### Plot peaks across a genomic region:
 
 ```r
+# Using included sample data
 result <- PlotRegion(
-    bed = bed,
+    bed = sample_bed,
     gtf = gtf,
-    Chr = "16",
-    Start = 165000,
-    End = 190000,
+    Chr = "12",
+    Start = 56000000,
+    End = 56050000,
     Strand = "+"
 )
 ```
@@ -223,20 +223,18 @@ See `?PlotGene` or `?PlotRegion` for complete documentation of all styling param
 
 ## Example Workflow
 
+### Using Included Sample Data
+
 ```r
 library(RNAPeaks)
 
-# Step 1: Load and validate BED data
-bed <- read.table("peaks.bed", header = FALSE, sep = "\t")
-bed <- checkBed(bed)
-
-# Step 2: Load GTF (or use cached version)
+# Step 1: Load GTF (or use cached version)
 gtf <- LoadGTF(species = "Human")
 saveRDS(gtf, "human_gtf.rds")  # Cache for next time
 
-# Step 3: Generate single-gene plot
+# Step 2: Generate single-gene plot with sample_bed
 result <- PlotGene(
-    bed = bed,
+    bed = sample_bed,
     geneID = "TP53",
     gtf = gtf,
     peak_col = "steelblue",
@@ -244,15 +242,35 @@ result <- PlotGene(
     RNA_Peaks_File_Path = "TP53_peaks.pdf"
 )
 
-# Step 4: Generate region plot for broader context
+# Step 3: Generate region plot for broader context
 result <- PlotRegion(
-    bed = bed,
+    bed = sample_bed,
     gtf = gtf,
     Chr = "17",
     Start = 7560000,
     End = 7600000,
     Strand = "-",
     RNA_Peaks_File_Path = "chr17_region.pdf"
+)
+```
+
+### Using Your Own BED File
+
+```r
+library(RNAPeaks)
+
+# Step 1: Load and validate your BED data
+bed <- read.table("peaks.bed", header = FALSE, sep = "\t")
+bed <- checkBed(bed)
+
+# Step 2: Load GTF (or use cached version)
+gtf <- LoadGTF(species = "Human")
+
+# Step 3: Generate plots
+result <- PlotGene(
+    bed = bed,
+    geneID = "TP53",
+    gtf = gtf
 )
 ```
 
