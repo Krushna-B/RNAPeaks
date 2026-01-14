@@ -48,7 +48,7 @@ install.packages(c("ggplot2", "dplyr", "scales", "magrittr"))
 ### Install RNAPeaks
 
 ```r
-# Install from GitHub (recommended for beta)
+# Install from GitHub
 # install.packages("devtools")
 devtools::install_github("Krushna-B/RNAPeaks")
 ```
@@ -155,7 +155,7 @@ Your BED file should contain peak/binding site data with the following columns:
 | 5 | Score (optional) |
 | 6 | Strand ("+" or "-") |
 
-The `checkBed()` function automatically validates and standardizes your BED file format.
+The `checkBed()` function automatically validates your BED file format.
 
 ### GTF Annotations
 
