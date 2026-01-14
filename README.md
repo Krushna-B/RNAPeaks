@@ -48,7 +48,7 @@ install.packages(c("ggplot2", "dplyr", "scales", "magrittr"))
 ### Install RNAPeaks
 
 ```r
-# Install from GitHub (recommended for beta)
+# Install from GitHub
 # install.packages("devtools")
 devtools::install_github("Krushna-B/RNAPeaks")
 ```
