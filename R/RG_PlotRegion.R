@@ -204,7 +204,8 @@ PlotRegion <- function(Chr = NULL,
     exon_width = exon_width,
     utr_width = utr_width,
     exon_col = exon_col,
-    utr_col = utr_col
+    utr_col = utr_col,
+    ...
   )
 
   # Save to Desktop
