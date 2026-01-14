@@ -55,9 +55,9 @@ checkBed <- function(df) {
       is.character(df$strand) &
       all(df$strand %in% c("+", "-"))) {
     # Normalize chromosome names by removing a leading "chr"
-
     colchr_tmp <- tolower(df$chr)
     df$chr <- sub("chr", "", colchr_tmp)
+    print("Bed file is good.")
     return(df)
 
   } else {

@@ -16,11 +16,17 @@
 #'     containing multiple genes. Use this for broader regional views.}
 #' }
 #'
+#' @section Included Data:
+#' The package includes sample data for testing:
+#' \describe{
+#'   \item{\code{\link{sample_bed}}}{K562 cell line RBP binding peaks, ready to use}
+#' }
+#'
 #' @section Workflow:
 #' A typical workflow involves:
 #' \enumerate{
-#'   \item Load your BED file with peak data
-#'   \item Validate it with \code{\link{checkBed}}
+#'   \item Use the included \code{sample_bed} data, OR load your own BED file
+#'     and validate it with \code{\link{checkBed}}
 #'   \item Load GTF annotation once with \code{\link{LoadGTF}} and store locally
 #'     (e.g., \code{gtf <- LoadGTF("Human")}; save with \code{saveRDS(gtf, "gtf.rds")}
 #'     for future sessions)
@@ -38,12 +44,7 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Basic workflow
 #' library(RNAPeaks)
-#'
-#' # Load and validate BED data
-#' bed <- read.table("peaks.bed", header = FALSE)
-#' bed <- checkBed(bed)
 #'
 #' # Load GTF once and store locally (do this once per session)
 #' gtf <- LoadGTF(species = "Human")
@@ -51,6 +52,23 @@
 #' # Optionally save for future sessions to avoid re-downloading
 #' saveRDS(gtf, "human_gtf.rds")
 #' # In future sessions: gtf <- readRDS("human_gtf.rds")
+#'
+#' # ----- Using included sample data -----
+#' # sample_bed is available immediately after loading the package
+#' result <- PlotGene(
+#'   bed = sample_bed,
+#'   geneID = "GAPDH",
+#'   gtf = gtf
+#' )
+#'
+#' # Access results
+#' result$plot
+#' result$csv
+#'
+#' # ----- Using your own BED file -----
+#' # Load and validate your BED data
+#' bed <- read.table("peaks.bed", header = FALSE, sep = "\t")
+#' bed <- checkBed(bed)
 #'
 #' # Plot peaks on a single gene
 #' PlotGene(
@@ -62,10 +80,10 @@
 #' # Plot peaks across a genomic region
 #' PlotRegion(
 #'   bed = bed,
-#'   Chr = "17",
-#'   Start = 7565097,
-#'   End = 7590856,
-#'   Strand = "-",
+#'   Chr = "12",
+#'   Start = 56000000,
+#'   End = 56050000,
+#'   Strand = "+",
 #'   gtf = gtf
 #' )
 #' }

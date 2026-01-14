@@ -110,22 +110,55 @@
 #'   \item{highlighted_region_opacity}{Opacity for highlighted region. Default: 0.30}
 #' }
 #'
-#' @return A list containing two elements: (1) A ggplot2 object of the peak
-#'   visualization, and (2) the filtered BED data frame used for plotting.
+#' @return A named list containing:
+#' \describe{
+#'   \item{plot}{A ggplot2 object of the peak visualization}
+#'   \item{csv}{The filtered BED data frame used for plotting}
+#' }
+#' Access with \code{result$plot} and \code{result$csv}.
 #'
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#'   # Plot a specific genomic region
+#'   # Load GTF annotation (do this once, takes time on first call)
+#'   gtf <- LoadGTF(species = "Human")
+#'
+#'   # ----- Using included sample data -----
+#'   # sample_bed is included with the package and ready to use
 #'   result <- PlotRegion(
-#'     bed = bed_data,
+#'     bed = sample_bed,
 #'     gtf = gtf,
-#'     Chr = "17",
-#'     Start = 7565097,
-#'     End = 7590856,
-#'     Strand = "-"
+#'     Chr = "12",
+#'     Start = 56000000,
+#'     End = 56050000,
+#'     Strand = "+"
 #'   )
+#'
+#'   # Access results
+#'   result$plot
+#'   result$csv
+#'
+#'   # ----- Using your own BED file -----
+#'   # 1. Read your BED file
+#'   my_bed <- read.table("my_peaks.bed", header = FALSE, sep = "\t")
+#'
+#'   # 2. Check Bed file
+#'   my_bed <- checkBed(my_bed)
+#'
+#'   # 3. Plot peaks on region
+#'   result <- PlotRegion(
+#'     bed = my_bed,
+#'     gtf = gtf,
+#'     Chr = "12",
+#'     Start = 56000000,
+#'     End = 56050000,
+#'     Strand = "+"
+#'   )
+#'
+#'   # Access results
+#'   result$plot
+#'   result$csv
 #' }
 PlotRegion <- function(Chr = NULL,
                        Start = NULL,
@@ -212,6 +245,6 @@ PlotRegion <- function(Chr = NULL,
   ggplot2::ggsave(RNA_Peaks_File_Path, Plot, height = 12, width = 16)
   utils::write.csv(bed, Bed_File_Path, row.names = FALSE)
 
-  Plot_and_Peaks <- list(Plot, bed)
+  Plot_and_Peaks <- list(plot = Plot, csv = bed)
   return(Plot_and_Peaks)
 }
