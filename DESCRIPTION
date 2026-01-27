@@ -20,14 +20,19 @@ Imports:
     BiocGenerics,
     GenomeInfoDb,
     AnnotationHub,
+    Biostrings,
+    BSgenome,
     scales,
+    slider,
+    progress,
     grid,
     magrittr
 Suggests:
     testthat (>= 3.0.0),
     zoo,
     microbenchmark,
-    ensembldb
+    ensembldb,
+    BSgenome.Hsapiens.UCSC.hg38
 Config/testthat/edition: 3
 Depends: 
     R (>= 3.5)
