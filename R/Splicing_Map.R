@@ -198,6 +198,7 @@ createSplicingMap <- function(bed_file,
   # Plot using the shared plotting function
   plot_splicing_sequence_map(df,
                               WidthIntoExon = WidthIntoExon,
-                              WidthIntoIntron = WidthIntoIntron)
+                              WidthIntoIntron = WidthIntoIntron,
+                              title = paste0("Splicing Map Peaks"))
 }
 

@@ -292,83 +292,121 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
   # Force evaluation to avoid scoping issues
   force(bsgenome_obj)
   n <- length(bins_gr)
-  pb <- progress::progress_bar$new(
-    format = "  finding sequences [:bar] :current/:total (:percent) eta::eta",
-    total = n, clear = FALSE, width = 80
+
+  #Pre-compute all metadata vectors
+  bins_chr <- as.character(GenomicRanges::seqnames(bins_gr))
+  bins_start <- GenomicRanges::start(bins_gr)
+  bins_end <- GenomicRanges::end(bins_gr)
+  bins_strand <- as.character(GenomicRanges::strand(bins_gr))
+  event_ids <- GenomicRanges::mcols(bins_gr)$event_id
+  bin_indices <- ((seq_len(n) - 1) %% 4) + 1
+  bin_lengths <- bins_end - bins_start + 1
+
+  # Calculate extended ends for sequence extraction
+  # (extended to allow matching at the end of each bin)
+
+  chr_lengths <- GenomeInfoDb::seqlengths(bsgenome_obj)
+  extended_ends <- pmin(bins_end + seq_length - 1, chr_lengths[bins_chr])
+
+  # Filter out bins with invalid chromosomes (NA in chr_lengths)
+  valid_idx <- which(!is.na(extended_ends) & extended_ends >= bins_start)
+
+  if (length(valid_idx) == 0) {
+    warning("No sequences could be extracted. Check chromosome naming convention.")
+    return(data.frame(global_position = 1:(4 * bin_width), match_count = 0))
+  }
+
+  # Create GRanges for BATCH sequence extraction
+  extended_gr <- GenomicRanges::GRanges(
+    seqnames = bins_chr[valid_idx],
+    ranges = IRanges::IRanges(start = bins_start[valid_idx], end = extended_ends[valid_idx]),
+    strand = bins_strand[valid_idx]
   )
 
-  # Process each bin and extract sequences
-  results_list <- lapply(seq_along(bins_gr), function(i) {
+  # BATCH getSeq: single call for all sequences
+  message("Extracting ", length(extended_gr), " sequences in batch...")
+  all_seqs <- tryCatch({
+    Biostrings::getSeq(bsgenome_obj, extended_gr)
+  }, error = function(e) {
+    warning("Batch sequence extraction failed: ", e$message)
+    return(NULL)
+  })
+
+  if (is.null(all_seqs)) {
+    warning("No sequences could be extracted. Check chromosome naming convention.")
+    return(data.frame(global_position = 1:(4 * bin_width), match_count = 0))
+  }
+
+
+  # Subset metadata to valid indices
+  valid_event_ids <- event_ids[valid_idx]
+  valid_bin_indices <- bin_indices[valid_idx]
+  valid_bin_lengths <- bin_lengths[valid_idx]
+
+  # Process matches (sequences are now in memory)
+  message("Finding pattern matches...")
+  n_valid <- length(all_seqs)
+  pb <- progress::progress_bar$new(
+    format = "  finding sequences [:bar] :current/:total (:percent) eta::eta",
+    total = n_valid, clear = FALSE, width = 120
+  )
+
+  results_list <- vector("list", n_valid)
+
+  for (i in seq_len(n_valid)) {
     pb$tick()
-    bin <- bins_gr[i]
-    chr <- as.character(GenomicRanges::seqnames(bin))
-    bin_start <- GenomicRanges::start(bin)
-    bin_end <- GenomicRanges::end(bin)
-    bin_strand <- as.character(GenomicRanges::strand(bin))
-    event_id <- GenomicRanges::mcols(bin)$event_id
-    bin_index <- ((i - 1) %% 4) + 1
 
-    # Get sequence for this region (extended to allow matching at the end)
-    extended_end <- min(bin_end + seq_length - 1,
-                        GenomeInfoDb::seqlengths(bsgenome_obj)[chr])
-
-    # Get the sequence
-    seq_region <- tryCatch({
-      Biostrings::getSeq(bsgenome_obj, chr, bin_start, extended_end)
-    }, error = function(e) {
-      return(NULL)
-    })
-
-    if (is.null(seq_region)) {
-      return(NULL)
-    }
-
-    # If on minus strand, reverse complement
-    if (bin_strand == "-") {
-      seq_region <- Biostrings::reverseComplement(seq_region)
-    }
+    seq_region <- all_seqs[[i]]
+    bin_length <- valid_bin_lengths[i]
+    bin_strand <- bins_strand[i]
 
     # Find all motif matches at once
-    bin_length <- bin_end - bin_start + 1
     matches <- rep(FALSE, bin_length)
 
-    # matchPattern finds all occurrences in one call
     match_hits <- Biostrings::matchPattern(pattern, seq_region, fixed = FALSE)
     if (length(match_hits) > 0) {
       match_starts <- BiocGenerics::start(match_hits)
       # Only mark positions within the bin length
       valid_starts <- match_starts[match_starts <= bin_length]
-      matches[valid_starts] <- TRUE
+      if (length(valid_starts) > 0) {
+        matches[valid_starts] <- TRUE
+      }
     }
 
     # Calculate position within bin (1 to bin_length)
-    positions <- 1:bin_length
+    # No reversal needed here - strand handling done in global_position calculation
+    positions <- seq_len(bin_length)
 
-    # Handle strand orientation for global position
-    if (bin_strand == "-") {
-      # Reverse positions for minus strand
-      positions <- rev(positions)
-    }
-
-    data.frame(
-      event_id = event_id,
-      bin_index = bin_index,
+    results_list[[i]] <- data.frame(
+      event_id = valid_event_ids[i],
+      bin_index = valid_bin_indices[i],
       position = positions,
       has_match = matches,
+      strand = bin_strand,
       stringsAsFactors = FALSE
     )
-  })
+  }
 
   # Combine all results
-  results_df <- do.call(rbind, Filter(Negate(is.null), results_list))
+  results_df <- do.call(rbind, results_list)
 
   if (is.null(results_df) || nrow(results_df) == 0) {
     warning("No sequences could be extracted. Check chromosome naming convention.")
     return(data.frame(global_position = 1:(4 * bin_width), match_count = 0))
   }
 
-  # Calculate global position
-  results_df$global_position <- (results_df$bin_index - 1) * bin_width + results_df$position
+
+  # Calculate global position (strand-aware)
+  # Plus strand: Bin 1 pos 1→global 1, Bin 4 pos 300→global 1200
+  # Minus strand: Bin 4 pos 300→global 1, Bin 1 pos 1→global 1200
+  #   (flip both bin order AND position order for 5'→3' orientation)
+  results_df$global_position <- ifelse(
+    results_df$strand == "+",
+    (results_df$bin_index - 1) * bin_width + results_df$position,
+    (4 - results_df$bin_index) * bin_width + (bin_width - results_df$position + 1)
+  )
+
+
 
   # Aggregate: count matches at each global position
   match_counts <- stats::aggregate(
