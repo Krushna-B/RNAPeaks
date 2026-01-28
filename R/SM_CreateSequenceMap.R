@@ -117,6 +117,7 @@ createSequenceMap <- function(SEMATS,
   if (is.na(max_cores) || max_cores < 1) max_cores <- 1
   cores <- min(cores, max_cores)
   cores <- max(cores, 1)
+  options(future.globals.maxSize = 8 * 1024^3)
 
   # If using parallel, warm up workers early while we do other setup
   warmup_future <- NULL

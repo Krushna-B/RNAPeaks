@@ -25,6 +25,9 @@ Imports:
     scales,
     slider,
     progress,
+    progressr,
+    future,
+    future.apply,
     grid,
     magrittr
 Suggests:

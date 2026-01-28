@@ -356,45 +356,47 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
     chunk_size <- 2000
     idx_chunks <- split(seq_len(n_valid), ceiling(seq_len(n_valid) / chunk_size))
     n_chunks <- length(idx_chunks)
-    options(future.globals.maxSize = 8 * 1024^3)
 
     message(sprintf("Processing %d bins in %d chunks using %d cores...", n_valid, n_chunks, cores))
 
+    # Use progressr for parallel progress reporting
+    progressr::handlers(global = TRUE)
+    progressr::handlers("txtprogressbar")
 
-    chunk_results <- future.apply::future_lapply(idx_chunks, function(chunk_indices) {
-      match_positions <- vector("list", length(chunk_indices))
-      pb <- progress::progress_bar$new(
-        format = "  processing [:bar] :current/:total (:percent) eta::eta",
-        total = n_valid, clear = FALSE, width = 120
-      )
-      for (pos in seq_along(chunk_indices)) {
-        pb$tick()
-        idx <- chunk_indices[pos]
-        bin_length <- valid_bin_lengths[idx]
-        starts <- starts_all[[idx]]
-        starts <- starts[starts <= bin_length]
+    all_match_positions <- progressr::with_progress({
+      p <- progressr::progressor(steps = n_chunks)
 
-        if (length(starts) > 0) {
-          bin_idx <- valid_bin_indices[idx]
-          strand <- valid_strands[idx]
+      chunk_results <- future.apply::future_lapply(idx_chunks, function(chunk_indices) {
+        match_positions <- vector("list", length(chunk_indices))
 
-          # Calculate global positions (strand-aware)
-          # Plus: global = (bin_index - 1) * bin_width + position
-          # Minus: global = (4 - bin_index) * bin_width + (bin_width - position + 1)
-          if (strand == "+") {
-            global_pos <- (bin_idx - 1) * bin_width + starts
-          } else {
-            global_pos <- (4 - bin_idx) * bin_width + (bin_width - starts + 1)
+        for (pos in seq_along(chunk_indices)) {
+          idx <- chunk_indices[pos]
+          bin_length <- valid_bin_lengths[idx]
+          starts <- starts_all[[idx]]
+          starts <- starts[starts <= bin_length]
+
+          if (length(starts) > 0) {
+            bin_idx <- valid_bin_indices[idx]
+            strand <- valid_strands[idx]
+
+            # Calculate global positions (strand-aware)
+            if (strand == "+") {
+              global_pos <- (bin_idx - 1) * bin_width + starts
+            } else {
+              global_pos <- (4 - bin_idx) * bin_width + (bin_width - starts + 1)
+            }
+            match_positions[[pos]] <- global_pos
           }
-          match_positions[[pos]] <- global_pos
         }
-      }
 
-      unlist(match_positions)
-    }, future.seed = TRUE)
+        p()  # Signal chunk completed
+        unlist(match_positions)
+      }, future.seed = TRUE)
 
-    message("Combining results...")
-    all_match_positions <- unlist(chunk_results)
+      unlist(chunk_results)
+    })
+
+    message("Done.")
 
   } else {
     # Sequential processing with progress bar
