@@ -353,7 +353,8 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
   # Process and collect global positions of matches
   if (cores > 1) {
     # Parallel processing - each chunk returns global positions of matches
-    chunk_size <- 2000
+    # Dynamic chunk size: target ~2 chunks per worker for load balancing, with minimum floor
+    chunk_size <- max(500, ceiling(n_valid / (cores * 2)))
     idx_chunks <- split(seq_len(n_valid), ceiling(seq_len(n_valid) / chunk_size))
     n_chunks <- length(idx_chunks)
 
@@ -364,7 +365,7 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
     progressr::handlers("txtprogressbar")
 
     all_match_positions <- progressr::with_progress({
-      p <- progressr::progressor(steps = n_chunks)
+      p <- progressr::progressor(steps = 100)
 
       chunk_results <- future.apply::future_lapply(idx_chunks, function(chunk_indices) {
         match_positions <- vector("list", length(chunk_indices))

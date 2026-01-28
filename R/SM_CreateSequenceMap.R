@@ -215,9 +215,8 @@ createSequenceMap <- function(SEMATS,
 
 
   # Plot using the shared plotting function
-  plot <- plot_splicing_sequence_map(combined_data,
+   plot_splicing_sequence_map(combined_data,
                               WidthIntoExon = WidthIntoExon,
                               WidthIntoIntron = WidthIntoIntron,
                               title = paste0("Sequence Frequency: ", sequence))
-  ggsave("~/Desktop/my_plot.pdf", plot = plot, width = 12, height = 16)
 }
