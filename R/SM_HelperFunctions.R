@@ -352,26 +352,28 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
   )
 
   results_list <- vector("list", n_valid)
+  #Get matches
+  tic("Getting All Sequence Overlaps")
+  hits_all <- Biostrings::vmatchPattern(pattern, all_seqs, fixed = FALSE)
+  toc()
+
+  tic("Getting Start Positions of Overlaps")
+  starts_all <- BiocGenerics::start(hits_all)
+  toc()
+
 
   for (i in seq_len(n_valid)) {
     pb$tick()
 
-    seq_region <- all_seqs[[i]]
     bin_length <- valid_bin_lengths[i]
-    bin_strand <- bins_strand[i]
 
     # Find all motif matches at once
     matches <- rep(FALSE, bin_length)
 
-    match_hits <- Biostrings::matchPattern(pattern, seq_region, fixed = FALSE)
-    if (length(match_hits) > 0) {
-      match_starts <- BiocGenerics::start(match_hits)
-      # Only mark positions within the bin length
-      valid_starts <- match_starts[match_starts <= bin_length]
-      if (length(valid_starts) > 0) {
-        matches[valid_starts] <- TRUE
-      }
-    }
+    starts <- starts_all[[i]]
+    starts <- starts[starts <= bin_length]
+    if (length(starts)) matches[starts] <- TRUE
+
 
     # Calculate position within bin (1 to bin_length)
     # No reversal needed here - strand handling done in global_position calculation
@@ -382,7 +384,7 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
       bin_index = valid_bin_indices[i],
       position = positions,
       has_match = matches,
-      strand = bin_strand,
+      strand = bins_strand[valid_idx][i],
       stringsAsFactors = FALSE
     )
   }
