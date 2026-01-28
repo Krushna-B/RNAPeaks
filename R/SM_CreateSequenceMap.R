@@ -175,37 +175,8 @@ createSequenceMap <- function(SEMATS,
     total_events <- length(unique(bins_gr$event_id))
     freq_data$frequency <- freq_data$match_count / total_events
 
-    # Apply moving average if specified
-    if (!is.null(moving_average) && moving_average > 0) {
-      freq_data <- freq_data %>%
-        dplyr::mutate(
-          bin = dplyr::case_when(
-            global_position <= bin_width ~ 1,
-            global_position <= 2 * bin_width ~ 2,
-            global_position <= 3 * bin_width ~ 3,
-            TRUE ~ 4
-          )
-        ) %>%
-        dplyr::arrange(global_position) %>%
-        dplyr::group_by(bin) %>%
-        dplyr::mutate(moving_avg = slider::slide_dbl(frequency,
-                                                       mean,
-                                                       .before = floor((moving_average - 1) / 2),
-                                                       .after = floor((moving_average - 1) / 2),
-                                                       .complete = FALSE)) %>%
-        dplyr::ungroup()
-    } else {
-      freq_data <- freq_data %>%
-        dplyr::mutate(
-          bin = dplyr::case_when(
-            global_position <= bin_width ~ 1,
-            global_position <= 2 * bin_width ~ 2,
-            global_position <= 3 * bin_width ~ 3,
-            TRUE ~ 4
-          ),
-          moving_avg = frequency
-        )
-    }
+    # Apply moving average using helper function
+    freq_data <- calculate_moving_average(freq_data, moving_average, bins = bin_width)
 
     freq_data$group <- group_name
     return(freq_data)
@@ -244,8 +215,9 @@ createSequenceMap <- function(SEMATS,
 
 
   # Plot using the shared plotting function
-  plot_splicing_sequence_map(combined_data,
+  plot <- plot_splicing_sequence_map(combined_data,
                               WidthIntoExon = WidthIntoExon,
                               WidthIntoIntron = WidthIntoIntron,
                               title = paste0("Sequence Frequency: ", sequence))
+  ggsave("~/Desktop/my_plot.pdf", plot = plot, width = 12, height = 16)
 }

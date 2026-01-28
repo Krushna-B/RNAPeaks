@@ -93,7 +93,7 @@ test_that("benchmark: calculate_sequence_frequency parallel vs sequential", {
 
 test_that("benchmark: scaling with number of events", {
 
-  #skip("Long running benchmark - run manually")
+  skip("Long running benchmark - run manually")
 
   library(BSgenome.Hsapiens.UCSC.hg38)
   library(bench)
@@ -103,7 +103,7 @@ test_that("benchmark: scaling with number of events", {
   sequence <- "YGCY"
 
   # Test different sizes
-  event_sizes <- c(500, 1000, 2000, 10000)
+  event_sizes <- c(500, 1000, 2000, 8000)
 
   results <- list()
 
