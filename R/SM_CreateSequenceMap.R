@@ -1,9 +1,7 @@
 #' Create Sequence Map
 #'
 #' Analyzes the frequency of a target sequence motif across splicing junction
-#' regions. Uses the same 4-region structure as createSplicingMap to show
-#' where specific sequences appear relative to exon/intron boundaries.
-#' Filters events into Retained, Excluded, and Control groups.
+#' regions.Filters events into Retained, Excluded, and Control groups.
 #'
 #' @param SEMATS A data frame containing SE.MATS output with columns:
 #'   chr, strand, upstreamES, upstreamEE, exonStart_0base, exonEnd,
@@ -51,7 +49,7 @@
 #' \itemize{
 #'   \item Retained: Significant events (PValue < threshold) with positive inclusion
 #'   \item Excluded: Significant events (PValue < threshold) with negative inclusion
-#'   \item Control: Non-significant events with stable inclusion levels
+#'   \item Control: Non-significant events
 #' }
 #'
 #' At each position, the function checks if the target sequence starts there.
@@ -62,13 +60,13 @@
 #' library(BSgenome.Hsapiens.UCSC.hg38)
 #'
 #' # Basic usage
-#' createSequenceMap(SEMATS = my_semats_data, sequence = "CCCC")
+#' createSequenceMap(SEMATS = sample_se.mats, sequence = "CCCC")
 #'
 #' # Search for YCAY motif (Y = C or T)
-#' createSequenceMap(SEMATS = my_semats_data, sequence = "YCAY")
+#' createSequenceMap(SEMATS = sample_se.mats, sequence = "YCAY")
 #'
 #' # Return data instead of plot
-#' freq_data <- createSequenceMap(SEMATS = my_semats_data,
+#' freq_data <- createSequenceMap(SEMATS = sample_se.mats,
 #'                                 sequence = "GGGG",
 #'                                 return_data = TRUE)
 #' }
@@ -86,6 +84,7 @@ createSequenceMap <- function(SEMATS,
                                exclusion_IncLevelDifference = -0.1,
                                Min_Count = 50,
                                groups = c("Retained", "Excluded", "Control"),
+                               cores = 1,
                                return_data = FALSE) {
 
   # Load default genome if not provided
@@ -112,6 +111,29 @@ createSequenceMap <- function(SEMATS,
   }
 
   message(paste0("Processing groups: ", paste(groups, collapse = ", ")))
+
+  # Cap cores at max available - 1
+  max_cores <- parallel::detectCores() - 1
+  if (is.na(max_cores) || max_cores < 1) max_cores <- 1
+  cores <- min(cores, max_cores)
+  cores <- max(cores, 1)
+
+  # If using parallel, warm up workers early while we do other setup
+  warmup_future <- NULL
+  if (cores > 1) {
+    message(sprintf("Starting %d parallel workers in background...", cores))
+    future::plan(future::multisession, workers = cores)
+
+    # workers will spawn and load packages
+    warmup_future <- future::future({
+      # library(Biostrings)
+      # library(IRanges)
+      # library(GenomicRanges)
+      # library(GenomeInfoDb)
+      TRUE
+    }, seed = TRUE)
+  }
+
 
   # Filter SEMATS into Controls, Retained, and Excluded
   filtered_events <- filter_SEMATS_events(
@@ -146,7 +168,8 @@ createSequenceMap <- function(SEMATS,
     freq_data <- calculate_sequence_frequency(bins_gr,
                                                sequence,
                                                bsgenome_obj = genome,
-                                               bin_width)
+                                               bin_width,
+                                              cores = cores)
 
     total_events <- length(unique(bins_gr$event_id))
     freq_data$frequency <- freq_data$match_count / total_events
@@ -187,6 +210,11 @@ createSequenceMap <- function(SEMATS,
     return(freq_data)
   }
 
+  # Wait for parallel workers to be ready
+  if (!is.null(warmup_future)) {
+    invisible(future::value(warmup_future))
+  }
+
   # Process only selected groups
   results_list <- list()
 
@@ -208,8 +236,9 @@ createSequenceMap <- function(SEMATS,
   # Combine selected groups
   combined_data <- do.call(rbind, results_list)
 
-  if (return_data) {
-    return(combined_data)
+  # Clean up parallel workers
+  if (cores > 1) {
+    future::plan(future::sequential)
   }
 
 

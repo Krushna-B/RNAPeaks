@@ -74,9 +74,7 @@ filter_SEMATS_events <- function(SEMATS,
 
 
 #' Create bins matrix for splicing events
-#'
 #' Divides each splicing event into 4 bins around exon/intron boundaries.
-#'
 #' @param MAT A data frame with SE.MATS columns
 #' @param WidthIntoExon Width to extend into exons (default 50)
 #' @param WidthIntoIntron Width to extend into introns (default 300)
@@ -87,8 +85,7 @@ make_bins_matrix <- function(MAT, WidthIntoExon, WidthIntoIntron) {
   n <- nrow(MAT)
 
   # Renaming variables for clarity
-
-exonStart <- MAT$exonStart_0base
+  exonStart <- MAT$exonStart_0base
   exonEnd   <- MAT$exonEnd
   upS <- MAT$upstreamES
   upE <- MAT$upstreamEE
@@ -127,7 +124,6 @@ exonStart <- MAT$exonStart_0base
 
 
 #' Find overlaps between bins and protein binding sites
-#'
 #' @param bins GRanges object of bins
 #' @param protein GRanges object of protein binding sites
 #'
@@ -156,20 +152,16 @@ find_overlaps <- function(bins, protein) {
   results <- lapply(seq_along(overlapping_bins), function(i) {
     pb$tick()
     bin <- overlapping_bins[i]
-
     if (GenomicRanges::start(bin) > GenomicRanges::end(bin)) {
       return(NULL)
     }
     chr <- as.character(GenomicRanges::seqnames(bin))
-
     chr_protein <- protein[GenomicRanges::seqnames(protein) == chr]
-
     positions <- GenomicRanges::start(bin):GenomicRanges::end(bin)
 
     # Every 1 bp position
     pos_gr <- GenomicRanges::GRanges(chr, IRanges::IRanges(positions, width = 1),
                                       strand = GenomicRanges::strand(bin))
-
     overlaps <- GenomicRanges::countOverlaps(pos_gr, chr_protein, ignore.strand = FALSE) > 0
     data.frame(
       event_id = GenomicRanges::mcols(bin)$event_id,
@@ -230,11 +222,9 @@ calculate_overlap_frequency <- function(overlap_df, total_events, bin_width) {
 
 
 #' Calculate moving average of frequency data
-#'
 #' @param freq_data Data frame with global_position and frequency columns
 #' @param window_size Window size for moving average (NULL or 0 to disable)
 #' @param bins Width of each bin region
-#'
 #' @return Data frame with additional moving_avg column
 #' @keywords internal
 calculate_moving_average <- function(freq_data, window_size = NULL, bins = NULL) {
@@ -279,10 +269,12 @@ calculate_moving_average <- function(freq_data, window_size = NULL, bins = NULL)
 #' @param sequence Target sequence motif
 #' @param bsgenome_obj BSgenome object
 #' @param bin_width Width of each bin
+#' @param cores Number of cores for parallel processing (default 1 = sequential).
+#'   Caller is responsible for validating/capping this value.
 #'
 #' @return Data frame with global_position and match_count columns
 #' @keywords internal
-calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_width) {
+calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_width, cores = 1) {
 
   seq_length <- nchar(sequence)
 
@@ -323,7 +315,7 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
     strand = bins_strand[valid_idx]
   )
 
-  # BATCH getSeq: single call for all sequences
+  # Batch getSeq
   message("Extracting ", length(extended_gr), " sequences in batch...")
   all_seqs <- tryCatch({
     Biostrings::getSeq(bsgenome_obj, extended_gr)
@@ -342,55 +334,130 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
   valid_event_ids <- event_ids[valid_idx]
   valid_bin_indices <- bin_indices[valid_idx]
   valid_bin_lengths <- bin_lengths[valid_idx]
+  valid_strands <- bins_strand[valid_idx]
 
-  # Process matches (sequences are now in memory)
+  # Get all pattern matches
   message("Finding pattern matches...")
   n_valid <- length(all_seqs)
-  pb <- progress::progress_bar$new(
-    format = "  finding sequences [:bar] :current/:total (:percent) eta::eta",
-    total = n_valid, clear = FALSE, width = 120
-  )
 
-  results_list <- vector("list", n_valid)
-  #Get matches
   tic("Getting All Sequence Overlaps")
   hits_all <- Biostrings::vmatchPattern(pattern, all_seqs, fixed = FALSE)
   toc()
 
   tic("Getting Start Positions of Overlaps")
   starts_all <- BiocGenerics::start(hits_all)
+  # Convert S4 IntegerList to regular R list for parallel serialization
+  starts_all <- as.list(starts_all)
   toc()
 
+  # Pre-allocate vectors for results (avoids slow rbind of many data.frames)
+  total_rows <- sum(valid_bin_lengths)
+  all_event_ids <- integer(total_rows)
+  all_bin_indices <- integer(total_rows)
+  all_positions <- integer(total_rows)
+  all_has_match <- logical(total_rows)
+  all_strands <- character(total_rows)
 
-  for (i in seq_len(n_valid)) {
-    pb$tick()
+  # Calculate cumulative offsets for filling pre-allocated vectors
+  cum_lengths <- c(0, cumsum(valid_bin_lengths))
 
-    bin_length <- valid_bin_lengths[i]
+  # Process results - parallel or sequential
+  if (cores > 1) {
+    # Parallel processing with chunking (uses future_lapply for efficient globals handling)
+    chunk_size <- 2000
+    idx_chunks <- split(seq_len(n_valid), ceiling(seq_len(n_valid) / chunk_size))
+    n_chunks <- length(idx_chunks)
+    options(future.globals.maxSize = 8 * 1024^3)
 
-    # Find all motif matches at once
-    matches <- rep(FALSE, bin_length)
+    message(sprintf("Processing %d bins in %d chunks using %d cores...", n_valid, n_chunks, cores))
 
-    starts <- starts_all[[i]]
-    starts <- starts[starts <= bin_length]
-    if (length(starts)) matches[starts] <- TRUE
+    # Process all chunks in parallel with future_lapply
+    chunk_results <- future.apply::future_lapply(idx_chunks, function(chunk_indices) {
+      chunk_bin_lengths <- valid_bin_lengths[chunk_indices]
+      chunk_total <- sum(chunk_bin_lengths)
 
+      chunk_event_ids <- integer(chunk_total)
+      chunk_bin_indices <- integer(chunk_total)
+      chunk_positions <- integer(chunk_total)
+      chunk_has_match <- logical(chunk_total)
+      chunk_strands <- character(chunk_total)
 
-    # Calculate position within bin (1 to bin_length)
-    # No reversal needed here - strand handling done in global_position calculation
-    positions <- seq_len(bin_length)
+      chunk_cum <- c(0, cumsum(chunk_bin_lengths))
+      for (pos in seq_along(chunk_indices)) {
+        idx <- chunk_indices[pos]
+        bin_length <- valid_bin_lengths[idx]
+        local_idx <- (chunk_cum[pos] + 1):chunk_cum[pos + 1]
 
-    results_list[[i]] <- data.frame(
-      event_id = valid_event_ids[i],
-      bin_index = valid_bin_indices[i],
-      position = positions,
-      has_match = matches,
-      strand = bins_strand[valid_idx][i],
-      stringsAsFactors = FALSE
+        matches <- rep(FALSE, bin_length)
+        starts <- starts_all[[idx]]
+        starts <- starts[starts <= bin_length]
+        if (length(starts)) matches[starts] <- TRUE
+
+        chunk_event_ids[local_idx] <- valid_event_ids[idx]
+        chunk_bin_indices[local_idx] <- valid_bin_indices[idx]
+        chunk_positions[local_idx] <- seq_len(bin_length)
+        chunk_has_match[local_idx] <- matches
+        chunk_strands[local_idx] <- valid_strands[idx]
+      }
+
+      list(
+        event_id = chunk_event_ids,
+        bin_index = chunk_bin_indices,
+        position = chunk_positions,
+        has_match = chunk_has_match,
+        strand = chunk_strands,
+        global_start = cum_lengths[chunk_indices[1]] + 1,
+        global_end = cum_lengths[chunk_indices[length(chunk_indices)] + 1]
+      )
+    }, future.seed = TRUE)
+
+    message("Combining results...")
+
+    # Fill pre-allocated vectors from chunk results
+    for (res in chunk_results) {
+      idx <- res$global_start:res$global_end
+      all_event_ids[idx] <- res$event_id
+      all_bin_indices[idx] <- res$bin_index
+      all_positions[idx] <- res$position
+      all_has_match[idx] <- res$has_match
+      all_strands[idx] <- res$strand
+    }
+
+  } else {
+    # Sequential processing with progress bar
+    pb <- progress::progress_bar$new(
+      format = "  processing [:bar] :current/:total (:percent) eta::eta",
+      total = n_valid, clear = FALSE, width = 120
     )
+
+    for (i in seq_len(n_valid)) {
+      pb$tick()
+
+      bin_length <- valid_bin_lengths[i]
+      idx <- (cum_lengths[i] + 1):cum_lengths[i + 1]
+
+      matches <- rep(FALSE, bin_length)
+      starts <- starts_all[[i]]
+      starts <- starts[starts <= bin_length]
+      if (length(starts)) matches[starts] <- TRUE
+
+      all_event_ids[idx] <- valid_event_ids[i]
+      all_bin_indices[idx] <- valid_bin_indices[i]
+      all_positions[idx] <- seq_len(bin_length)
+      all_has_match[idx] <- matches
+      all_strands[idx] <- valid_strands[i]
+    }
   }
 
-  # Combine all results
-  results_df <- do.call(rbind, results_list)
+  # Create single data.frame from pre-allocated vectors
+  results_df <- data.frame(
+    event_id = all_event_ids,
+    bin_index = all_bin_indices,
+    position = all_positions,
+    has_match = all_has_match,
+    strand = all_strands,
+    stringsAsFactors = FALSE
+  )
 
   if (is.null(results_df) || nrow(results_df) == 0) {
     warning("No sequences could be extracted. Check chromosome naming convention.")
