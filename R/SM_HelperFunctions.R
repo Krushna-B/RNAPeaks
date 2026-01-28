@@ -285,12 +285,11 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
   force(bsgenome_obj)
   n <- length(bins_gr)
 
-  #Pre-compute all metadata vectors
+  # Pre-compute all metadata vectors
   bins_chr <- as.character(GenomicRanges::seqnames(bins_gr))
   bins_start <- GenomicRanges::start(bins_gr)
   bins_end <- GenomicRanges::end(bins_gr)
   bins_strand <- as.character(GenomicRanges::strand(bins_gr))
-  event_ids <- GenomicRanges::mcols(bins_gr)$event_id
   bin_indices <- ((seq_len(n) - 1) %% 4) + 1
   bin_lengths <- bins_end - bins_start + 1
 
@@ -331,7 +330,6 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
 
 
   # Subset metadata to valid indices
-  valid_event_ids <- event_ids[valid_idx]
   valid_bin_indices <- bin_indices[valid_idx]
   valid_bin_lengths <- bin_lengths[valid_idx]
   valid_strands <- bins_strand[valid_idx]
@@ -350,20 +348,11 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
   starts_all <- as.list(starts_all)
   toc()
 
-  # Pre-allocate vectors for results (avoids slow rbind of many data.frames)
-  total_rows <- sum(valid_bin_lengths)
-  all_event_ids <- integer(total_rows)
-  all_bin_indices <- integer(total_rows)
-  all_positions <- integer(total_rows)
-  all_has_match <- logical(total_rows)
-  all_strands <- character(total_rows)
+  total_positions <- 4 * bin_width
 
-  # Calculate cumulative offsets for filling pre-allocated vectors
-  cum_lengths <- c(0, cumsum(valid_bin_lengths))
-
-  # Process results - parallel or sequential
+  # Process and collect global positions of matches
   if (cores > 1) {
-    # Parallel processing with chunking (uses future_lapply for efficient globals handling)
+    # Parallel processing - each chunk returns global positions of matches
     chunk_size <- 2000
     idx_chunks <- split(seq_len(n_valid), ceiling(seq_len(n_valid) / chunk_size))
     n_chunks <- length(idx_chunks)
@@ -371,57 +360,41 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
 
     message(sprintf("Processing %d bins in %d chunks using %d cores...", n_valid, n_chunks, cores))
 
-    # Process all chunks in parallel with future_lapply
+
     chunk_results <- future.apply::future_lapply(idx_chunks, function(chunk_indices) {
-      chunk_bin_lengths <- valid_bin_lengths[chunk_indices]
-      chunk_total <- sum(chunk_bin_lengths)
-
-      chunk_event_ids <- integer(chunk_total)
-      chunk_bin_indices <- integer(chunk_total)
-      chunk_positions <- integer(chunk_total)
-      chunk_has_match <- logical(chunk_total)
-      chunk_strands <- character(chunk_total)
-
-      chunk_cum <- c(0, cumsum(chunk_bin_lengths))
+      match_positions <- vector("list", length(chunk_indices))
+      pb <- progress::progress_bar$new(
+        format = "  processing [:bar] :current/:total (:percent) eta::eta",
+        total = n_valid, clear = FALSE, width = 120
+      )
       for (pos in seq_along(chunk_indices)) {
+        pb$tick()
         idx <- chunk_indices[pos]
         bin_length <- valid_bin_lengths[idx]
-        local_idx <- (chunk_cum[pos] + 1):chunk_cum[pos + 1]
-
-        matches <- rep(FALSE, bin_length)
         starts <- starts_all[[idx]]
         starts <- starts[starts <= bin_length]
-        if (length(starts)) matches[starts] <- TRUE
 
-        chunk_event_ids[local_idx] <- valid_event_ids[idx]
-        chunk_bin_indices[local_idx] <- valid_bin_indices[idx]
-        chunk_positions[local_idx] <- seq_len(bin_length)
-        chunk_has_match[local_idx] <- matches
-        chunk_strands[local_idx] <- valid_strands[idx]
+        if (length(starts) > 0) {
+          bin_idx <- valid_bin_indices[idx]
+          strand <- valid_strands[idx]
+
+          # Calculate global positions (strand-aware)
+          # Plus: global = (bin_index - 1) * bin_width + position
+          # Minus: global = (4 - bin_index) * bin_width + (bin_width - position + 1)
+          if (strand == "+") {
+            global_pos <- (bin_idx - 1) * bin_width + starts
+          } else {
+            global_pos <- (4 - bin_idx) * bin_width + (bin_width - starts + 1)
+          }
+          match_positions[[pos]] <- global_pos
+        }
       }
 
-      list(
-        event_id = chunk_event_ids,
-        bin_index = chunk_bin_indices,
-        position = chunk_positions,
-        has_match = chunk_has_match,
-        strand = chunk_strands,
-        global_start = cum_lengths[chunk_indices[1]] + 1,
-        global_end = cum_lengths[chunk_indices[length(chunk_indices)] + 1]
-      )
+      unlist(match_positions)
     }, future.seed = TRUE)
 
     message("Combining results...")
-
-    # Fill pre-allocated vectors from chunk results
-    for (res in chunk_results) {
-      idx <- res$global_start:res$global_end
-      all_event_ids[idx] <- res$event_id
-      all_bin_indices[idx] <- res$bin_index
-      all_positions[idx] <- res$position
-      all_has_match[idx] <- res$has_match
-      all_strands[idx] <- res$strand
-    }
+    all_match_positions <- unlist(chunk_results)
 
   } else {
     # Sequential processing with progress bar
@@ -430,67 +403,44 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
       total = n_valid, clear = FALSE, width = 120
     )
 
+    match_positions <- vector("list", n_valid)
+
     for (i in seq_len(n_valid)) {
       pb$tick()
 
       bin_length <- valid_bin_lengths[i]
-      idx <- (cum_lengths[i] + 1):cum_lengths[i + 1]
-
-      matches <- rep(FALSE, bin_length)
       starts <- starts_all[[i]]
       starts <- starts[starts <= bin_length]
-      if (length(starts)) matches[starts] <- TRUE
 
-      all_event_ids[idx] <- valid_event_ids[i]
-      all_bin_indices[idx] <- valid_bin_indices[i]
-      all_positions[idx] <- seq_len(bin_length)
-      all_has_match[idx] <- matches
-      all_strands[idx] <- valid_strands[i]
+      if (length(starts) > 0) {
+        bin_idx <- valid_bin_indices[i]
+        strand <- valid_strands[i]
+
+        # Calculate global positions (strand-aware)
+        if (strand == "+") {
+          global_pos <- (bin_idx - 1) * bin_width + starts
+        } else {
+          global_pos <- (4 - bin_idx) * bin_width + (bin_width - starts + 1)
+        }
+        match_positions[[i]] <- global_pos
+      }
     }
+
+    all_match_positions <- unlist(match_positions)
   }
 
-  # Create single data.frame from pre-allocated vectors
-  results_df <- data.frame(
-    event_id = all_event_ids,
-    bin_index = all_bin_indices,
-    position = all_positions,
-    has_match = all_has_match,
-    strand = all_strands,
-    stringsAsFactors = FALSE
-  )
-
-  if (is.null(results_df) || nrow(results_df) == 0) {
-    warning("No sequences could be extracted. Check chromosome naming convention.")
-    return(data.frame(global_position = 1:(4 * bin_width), match_count = 0))
+  # Use tabulate to count matches at each position
+  if (length(all_match_positions) > 0) {
+    match_count <- tabulate(all_match_positions, nbins = total_positions)
+  } else {
+    match_count <- integer(total_positions)
   }
 
-
-  # Calculate global position (strand-aware)
-  # Plus strand: Bin 1 pos 1→global 1, Bin 4 pos 300→global 1200
-  # Minus strand: Bin 4 pos 300→global 1, Bin 1 pos 1→global 1200
-  #   (flip both bin order AND position order for 5'→3' orientation)
-  results_df$global_position <- ifelse(
-    results_df$strand == "+",
-    (results_df$bin_index - 1) * bin_width + results_df$position,
-    (4 - results_df$bin_index) * bin_width + (bin_width - results_df$position + 1)
+  # Create final data frame only once at the end
+  data.frame(
+    global_position = seq_len(total_positions),
+    match_count = match_count
   )
-
-
-
-  # Aggregate: count matches at each global position
-  match_counts <- stats::aggregate(
-    has_match ~ global_position,
-    data = results_df,
-    FUN = sum
-  )
-  names(match_counts)[2] <- "match_count"
-
-  # Ensure all positions are represented
-  all_positions <- data.frame(global_position = 1:(4 * bin_width))
-  result <- merge(all_positions, match_counts, by = "global_position", all.x = TRUE)
-  result$match_count[is.na(result$match_count)] <- 0
-
-  return(result)
 }
 
 
