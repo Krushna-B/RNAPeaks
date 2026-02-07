@@ -15,8 +15,8 @@
 filter_SEMATS_events <- function(SEMATS,
                                   p_valueRetainedAndExclusion = 0.05,
                                   p_valueControls = 0.95,
-                                  retained_IncLevelDifference = 0.1,
-                                  exclusion_IncLevelDifference = -0.1,
+                                  retained_IncLevelDifference = -0.1,
+                                  exclusion_IncLevelDifference = 0.1,
                                   Min_Count = 50) {
 
   # Calculate counts from junction counts
@@ -57,7 +57,7 @@ filter_SEMATS_events <- function(SEMATS,
   Retained <- SEMATS %>%
     dplyr::filter(PValue < p_valueRetainedAndExclusion,
                   FDR < p_valueRetainedAndExclusion,
-                  IncLevelDifference < exclusion_IncLevelDifference)
+                  IncLevelDifference < retained_IncLevelDifference)
 
   Control <- SEMATS %>%
     dplyr::filter(PValue > p_valueControls,
@@ -75,9 +75,10 @@ filter_SEMATS_events <- function(SEMATS,
 
 #' Create bins matrix for splicing events
 #' Divides each splicing event into 4 bins around exon/intron boundaries.
-#' @param MAT A data frame with SE.MATS columns
+#' @param MAT A data frame with SE.MATS columns. If a 'group' column exists,
+#'   it will be preserved in the output GRanges.
 #' @param WidthIntoExon Width to extend into exons (default 50)
-#' @param WidthIntoIntron Width to extend into introns (default 300)
+#' @param WidthIntoIntron Width to extend into introns (default 250)
 #'
 #' @return A GRanges object with bins for all events
 #' @keywords internal
@@ -112,7 +113,7 @@ make_bins_matrix <- function(MAT, WidthIntoExon, WidthIntoIntron) {
   ends   <- cbind(bin1_end,   bin2_end,   bin3_end,   bin4_end)
 
   # Build GRanges
-  GenomicRanges::GRanges(
+  gr <- GenomicRanges::GRanges(
     seqnames = rep(MAT$chr, each = 4),
     ranges   = IRanges::IRanges(start = as.vector(t(starts)),
                                 end   = as.vector(t(ends))),
@@ -120,10 +121,192 @@ make_bins_matrix <- function(MAT, WidthIntoExon, WidthIntoIntron) {
     geneID = rep(MAT$GeneID, each = 4),
     event_id = rep(seq_len(nrow(MAT)), each = 4)
   )
+
+  # Preserve group column if present
+  if ("group" %in% colnames(MAT)) {
+    GenomicRanges::mcols(gr)$group <- rep(MAT$group, each = 4)
+  }
+  gr
 }
 
 
-#' Find overlaps between bins and protein binding sites
+#' Calculate binding frequency using vectorized batch
+#'
+#' Calculates protein binding frequency across all bins using
+#' vectorized operations and a single findOverlaps call.
+#'
+#' @param bins_gr GRanges object from make_bins_matrix. If it has a 'group'
+#'   metadata column, results are returned per group.
+#' @param protein GRanges object of protein binding sites
+#' @param bin_width Width of each bin region
+#' @param cores Number of cores for parallel processing (default 1, Sync)
+#'
+#' @return Data frame with global_position and overlap_count columns.
+#'   If bins_gr has a 'group' column, includes group column.
+#' @keywords internal
+calculate_binding_frequency <- function(bins_gr, protein, bin_width, cores = 1) {
+
+  n_bins <- length(bins_gr)
+  total_positions <- 4 * bin_width
+
+  # Check for group metadata
+  has_groups <- "group" %in% names(GenomicRanges::mcols(bins_gr))
+  if (has_groups) {
+    bins_groups <- as.character(GenomicRanges::mcols(bins_gr)$group)
+    unique_groups <- unique(bins_groups)
+    group_to_idx <- setNames(seq_along(unique_groups), unique_groups)
+  }
+
+  # Pre-filter bins that overlap protein ranges
+  overlapping_idx <- which(IRanges::overlapsAny(bins_gr, protein))
+
+  if (length(overlapping_idx) == 0) {
+    message("No bins overlap protein binding sites")
+    if (has_groups) {
+      return(do.call(rbind, lapply(unique_groups, function(g) {
+        data.frame(global_position = seq_len(total_positions), overlap_count = 0L, group = g)
+      })))
+    }
+    return(data.frame(global_position = seq_len(total_positions), overlap_count = 0L))
+  }
+
+  # Subset to overlapping bins only
+  overlapping_bins <- bins_gr[overlapping_idx]
+  n_overlapping <- length(overlapping_bins)
+
+  message(sprintf("Processing %d bins that overlap protein sites...", n_overlapping))
+
+  # Pre-compute bin metadata
+
+  bins_chr <- as.character(GenomicRanges::seqnames(overlapping_bins))
+  bins_start <- GenomicRanges::start(overlapping_bins)
+  bins_end <- GenomicRanges::end(overlapping_bins)
+  bins_strand <- as.character(GenomicRanges::strand(overlapping_bins))
+  bins_event_id <- GenomicRanges::mcols(overlapping_bins)$event_id
+
+  # Calculate bin indices (1-4) based on original position in bins_gr
+  original_indices <- overlapping_idx
+  bin_indices <- ((original_indices - 1) %% 4) + 1
+
+  # Filter out invalid bins (start > end)
+  valid_mask <- bins_start <= bins_end
+  if (!all(valid_mask)) {
+    overlapping_bins <- overlapping_bins[valid_mask]
+    bins_chr <- bins_chr[valid_mask]
+    bins_start <- bins_start[valid_mask]
+    bins_end <- bins_end[valid_mask]
+    bins_strand <- bins_strand[valid_mask]
+    bins_event_id <- bins_event_id[valid_mask]
+    bin_indices <- bin_indices[valid_mask]
+    if (has_groups) {
+      bins_groups_subset <- bins_groups[overlapping_idx][valid_mask]
+    }
+    n_overlapping <- length(overlapping_bins)
+  } else if (has_groups) {
+    bins_groups_subset <- bins_groups[overlapping_idx]
+  }
+
+  if (n_overlapping == 0) {
+    if (has_groups) {
+      return(do.call(rbind, lapply(unique_groups, function(g) {
+        data.frame(global_position = seq_len(total_positions), overlap_count = 0L, group = g)
+      })))
+    }
+    return(data.frame(global_position = seq_len(total_positions), overlap_count = 0L))
+  }
+
+  # Calculate bin widths and total positions to expand
+
+  bin_widths <- bins_end - bins_start + 1L
+  total_1bp_positions <- sum(bin_widths)
+
+  message(sprintf("Expanding %d bins to %d 1bp positions...", n_overlapping, total_1bp_positions))
+
+  # Vectorized expansion: create all 1bp positions at once
+  # For each bin, we need positions from start to end
+  bin_rep_idx <- rep(seq_len(n_overlapping), times = bin_widths)
+
+  # Calculate genomic positions using vectorized cumsum trick
+  # Create sequence 1,2,3,...,w1, 1,2,3,...,w2, etc.
+  position_in_bin <- sequence(bin_widths)
+  genomic_positions <- bins_start[bin_rep_idx] + position_in_bin - 1L
+
+  # Create 1bp GRanges for all positions at once
+  all_positions_gr <- GenomicRanges::GRanges(
+    seqnames = bins_chr[bin_rep_idx],
+    ranges = IRanges::IRanges(start = genomic_positions, width = 1L),
+    strand = bins_strand[bin_rep_idx]
+  )
+
+  message("Finding overlaps with protein binding sites...")
+
+  # Single findOverlaps call for ALL positions
+  hits <- GenomicRanges::findOverlaps(all_positions_gr, protein, ignore.strand = FALSE)
+
+  # Get indices of positions that have overlaps
+  hit_query_idx <- S4Vectors::queryHits(hits)
+
+  if (length(hit_query_idx) == 0) {
+    message("No position overlaps found")
+    if (has_groups) {
+      return(do.call(rbind, lapply(unique_groups, function(g) {
+        data.frame(global_position = seq_len(total_positions), overlap_count = 0L, group = g)
+      })))
+    }
+    return(data.frame(global_position = seq_len(total_positions), overlap_count = 0L))
+  }
+
+  # Get unique hit positions (a position might overlap multiple protein regions)
+  hit_query_idx <- unique(hit_query_idx)
+
+  message(sprintf("Found %d positions with overlaps, calculating global positions...", length(hit_query_idx)))
+
+  # For hit positions, calculate global positions
+  hit_bin_idx <- bin_rep_idx[hit_query_idx]
+  hit_position_in_bin <- position_in_bin[hit_query_idx]
+  hit_bin_indices <- bin_indices[hit_bin_idx]
+  hit_strands <- bins_strand[hit_bin_idx]
+
+  # Calculate global positions (strand-aware)
+  # Plus strand: (bin_index - 1) * bin_width + position_in_bin
+  # Minus strand: (4 - bin_index) * bin_width + (bin_width - position_in_bin + 1)
+  is_minus <- hit_strands == "-"
+  global_pos <- integer(length(hit_query_idx))
+  global_pos[!is_minus] <- (hit_bin_indices[!is_minus] - 1L) * bin_width + hit_position_in_bin[!is_minus]
+  global_pos[is_minus] <- (4L - hit_bin_indices[is_minus]) * bin_width + (bin_width - hit_position_in_bin[is_minus] + 1L)
+
+  # Clamp to valid range
+
+  global_pos <- pmax(1L, pmin(global_pos, total_positions))
+
+  # Aggregate results
+  if (has_groups) {
+    hit_groups <- bins_groups_subset[hit_bin_idx]
+    hit_group_indices <- group_to_idx[hit_groups]
+    n_groups <- length(unique_groups)
+
+    # Combined index for tabulation: (group_idx - 1) * total_positions + global_pos
+    combined_idx <- (hit_group_indices - 1L) * total_positions + global_pos
+    counts <- tabulate(combined_idx, nbins = n_groups * total_positions)
+
+    result <- data.frame(
+      global_position = rep(seq_len(total_positions), n_groups),
+      overlap_count = counts,
+      group = rep(unique_groups, each = total_positions)
+    )
+  } else {
+    counts <- tabulate(global_pos, nbins = total_positions)
+    result <- data.frame(
+      global_position = seq_len(total_positions),
+      overlap_count = counts
+    )
+  }
+
+  return(result)
+}
+
+
+#' Find overlaps between bins and protein binding sites (legacy)
 #' @param bins GRanges object of bins
 #' @param protein GRanges object of protein binding sites
 #'
@@ -178,7 +361,7 @@ find_overlaps <- function(bins, protein) {
 }
 
 
-#' Calculate overlap frequency at each position
+#' Calculate overlap frequency at each position (legacy)
 #'
 #' @param overlap_df Data frame from find_overlaps
 #' @param total_events Total number of events
@@ -207,8 +390,8 @@ calculate_overlap_frequency <- function(overlap_df, total_events, bin_width) {
     data = overlap_df,
     FUN = sum
   )
-
   # Calculate frequency (overlaps / TOTAL events in dataset)
+
   overlap_counts$frequency <- overlap_counts$has_overlap / total_events
 
   # Ensure all positions are represented (fill missing with 0)
@@ -258,7 +441,6 @@ calculate_moving_average <- function(freq_data, window_size = NULL, bins = NULL)
     freq_data <- freq_data %>%
       dplyr::mutate(moving_avg = frequency)
   }
-
   return(freq_data)
 }
 
@@ -295,7 +477,6 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
 
   # Calculate extended ends for sequence extraction
   # (extended to allow matching at the end of each bin)
-
   chr_lengths <- GenomeInfoDb::seqlengths(bsgenome_obj)
   extended_ends <- pmin(bins_end + seq_length - 1, chr_lengths[bins_chr])
 
@@ -338,22 +519,18 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
   message("Finding pattern matches...")
   n_valid <- length(all_seqs)
 
-  tic("Getting All Sequence Overlaps")
   hits_all <- Biostrings::vmatchPattern(pattern, all_seqs, fixed = FALSE)
-  toc()
 
-  tic("Getting Start Positions of Overlaps")
   starts_all <- BiocGenerics::start(hits_all)
   # Convert S4 IntegerList to regular R list for parallel serialization
   starts_all <- as.list(starts_all)
-  toc()
 
   total_positions <- 4 * bin_width
 
   # Process and collect global positions of matches
   if (cores > 1) {
     # Parallel processing - each chunk returns global positions of matches
-    # Dynamic chunk size: target ~2 chunks per worker for load balancing, with minimum floor
+    # Dynamic chunk size
     chunk_size <- max(500, ceiling(n_valid / (cores * 2)))
     idx_chunks <- split(seq_len(n_valid), ceiling(seq_len(n_valid) / chunk_size))
     n_chunks <- length(idx_chunks)
@@ -447,6 +624,122 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
 }
 
 
+#' Calculate Z-scores and Find Significant Regions
+#'
+#' Compares Retained and Excluded frequencies against Control using z-scores.
+#' Identifies positions where the difference is statistically significant.
+#'
+#' @param freq_data Data frame with columns: global_position, moving_avg, group,
+#'   and moving_avg_sd (for Control group from bootstrap)
+#' @param z_threshold Z-score threshold for significance (default 1.96 for p < 0.05)
+#' @param min_consecutive Minimum consecutive significant positions to form a region
+#'   (default 10). Helps reduce false positives from noise.
+#' @param compare_to Which group to compare against. Default "Control".
+#'
+#' @return A list with:
+#'   \item{z_scores}{Data frame with z-scores for each position and comparison}
+#'   \item{significant_regions}{Data frame with start/end of significant regions}
+#'
+#' @export
+calculate_significance <- function(freq_data,
+                                    z_threshold = 1.96,
+                                    min_consecutive = 10,
+                                    compare_to = "Control") {
+
+  # Get Control data (must have SD from bootstrap)
+  control_data <- freq_data %>%
+    dplyr::filter(group == compare_to) %>%
+    dplyr::select(global_position, moving_avg, moving_avg_sd) %>%
+    dplyr::rename(control_mean = moving_avg, control_sd = moving_avg_sd)
+
+  if (nrow(control_data) == 0) {
+    stop("No Control group found in freq_data")
+  }
+
+  if (all(control_data$control_sd == 0, na.rm = TRUE)) {
+    warning("Control SD is all zeros. Cannot calculate z-scores. ",
+            "Make sure bootstrap iterations > 1 in createSequenceMap.")
+    return(list(z_scores = NULL, significant_regions = NULL))
+  }
+
+  # Get other groups to compare
+  other_groups <- unique(freq_data$group[freq_data$group != compare_to])
+
+  z_scores_list <- list()
+  sig_regions_list <- list()
+
+  for (grp in other_groups) {
+    grp_data <- freq_data %>%
+      dplyr::filter(group == grp) %>%
+      dplyr::select(global_position, moving_avg) %>%
+      dplyr::rename(grp_freq = moving_avg)
+
+    # Merge with control
+    merged <- dplyr::left_join(grp_data, control_data, by = "global_position")
+
+    # Calculate z-scores (handle zero SD)
+    merged <- merged %>%
+      dplyr::mutate(
+        z_score = dplyr::if_else(
+          control_sd > 0,
+          (grp_freq - control_mean) / control_sd,
+          0
+        ),
+        significant = abs(z_score) >= z_threshold,
+        direction = dplyr::case_when(
+          z_score >= z_threshold ~ "enriched",
+          z_score <= -z_threshold ~ "depleted",
+          TRUE ~ "ns"
+        ),
+        comparison = paste0(grp, "_vs_", compare_to)
+      )
+
+    z_scores_list[[grp]] <- merged
+
+    # Find consecutive significant regions
+    if (any(merged$significant, na.rm = TRUE)) {
+      # Use run-length encoding to find consecutive runs
+      rle_sig <- rle(merged$significant)
+      ends <- cumsum(rle_sig$lengths)
+      starts <- c(1, ends[-length(ends)] + 1)
+
+      # Filter for significant runs that meet minimum length
+      sig_runs <- which(rle_sig$values == TRUE & rle_sig$lengths >= min_consecutive)
+
+      if (length(sig_runs) > 0) {
+        regions <- data.frame(
+          start_pos = merged$global_position[starts[sig_runs]],
+          end_pos = merged$global_position[ends[sig_runs]],
+          length = rle_sig$lengths[sig_runs],
+          comparison = paste0(grp, "_vs_", compare_to),
+          group = grp
+        )
+
+        # Add mean z-score for each region
+        regions$mean_z <- sapply(seq_len(nrow(regions)), function(i) {
+          idx <- merged$global_position >= regions$start_pos[i] &
+                 merged$global_position <= regions$end_pos[i]
+          mean(merged$z_score[idx], na.rm = TRUE)
+        })
+
+        regions$direction <- ifelse(regions$mean_z > 0, "enriched", "depleted")
+
+        sig_regions_list[[grp]] <- regions
+      }
+    }
+  }
+
+  # Combine results
+  z_scores <- dplyr::bind_rows(z_scores_list)
+  significant_regions <- dplyr::bind_rows(sig_regions_list)
+
+  return(list(
+    z_scores = z_scores,
+    significant_regions = significant_regions
+  ))
+}
+
+
 #' Add region labels to combined data
 #'
 #' @param Combined Data frame with Pos column
@@ -487,13 +780,16 @@ add_regions <- function(Combined, WidthIntoExon = 50, WidthIntoIntron = 300) {
 #' @param WidthIntoExon Width into exon (default 50)
 #' @param WidthIntoIntron Width into intron (default 250)
 #' @param title Plot title
+#' @param sig_regions Data frame with significant regions from calculate_significance.
+#'   Should have columns: start_pos, end_pos, group. If NULL, no significance bars shown.
 #'
 #' @return A ggplot object
 #' @keywords internal
 plot_splicing_sequence_map <- function(freq_data,
                                         WidthIntoExon = 50,
                                         WidthIntoIntron = 250,
-                                        title = NULL) {
+                                        title = NULL,
+                                        sig_regions = NULL) {
 
   bin_width <- WidthIntoExon + WidthIntoIntron
   gap <- 80
@@ -579,11 +875,41 @@ plot_splicing_sequence_map <- function(freq_data,
   present_groups <- intersect(c("Retained", "Excluded", "Control"), unique(freq_data$group))
   freq_data$group <- factor(freq_data$group, levels = present_groups)
 
+  # Add ribbon data for groups with standard deviation
+  if ("moving_avg_sd" %in% names(freq_data)) {
+    freq_data <- freq_data %>%
+      dplyr::mutate(
+        ymin = moving_avg - moving_avg_sd,
+        ymax = moving_avg + moving_avg_sd
+      )
+  }
+
   plot <- ggplot2::ggplot(freq_data,
                           ggplot2::aes(x = schematic_position,
                                        y = moving_avg,
                                        color = group,
-                                       group = interaction(bin, group))) +
+                                       group = interaction(bin, group)))
+
+  # Add ribbon for standard deviation if available
+  if ("moving_avg_sd" %in% names(freq_data)) {
+    ribbon_data <- freq_data %>%
+      dplyr::filter(moving_avg_sd > 0)
+    if (nrow(ribbon_data) > 0) {
+      # Map group names to colors for ribbon fill
+      group_colors <- c("Retained" = "blue", "Excluded" = "red", "Control" = "gray50")
+      ribbon_data$ribbon_fill <- group_colors[as.character(ribbon_data$group)]
+
+      plot <- plot +
+        ggplot2::geom_ribbon(data = ribbon_data,
+                             ggplot2::aes(x = schematic_position,
+                                          ymin = ymin, ymax = ymax,
+                                          group = interaction(bin, group),
+                                          fill = ribbon_fill),
+                             alpha = 0.3, color = NA, inherit.aes = FALSE)
+    }
+  }
+
+  plot <- plot +
     ggplot2::geom_line(linewidth = 0.8, alpha = 0.7) +
     ggplot2::scale_color_manual(
       values = c("Retained" = "blue", "Excluded" = "red", "Control" = "black"),
@@ -597,7 +923,7 @@ plot_splicing_sequence_map <- function(freq_data,
 
     # Break symbols
     ggplot2::annotate("text", x = break_x, y = y_min,
-                      label = "//", size = 8, fontface = "bold") +
+                      label = "//", size = 8, fontface = "bold",vjust = 1) +
 
     # Zero line
     ggplot2::geom_hline(yintercept = 0, color = "black", linewidth = 0.5) +
@@ -617,7 +943,8 @@ plot_splicing_sequence_map <- function(freq_data,
                           color = "black", linewidth = 1.5, inherit.aes = FALSE) +
     ggplot2::scale_linetype_identity() +
 
-    ggplot2::scale_y_continuous(limits = c(y_min - exon_height * 1.5, y_max * 1.05)) +
+    ggplot2::scale_y_continuous(limits = c(y_min - exon_height * 1.5,
+                                           y_max * 1.05 + y_range * 0.15)) +
 
     ggplot2::labs(x = NULL, y = NULL, title = title) +
     ggplot2::theme_minimal() +
@@ -628,14 +955,116 @@ plot_splicing_sequence_map <- function(freq_data,
       axis.line = ggplot2::element_blank(),
       axis.text.x = ggplot2::element_blank(),
       axis.ticks.x = ggplot2::element_blank(),
-      axis.text.y = ggplot2::element_blank(),
-      axis.ticks.y = ggplot2::element_blank(),
+      axis.text.y  = ggplot2::element_text(size = 11, color = "black"),
+      axis.ticks.y = ggplot2::element_line(color = "black"),
+      ggplot2::labs(x = NULL, y = "Frequency", title = title),
       panel.background = ggplot2::element_rect(fill = "transparent", colour = NA),
       plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
       plot.title = ggplot2::element_text(hjust = 0.5, size = 20,
                                           color = "black", face = "bold.italic"),
       legend.position = "bottom"
     )
+
+  # Add significance bars if provided
+  if (!is.null(sig_regions) && nrow(sig_regions) > 0) {
+    # Helper to get bin number from global position
+    get_bin <- function(pos) {
+      dplyr::case_when(
+        pos <= bin_width ~ 1L,
+        pos <= 2 * bin_width ~ 2L,
+        pos <= 3 * bin_width ~ 3L,
+        TRUE ~ 4L
+      )
+    }
+
+    # Helper function to convert global position to schematic position
+    global_to_schematic <- function(pos) {
+      bin <- get_bin(pos)
+      position_in_bin <- pos - (bin - 1) * bin_width
+      schematic_pos <- dplyr::case_when(
+        bin == 1 ~ position_in_bin,
+        bin == 2 ~ bin_width + gap + position_in_bin,
+        bin == 3 ~ 2 * bin_width + gap + position_in_bin,
+        bin == 4 ~ 3 * bin_width + 2 * gap + position_in_bin
+      )
+      return(schematic_pos)
+    }
+
+    # Calculate max y value per bin for positioning bars just above data
+    bin_max_y <- freq_data %>%
+      dplyr::group_by(bin) %>%
+      dplyr::summarise(max_y = max(moving_avg, na.rm = TRUE), .groups = "drop")
+
+    # Split significance regions at bin boundaries
+    split_regions <- list()
+    for (i in seq_len(nrow(sig_regions))) {
+      reg <- sig_regions[i, ]
+      start_bin <- get_bin(reg$start_pos)
+      end_bin <- get_bin(reg$end_pos)
+
+      if (start_bin == end_bin) {
+        # Region is within a single bin
+        split_regions[[length(split_regions) + 1]] <- data.frame(
+          start_pos = reg$start_pos,
+          end_pos = reg$end_pos,
+          group = reg$group,
+          bin = start_bin
+        )
+      } else {
+        # Region spans multiple bins - split it
+        for (b in start_bin:end_bin) {
+          bin_start_global <- (b - 1) * bin_width + 1
+          bin_end_global <- b * bin_width
+
+          seg_start <- max(reg$start_pos, bin_start_global)
+          seg_end <- min(reg$end_pos, bin_end_global)
+
+          if (seg_start <= seg_end) {
+            split_regions[[length(split_regions) + 1]] <- data.frame(
+              start_pos = seg_start,
+              end_pos = seg_end,
+              group = reg$group,
+              bin = b
+            )
+          }
+        }
+      }
+    }
+
+    if (length(split_regions) > 0) {
+      sig_regions_split <- dplyr::bind_rows(split_regions)
+
+      # Convert to schematic coordinates
+      sig_regions_split <- sig_regions_split %>%
+        dplyr::mutate(
+          schematic_start = global_to_schematic(start_pos),
+          schematic_end = global_to_schematic(end_pos)
+        )
+
+      # Join with bin max y values and set bar position just above data
+      sig_regions_split <- sig_regions_split %>%
+        dplyr::left_join(bin_max_y, by = "bin") %>%
+        dplyr::mutate(
+          bar_y = max_y + y_range * dplyr::case_when(
+            group == "Retained" ~ 0.06,
+            group == "Excluded" ~ 0.03,
+            TRUE ~ 0.045
+          )
+        )
+
+      # Add significance bars as segments (thinner lines)
+      plot <- plot +
+        ggplot2::geom_segment(
+          data = sig_regions_split,
+          ggplot2::aes(x = schematic_start, xend = schematic_end,
+                       y = bar_y, yend = bar_y,
+                       color = group),
+          linewidth = 1.2,
+          lineend = "butt",
+          inherit.aes = FALSE
+        )
+    }
+  }
 
   return(plot)
 }

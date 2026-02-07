@@ -29,6 +29,7 @@
 #'   Options are "Retained", "Excluded", and/or "Control". Default is
 #'   c("Retained", "Excluded", "Control") to process all groups. Use
 #'   c("Retained", "Excluded") to skip the Control group (which can be large).
+#' @param cores Number of cores for parallel processing. Default is 1 (sequential).
 #' @param return_data Logical. If TRUE, returns the frequency data frame instead
 #'   of a plot. Default is FALSE.
 #'
@@ -62,6 +63,9 @@
 #' # Basic usage
 #' createSplicingMap(bed_file = bed, SEMATS = semats)
 #'
+#' # Use parallel processing
+#' createSplicingMap(bed_file = bed, SEMATS = semats, cores = 4)
+#'
 #' # Return data instead of plot
 #' freq_data <- createSplicingMap(bed_file = bed,
 #'                                 SEMATS = semats,
@@ -80,6 +84,7 @@ createSplicingMap <- function(bed_file,
                                exclusion_IncLevelDifference = -0.1,
                                Min_Count = 50,
                                groups = c("Retained", "Excluded", "Control"),
+                               cores = 1,
                                return_data = FALSE) {
 
   # Load BED file if path provided
@@ -94,6 +99,7 @@ createSplicingMap <- function(bed_file,
   SEMATS$chr <- sub("^chr", "", SEMATS$chr)
 
   # Convert BED to GRanges and reduce overlapping peaks
+
   buckets <- GenomicRanges::makeGRangesFromDataFrame(
     bed_data,
     seqnames.field = "chr",
@@ -114,6 +120,12 @@ createSplicingMap <- function(bed_file,
 
   message(paste0("Processing groups: ", paste(groups, collapse = ", ")))
 
+  # Cap cores at max available - 1
+  max_cores <- parallel::detectCores() - 1
+  if (is.na(max_cores) || max_cores < 1) max_cores <- 1
+  cores <- min(cores, max_cores)
+  cores <- max(cores, 1)
+
   # Filter SEMATS into Controls, Retained, and Excluded using helper function
   filtered_events <- filter_SEMATS_events(
     SEMATS,
@@ -126,77 +138,76 @@ createSplicingMap <- function(bed_file,
 
   bin_width <- WidthIntoExon + WidthIntoIntron + 1
 
-  # Process each group using helper functions
-  process_group <- function(data, group_name) {
-    if (nrow(data) == 0) {
-      message(paste0("No events found for group: ", group_name))
-      return(data.frame(
+  # Combine all selected groups into one data frame with group labels
+  combined_events <- do.call(rbind, lapply(groups, function(g) {
+    data <- filtered_events[[g]]
+    if (nrow(data) > 0) {
+      data$group <- g
+    }
+    data
+  }))
+
+  # Count events per group for frequency calculation (convert to named vector for safe subsetting)
+  event_counts <- table(combined_events$group)
+  events_per_group <- setNames(as.integer(event_counts), names(event_counts))
+
+  if (nrow(combined_events) == 0) {
+    message("No events found in any selected group")
+    combined_data <- do.call(rbind, lapply(groups, function(g) {
+      data.frame(
         global_position = 1:(4 * bin_width),
         frequency = 0,
         moving_avg = 0,
-        group = group_name
-      ))
-    }
+        group = g
+      )
+    }))
+  } else {
+    message(sprintf("Processing %d total events across %d groups in single pass...",
+                    nrow(combined_events), length(unique(combined_events$group))))
 
-    # Build bins matrix using helper function
-    bins_gr <- make_bins_matrix(data,
+    # Build bins matrix for ALL events at once (group column is preserved)
+    bins_gr <- make_bins_matrix(combined_events,
                                  WidthIntoExon = WidthIntoExon,
                                  WidthIntoIntron = WidthIntoIntron)
 
-    # Find overlaps with protein binding sites using helper function
-    message(paste0("Finding overlaps for ", group_name, " events..."))
-    overlap_matrix <- find_overlaps(bins_gr, buckets)
+    # Calculate binding frequency for all groups in one vectorized pass
+    freq_data <- calculate_binding_frequency(bins_gr,
+                                              buckets,
+                                              bin_width,
+                                              cores = cores)
 
-    if (is.null(overlap_matrix) || nrow(overlap_matrix) == 0) {
-      message(paste0("No overlaps found for group: ", group_name))
-      return(data.frame(
+    # Calculate per-group frequency using per-group event counts
+    freq_data$frequency <- freq_data$overlap_count / as.numeric(events_per_group[freq_data$group])
+
+    # Apply moving average per group
+    combined_data <- freq_data %>%
+      dplyr::group_by(group) %>%
+      dplyr::group_modify(~ calculate_moving_average(.x, moving_average, bins = bin_width)) %>%
+      dplyr::ungroup()
+  }
+
+  # Handle any groups with no events (add zero rows)
+  missing_groups <- setdiff(groups, unique(combined_data$group))
+  if (length(missing_groups) > 0) {
+    message(paste0("No events found for groups: ", paste(missing_groups, collapse = ", ")))
+    zero_data <- do.call(rbind, lapply(missing_groups, function(g) {
+      data.frame(
         global_position = 1:(4 * bin_width),
+        overlap_count = 0L,
         frequency = 0,
         moving_avg = 0,
-        group = group_name
-      ))
-    }
-
-    # Calculate total events
-    total_events <- length(unique(bins_gr$event_id))
-
-    # Calculate overlap frequency using helper function
-    freq_data <- calculate_overlap_frequency(overlap_matrix, total_events, bin_width)
-
-    # Apply moving average using helper function
-    freq_data <- calculate_moving_average(freq_data, moving_average, bins = bin_width)
-
-    freq_data$group <- group_name
-    return(freq_data)
+        group = g
+      )
+    }))
+    combined_data <- rbind(combined_data, zero_data)
   }
-
-  # Process only selected groups
-  results_list <- list()
-
-  if ("Retained" %in% groups) {
-    message("Processing Retained events...")
-    results_list$Retained <- process_group(filtered_events$Retained, "Retained")
-  }
-
-  if ("Excluded" %in% groups) {
-    message("Processing Excluded events...")
-    results_list$Excluded <- process_group(filtered_events$Excluded, "Excluded")
-  }
-
-  if ("Control" %in% groups) {
-    message("Processing Control events...")
-    results_list$Control <- process_group(filtered_events$Control, "Control")
-  }
-
-  # Combine selected groups
-  df <- do.call(rbind, results_list) %>% data.frame()
 
   if (return_data) {
-    return(df)
+    return(combined_data)
   }
 
   # Plot using the shared plotting function
-  plot_splicing_sequence_map(df,
+  plot_splicing_sequence_map(combined_data,
                               WidthIntoExon = WidthIntoExon,
                               WidthIntoIntron = WidthIntoIntron,
                               title = paste0("Splicing Map Peaks"))

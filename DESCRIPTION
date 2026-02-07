@@ -29,7 +29,8 @@ Imports:
     future,
     future.apply,
     grid,
-    magrittr
+    magrittr,
+    tictoc
 Suggests:
     testthat (>= 3.0.0),
     zoo,

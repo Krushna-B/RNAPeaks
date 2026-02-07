@@ -28,12 +28,27 @@
 #'   Options are "Retained", "Excluded", and/or "Control". Default is
 #'   c("Retained", "Excluded", "Control") to process all groups. Use
 #'   c("Retained", "Excluded") to skip the Control group (which can be large).
+#' @param control_multiplier Numeric multiplier for control sample size. The
+#'   number of control events sampled per iteration is
+#'   (n_retained + n_excluded) * control_multiplier. Default is 1.0.
+#' @param control_iterations Integer number of bootstrap iterations for control
+#'   sampling. The final control frequency is the mean across iterations, with
+#'   standard deviation shown as a shaded band. Default is 100.
+#' @param z_threshold Z-score threshold for significance testing. Default is 1.96
+#'   (corresponds to p < 0.05 two-tailed).
+#' @param min_consecutive Minimum number of consecutive significant positions
+#'   required to form a significant region. Default is 10. Helps reduce false
+#'   positives from noise.
+#' @param show_significance Logical. If TRUE (default), displays colored bars above
+#'   the plot indicating regions where Retained/Excluded differ significantly
+#'   from Control based on z-test.
 #' @param return_data Logical. If TRUE, returns the frequency data frame instead
 #'   of a plot. Default is FALSE.
 #'
 #' @return A ggplot object showing sequence frequency across the 4 regions
-#'   for Retained (blue), Excluded (red), and Control (black) groups,
-#'   or a data frame if return_data = TRUE.
+#'   for Retained (blue), Excluded (red), and Control (black) groups.
+#'   Significant regions (z-test vs Control) are shown as colored bars above
+#'   the plot. Returns a data frame if return_data = TRUE.
 #'
 #' @details
 #' The function divides each splicing event into 4 regions of (WidthIntoExon +
@@ -84,7 +99,12 @@ createSequenceMap <- function(SEMATS,
                                exclusion_IncLevelDifference = -0.1,
                                Min_Count = 50,
                                groups = c("Retained", "Excluded", "Control"),
+                               control_multiplier = 2.0,
+                               control_iterations = 20,
                                cores = 1,
+                               z_threshold = 1.96,
+                               min_consecutive = 10,
+                               show_significance = TRUE,
                                return_data = FALSE) {
 
   # Load default genome if not provided
@@ -118,7 +138,6 @@ createSequenceMap <- function(SEMATS,
   cores <- min(cores, max_cores)
   cores <- max(cores, 1)
   options(future.globals.maxSize = 8 * 1024^3)
-
   # If using parallel, warm up workers early while we do other setup
   warmup_future <- NULL
   if (cores > 1) {
@@ -127,10 +146,6 @@ createSequenceMap <- function(SEMATS,
 
     # workers will spawn and load packages
     warmup_future <- future::future({
-      # library(Biostrings)
-      # library(IRanges)
-      # library(GenomicRanges)
-      # library(GenomeInfoDb)
       TRUE
     }, seed = TRUE)
   }
@@ -154,7 +169,9 @@ createSequenceMap <- function(SEMATS,
       message(paste0("No events found for group: ", group_name))
       return(data.frame(
         global_position = 1:(4 * bin_width),
+        match_count = 0,
         frequency = 0,
+        bin = rep(1:4, each = bin_width),
         moving_avg = 0,
         group = group_name
       ))
@@ -193,30 +210,129 @@ createSequenceMap <- function(SEMATS,
   if ("Retained" %in% groups) {
     message("Processing Retained events...")
     results_list$Retained <- process_group(filtered_events$Retained, "Retained")
+    results_list$Retained$moving_avg_sd <- 0
   }
 
   if ("Excluded" %in% groups) {
     message("Processing Excluded events...")
     results_list$Excluded <- process_group(filtered_events$Excluded, "Excluded")
+    results_list$Excluded$moving_avg_sd <- 0
   }
 
   if ("Control" %in% groups) {
-    message("Processing Control events...")
-    results_list$Control <- process_group(filtered_events$Control, "Control")
+    message("Processing Control events with sampling...")
+
+    control_data <- filtered_events$Control
+    n_controls <- nrow(control_data)
+
+    # Calculate sample size based on retained + excluded counts
+    n_retained <- nrow(filtered_events$Retained)
+    n_excluded <- nrow(filtered_events$Excluded)
+    sample_size <- round((n_retained + n_excluded) * control_multiplier)
+
+    message(sprintf("  Retained: %d, Excluded: %d, Sample size per iteration: %d",
+                    n_retained, n_excluded, sample_size))
+    message(sprintf("  Total controls available: %d, Iterations: %d",
+                    n_controls, control_iterations))
+
+    if (n_controls == 0) {
+      message("No control events found")
+      results_list$Control <- data.frame(
+        global_position = 1:(4 * bin_width),
+        match_count = 0,
+        frequency = 0,
+        bin = rep(1:4, each = bin_width),
+        moving_avg = 0,
+        group = "Control",
+        moving_avg_sd = 0
+      )
+    } else if (sample_size >= n_controls || sample_size == 0) {
+      # If sample size >= available controls, just use all controls once
+      message("Sample size >= available controls, using all controls without bootstrap")
+      results_list$Control <- process_group(control_data, "Control")
+      results_list$Control$moving_avg_sd <- 0
+    } else {
+      # Bootstrap sampling
+      iteration_results <- vector("list", control_iterations)
+
+      pb <- progress::progress_bar$new(
+        format = "  bootstrap iterations [:bar] :current/:total (:percent) eta::eta",
+        total = control_iterations, clear = FALSE, width = 80
+      )
+
+      for (iter in seq_len(control_iterations)) {
+        pb$tick()
+
+        # Random sample of controls
+        sampled_indices <- sample(n_controls, sample_size, replace = FALSE)
+        sampled_controls <- control_data[sampled_indices, ]
+
+        # Process this sample
+        iter_result <- process_group(sampled_controls, "Control")
+        iteration_results[[iter]] <- iter_result$moving_avg
+      }
+
+      # Combine results and calculate mean/sd
+      freq_matrix <- do.call(cbind, iteration_results)
+      mean_freq <- rowMeans(freq_matrix, na.rm = TRUE)
+      sd_freq <- apply(freq_matrix, 1, sd, na.rm = TRUE)
+
+      results_list$Control <- data.frame(
+        global_position = 1:(4 * bin_width),
+        match_count = NA,
+        frequency = mean_freq,
+        bin = rep(1:4, each = bin_width),
+        moving_avg = mean_freq,
+        group = "Control",
+        moving_avg_sd = sd_freq
+      )
+
+
+    }
   }
 
   # Combine selected groups
-  combined_data <- do.call(rbind, results_list)
+  combined_data <- dplyr::bind_rows(results_list)
 
   # Clean up parallel workers
   if (cores > 1) {
     future::plan(future::sequential)
   }
 
+  # Return data if requested
+  if (return_data) {
+    return(combined_data)
+  }
+
+  # Calculate significance if Control group is present and has SD
+  sig_regions <- NULL
+  if (show_significance && "Control" %in% groups) {
+    control_has_sd <- any(combined_data$moving_avg_sd[combined_data$group == "Control"] > 0,
+                          na.rm = TRUE)
+    if (control_has_sd) {
+      message("Calculating significance (z-test vs Control)...")
+      sig_result <- calculate_significance(
+        combined_data,
+        z_threshold = z_threshold,
+        min_consecutive = min_consecutive,
+        compare_to = "Control"
+      )
+      sig_regions <- sig_result$significant_regions
+
+      if (!is.null(sig_regions) && nrow(sig_regions) > 0) {
+        message(sprintf("Found %d significant regions", nrow(sig_regions)))
+      } else {
+        message("No significant regions found")
+      }
+    } else {
+      message("Skipping significance: Control SD is zero (need bootstrap iterations > 1)")
+    }
+  }
 
   # Plot using the shared plotting function
-   plot_splicing_sequence_map(combined_data,
-                              WidthIntoExon = WidthIntoExon,
-                              WidthIntoIntron = WidthIntoIntron,
-                              title = paste0("Sequence Frequency: ", sequence))
+  plot_splicing_sequence_map(combined_data,
+                             WidthIntoExon = WidthIntoExon,
+                             WidthIntoIntron = WidthIntoIntron,
+                             title = paste0("Sequence Frequency: ", sequence),
+                             sig_regions = sig_regions)
 }
