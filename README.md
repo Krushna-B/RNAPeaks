@@ -3,10 +3,9 @@
 **Visualize RNA-Binding Protein Peaks on Gene Structures**
 
 [![Status: Beta](https://img.shields.io/badge/Status-Beta-yellow.svg)]()
-[![R-CMD-check](https://github.com/Krushna-B/RNAPeaks/workflows/R-CMD-check/badge.svg)](https://github.com/Krushna-B/RNAPeaks/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-RNAPeaks is an R/Bioconductor package for creating publication-quality visualizations of RNA-binding protein (RBP) peaks overlaid on gene structure diagrams. It takes BED files containing protein binding sites and overlays them on gene annotations from Ensembl GTF files, enabling researchers to visualize where RBPs bind relative to exons, introns, and UTRs.
+RNAPeaks is an R package for creating quality visualizations of RNA-binding protein (RBP) peaks overlaid on gene structure diagrams, sequence maps, and splicing maps. It takes BED files containing protein binding sites and overlays them on gene annotations from Ensembl GTF files, enabling researchers to visualize where RBPs bind relative to exons, introns, and UTRs.
 
 ## Features
 
@@ -15,20 +14,11 @@ RNAPeaks is an R/Bioconductor package for creating publication-quality visualiza
 - **Splicing maps**: Analyze RBP binding frequency around splice junctions with `createSplicingMap()`
 - **Sequence motif analysis**: Identify motif enrichment patterns around splice sites with `createSequenceMap()`
 - **Statistical significance testing**: Bootstrap-based z-score testing to identify significant enrichment regions
-- **Automatic GTF integration**: Fetches Ensembl annotations via AnnotationHub (Human/Mouse)
+- **Automatic GTF integration**: Fetches Ensembl annotations via AnnotationHub (Human)
 - **Parallel processing**: Multi-core support for faster analysis of large datasets
 - **Customizable styling**: Extensive options for colors, sizes, labels, and layout
 
 ## Installation
-
-### From Bioconductor (when available)
-
-```r
-if (!require("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-
-BiocManager::install("RNAPeaks")
-```
 
 ### Development Version from GitHub
 
@@ -123,7 +113,7 @@ createSequenceMap(
     SEMATS = sample_se.mats,
     sequence = "YGCY",
     control_iterations = 20,
-    z_threshold = 1.96,           # p < 0.05 two-tailed
+    z_threshold = 1.96,          
     min_consecutive = 10,         # Minimum positions for significant region
     show_significance = TRUE
 )
@@ -148,7 +138,7 @@ diag <- createSequenceMap(
     return_diagnostics = TRUE
 )
 
-# Test normality at all positions (should be > 90%)
+# Test normality at all positions
 mean(apply(diag$bootstrap_matrix, 1, function(x) shapiro.test(x)$p.value) > 0.05)
 ```
 
@@ -167,7 +157,7 @@ mean(apply(diag$bootstrap_matrix, 1, function(x) shapiro.test(x)$p.value) > 0.05
 
 | Function | Description |
 |----------|-------------|
-| `LoadGTF()` | Load GTF annotation from AnnotationHub (Human/Mouse) |
+| `LoadGTF()` | Load GTF annotation from AnnotationHub (Human) |
 | `checkBed()` | Validate and normalize BED file format |
 
 ### Key Parameters for Splicing/Sequence Maps
