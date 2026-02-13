@@ -2,6 +2,7 @@
 
 **Visualize RNA-Binding Protein Peaks on Gene Structures**
 
+[![Status: Beta](https://img.shields.io/badge/Status-Beta-yellow.svg)]()
 [![R-CMD-check](https://github.com/Krushna-B/RNAPeaks/workflows/R-CMD-check/badge.svg)](https://github.com/Krushna-B/RNAPeaks/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
