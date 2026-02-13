@@ -1,5 +1,4 @@
-#' Load GTF Annotation from AnnotationHub
-#'
+
 #' Loads GTF gene annotation data from AnnotationHub for Human or Mouse.
 #' This function can be called once to load the annotation, which can then
 #' be passed to other functions like `PlotGene()` or `PlotRegion()` to avoid

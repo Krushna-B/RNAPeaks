@@ -1,4 +1,4 @@
-#' Filter BED Data by Genomic Coordinates
+
 #'
 #' Filters a BED data frame to retain only peaks within specified genomic
 #' coordinates and optionally merges nearby peaks.
@@ -15,8 +15,7 @@
 #' @return A filtered data frame containing only peaks within the specified
 #'   region, with nearby peaks optionally merged.
 #'
-#'
-#'
+#' @noRd
 #' @examples
 #' \dontrun{
 #'

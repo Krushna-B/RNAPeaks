@@ -1,66 +1,101 @@
-#' Validate and Normalize BED Format Data
-#'
+
 #' Validates a data frame as BED format and normalizes column names and
 #' chromosome identifiers. The function expects columns in standard BED order:
 #' chr, start, end, tag/name, score, strand.
 #'
 #' @param df A data frame with at least 3 columns representing BED data.
 #'   Columns are mapped by position: 1=chr, 2=start, 3=end, 4=tag, 5=score, 6=strand.
+#'   If fewer than 6 columns are provided, missing columns are filled with defaults:
+#'   tag="peak", score=0, strand="+".
 #'
 #' @return A validated data frame with normalized column names (chr, start, end,
 #'   tag, score, strand) and chromosome names without "chr" prefix.
 #'
 #' @details
-#' The function performs the following validations:
+#' The function performs the following:
 #' \itemize{
-#'   \item Requires at least 3 columns
-#'   \item Checks that chromosome is character type
+#'   \item Requires at least 3 columns (chr, start, end)
+#'   \item Maps columns by position to canonical BED names
+#'   \item Fills missing columns with defaults (tag="peak", score=0, strand="+")
+#'   \item Validates chromosome is character type
 #'   \item Verifies end >= start for all rows
 #'   \item Validates strand values are "+" or "-"
 #'   \item Removes "chr" prefix from chromosome names
+#'   \item Converts chromosome names to uppercase
 #' }
 #'
 #' @export
 #'
 #' @examples
 #' \dontrun{
+#'   # Standard 6-column BED
 #'   bed <- read.table("peaks.bed", header = FALSE)
 #'   bed <- checkBed(bed)
+#'
+#'   # 3-column BED (will add defaults for tag, score, strand)
+#'   bed3 <- data.frame(chr = "chr1", start = 100, end = 200)
+#'   bed3 <- checkBed(bed3)
 #' }
 checkBed <- function(df) {
-  # Make data frame and make marker values lowercase
+  # Convert to data frame
+
   df <- as.data.frame(df, stringsAsFactors = FALSE)
-  colnames(df) <- tolower(colnames(df))
 
-  # Require at least the 3 key columns to exist (by POSITION below)
-  stopifnot(ncol(df) >= 3)
+  # Require at least 3 columns (chr, start, end)
 
-  # Map the FIRST up-to-6 columns BY POSITION to canonical BED-like names:
-  # 1->chr, 2->start, 3->end, 4->tag, 5->score, 6->strand
-  # NOTE: This assumes your input columns are already in this order
+if (ncol(df) < 3) {
+    stop("BED file must have at least 3 columns (chr, start, end)")
+  }
 
+  # Map columns by position to canonical BED names
   col_names <- c("chr", "start", "end", "tag", "score", "strand")
   k <- min(ncol(df), length(col_names))
+  colnames(df)[1:k] <- col_names[1:k]
 
-  for (i in seq_len(k)) {
-    colnames(df)[i] <- col_names[i]
+  # Add missing columns with defaults
+  if (!"tag" %in% colnames(df)) {
+    df$tag <- "peak"
+  }
+  if (!"score" %in% colnames(df)) {
+    df$score <- 0
+  }
+  if (!"strand" %in% colnames(df)) {
+    df$strand <- "+"
+    message("No strand column found, defaulting to '+'")
   }
 
-  # Validate basic types/values:
-  # - chr must be character
-  # - end >= start for all rows
-  # - strand must be character and only "+" or "-"
-  if (is.character(df$chr) &
-      all(as.numeric(df$end) >= as.numeric(df$start)) &
-      is.character(df$strand) &
-      all(df$strand %in% c("+", "-"))) {
-    # Normalize chromosome names by removing a leading "chr"
-    colchr_tmp <- tolower(df$chr)
-    df$chr <- sub("chr", "", colchr_tmp)
-    print("Bed file is good.")
-    return(df)
-
-  } else {
-    stop("Check Bed File!")
+  # Validate chromosome
+  if (!is.character(df$chr)) {
+    df$chr <- as.character(df$chr)
   }
+
+  # Validate coordinates
+  df$start <- as.numeric(df$start)
+  df$end <- as.numeric(df$end)
+
+  if (any(is.na(df$start)) || any(is.na(df$end))) {
+    stop("BED file contains non-numeric start/end coordinates")
+  }
+
+  if (any(df$end < df$start)) {
+    bad_rows <- which(df$end < df$start)
+    stop(sprintf("BED file has end < start at %d rows (first: row %d)",
+                 length(bad_rows), bad_rows[1]))
+  }
+
+  # Validate strand
+  df$strand <- as.character(df$strand)
+  invalid_strand <- !df$strand %in% c("+", "-")
+  if (any(invalid_strand)) {
+    bad_vals <- unique(df$strand[invalid_strand])
+    stop(sprintf("Invalid strand values found: %s (must be '+' or '-')",
+                 paste(bad_vals, collapse = ", ")))
+  }
+
+  # Normalize chromosome names: remove "chr" prefix, uppercase
+df$chr <- toupper(df$chr)
+  df$chr <- sub("^chr", "", df$chr, ignore.case = TRUE)
+
+  message("BED file validated successfully")
+  return(df)
 }

@@ -5,3 +5,5 @@
 .DS_Store
 .quarto
 CLAUDE.md
+benchmarks/*
+tests/*

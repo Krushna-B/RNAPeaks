@@ -1,5 +1,5 @@
-#' Retrieve Gene Annotation from GTF
-#'
+
+
 #' Retrieves gene or transcript annotation from a GTF data frame or
 #' automatically loads annotations from AnnotationHub for Human or Mouse.
 #'
@@ -22,6 +22,7 @@
 #'
 #'
 #'
+#' @noRd
 #' @examples
 #' \dontrun{
 #'   # Get TP53 annotation (longest transcript)
