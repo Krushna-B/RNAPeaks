@@ -1,7 +1,7 @@
-#' Create Sequence Map
-#'
+
 #' Analyzes the frequency of a target sequence motif across splicing junction
-#' regions.Filters events into Retained, Excluded, and Control groups.
+#' regions. Compares motif frequency between Retained, Excluded, and Control
+#' splicing events to identify position-specific enrichment patterns.
 #'
 #' @param SEMATS A data frame containing SE.MATS output with columns:
 #'   chr, strand, upstreamES, upstreamEE, exonStart_0base, exonEnd,
@@ -31,9 +31,11 @@
 #' @param control_multiplier Numeric multiplier for control sample size. The
 #'   number of control events sampled per iteration is
 #'   (n_retained + n_excluded) * control_multiplier. Default is 1.0.
-#' @param control_iterations Integer number of bootstrap iterations for control
+#' @param control_iterations Integer number for sampling iterations for control
 #'   sampling. The final control frequency is the mean across iterations, with
-#'   standard deviation shown as a shaded band. Default is 100.
+#'   standard deviation shown as a shaded band. Default is 20.
+#' @param cores Integer number of cores for parallel processing. Default is 1
+#'   (sequential). Set higher for faster processing on multi-core systems.
 #' @param z_threshold Z-score threshold for significance testing. Default is 1.96
 #'   (corresponds to p < 0.05 two-tailed).
 #' @param min_consecutive Minimum number of consecutive significant positions
@@ -44,6 +46,11 @@
 #'   from Control based on z-test.
 #' @param return_data Logical. If TRUE, returns the frequency data frame instead
 #'   of a plot. Default is FALSE.
+#' @param return_diagnostics Logical. If TRUE, returns a list containing the
+#'   frequency data, raw bootstrap iteration results (for normality testing),
+#'   and significance results. Useful for validating bootstrap assumptions.
+#'   Default is FALSE.
+#' @param verbose Logical. If TRUE, prints progress messages. Default is TRUE.
 #'
 #' @return A ggplot object showing sequence frequency across the 4 regions
 #'   for Retained (blue), Excluded (red), and Control (black) groups.
@@ -105,7 +112,9 @@ createSequenceMap <- function(SEMATS,
                                z_threshold = 1.96,
                                min_consecutive = 10,
                                show_significance = TRUE,
-                               return_data = FALSE) {
+                               return_data = FALSE,
+                               return_diagnostics = FALSE,
+                               verbose = TRUE) {
 
   # Load default genome if not provided
   if (is.null(genome)) {
@@ -130,7 +139,7 @@ createSequenceMap <- function(SEMATS,
     stop("At least one group must be specified")
   }
 
-  message(paste0("Processing groups: ", paste(groups, collapse = ", ")))
+  if (verbose) message("Processing groups: ", paste(groups, collapse = ", "))
 
   # Cap cores at max available - 1
   max_cores <- parallel::detectCores() - 1
@@ -141,7 +150,7 @@ createSequenceMap <- function(SEMATS,
   # If using parallel, warm up workers early while we do other setup
   warmup_future <- NULL
   if (cores > 1) {
-    message(sprintf("Starting %d parallel workers in background...", cores))
+    if (verbose) message(sprintf("Starting %d parallel workers...", cores))
     future::plan(future::multisession, workers = cores)
 
     # workers will spawn and load packages
@@ -161,12 +170,12 @@ createSequenceMap <- function(SEMATS,
     Min_Count = Min_Count
   )
 
-  bin_width <- WidthIntoExon + WidthIntoIntron
+  bin_width <- WidthIntoExon + WidthIntoIntron + 1
 
   # Process each group
   process_group <- function(data, group_name) {
     if (nrow(data) == 0) {
-      message(paste0("No events found for group: ", group_name))
+      if (verbose) message("No events found for group: ", group_name)
       return(data.frame(
         global_position = 1:(4 * bin_width),
         match_count = 0,
@@ -208,19 +217,19 @@ createSequenceMap <- function(SEMATS,
   results_list <- list()
 
   if ("Retained" %in% groups) {
-    message("Processing Retained events...")
+    if (verbose) message("Processing Retained events...")
     results_list$Retained <- process_group(filtered_events$Retained, "Retained")
     results_list$Retained$moving_avg_sd <- 0
   }
 
   if ("Excluded" %in% groups) {
-    message("Processing Excluded events...")
+    if (verbose) message("Processing Excluded events...")
     results_list$Excluded <- process_group(filtered_events$Excluded, "Excluded")
     results_list$Excluded$moving_avg_sd <- 0
   }
 
   if ("Control" %in% groups) {
-    message("Processing Control events with sampling...")
+    if (verbose) message("Processing Control events with sampling...")
 
     control_data <- filtered_events$Control
     n_controls <- nrow(control_data)
@@ -230,13 +239,15 @@ createSequenceMap <- function(SEMATS,
     n_excluded <- nrow(filtered_events$Excluded)
     sample_size <- round((n_retained + n_excluded) * control_multiplier)
 
-    message(sprintf("  Retained: %d, Excluded: %d, Sample size per iteration: %d",
-                    n_retained, n_excluded, sample_size))
-    message(sprintf("  Total controls available: %d, Iterations: %d",
-                    n_controls, control_iterations))
+    if (verbose) {
+      message(sprintf("  Retained: %d, Excluded: %d, Sample size: %d",
+                      n_retained, n_excluded, sample_size))
+      message(sprintf("  Controls: %d, Iterations: %d",
+                      n_controls, control_iterations))
+    }
 
     if (n_controls == 0) {
-      message("No control events found")
+      if (verbose) message("No control events found")
       results_list$Control <- data.frame(
         global_position = 1:(4 * bin_width),
         match_count = 0,
@@ -248,15 +259,15 @@ createSequenceMap <- function(SEMATS,
       )
     } else if (sample_size >= n_controls || sample_size == 0) {
       # If sample size >= available controls, just use all controls once
-      message("Sample size >= available controls, using all controls without bootstrap")
+      if (verbose) message("Using all controls without bootstrap")
       results_list$Control <- process_group(control_data, "Control")
       results_list$Control$moving_avg_sd <- 0
     } else {
-      # Bootstrap sampling
+      # sampling
       iteration_results <- vector("list", control_iterations)
 
       pb <- progress::progress_bar$new(
-        format = "  bootstrap iterations [:bar] :current/:total (:percent) eta::eta",
+        format = "  Sampling iterations [:bar] :current/:total (:percent) eta::eta",
         total = control_iterations, clear = FALSE, width = 80
       )
 
@@ -287,7 +298,8 @@ createSequenceMap <- function(SEMATS,
         moving_avg_sd = sd_freq
       )
 
-
+      # Store raw bootstrap matrix for diagnostics
+      bootstrap_matrix <- freq_matrix
     }
   }
 
@@ -304,13 +316,25 @@ createSequenceMap <- function(SEMATS,
     return(combined_data)
   }
 
+  # Return diagnostics if requested (for normality testing)
+  if (return_diagnostics) {
+    diagnostics <- list(
+      data = combined_data,
+      bootstrap_matrix = if (exists("bootstrap_matrix")) bootstrap_matrix else NULL,
+      n_iterations = if (exists("bootstrap_matrix")) control_iterations else 0,
+      sample_size = if (exists("sample_size")) sample_size else NA,
+      n_controls = if (exists("n_controls")) n_controls else NA
+    )
+    return(diagnostics)
+  }
+
   # Calculate significance if Control group is present and has SD
   sig_regions <- NULL
   if (show_significance && "Control" %in% groups) {
     control_has_sd <- any(combined_data$moving_avg_sd[combined_data$group == "Control"] > 0,
                           na.rm = TRUE)
     if (control_has_sd) {
-      message("Calculating significance (z-test vs Control)...")
+      if (verbose) message("Calculating significance...")
       sig_result <- calculate_significance(
         combined_data,
         z_threshold = z_threshold,
@@ -319,13 +343,15 @@ createSequenceMap <- function(SEMATS,
       )
       sig_regions <- sig_result$significant_regions
 
-      if (!is.null(sig_regions) && nrow(sig_regions) > 0) {
-        message(sprintf("Found %d significant regions", nrow(sig_regions)))
-      } else {
-        message("No significant regions found")
+      if (verbose) {
+        if (!is.null(sig_regions) && nrow(sig_regions) > 0) {
+          message(sprintf("Found %d significant regions", nrow(sig_regions)))
+        } else {
+          message("No significant regions found")
+        }
       }
-    } else {
-      message("Skipping significance: Control SD is zero (need bootstrap iterations > 1)")
+    } else if (verbose) {
+      message("Skipping significance: Control SD is zero")
     }
   }
 

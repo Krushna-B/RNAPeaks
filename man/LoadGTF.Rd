@@ -2,7 +2,10 @@
 % Please edit documentation in R/GN_LoadGTF.R
 \name{LoadGTF}
 \alias{LoadGTF}
-\title{Load GTF Annotation from AnnotationHub}
+\title{Loads GTF gene annotation data from AnnotationHub for Human or Mouse.
+This function can be called once to load the annotation, which can then
+be passed to other functions like \code{PlotGene()} or \code{PlotRegion()} to avoid
+repeated downloads.}
 \usage{
 LoadGTF(species = "Human")
 }

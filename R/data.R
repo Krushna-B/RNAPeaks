@@ -25,7 +25,7 @@
 #'
 #' # Use with PlotGene
 #' \dontrun{
-#'   gtf <- LoadGTF("human")
+#'   gtf <- LoadGTF("Human")
 #'   PlotGene(bed = sample_bed,geneID ="GAPDH", gtf=gtf)
 #' }
 "sample_bed"
@@ -72,7 +72,7 @@
 #'
 #' # Use with createSplicingMap
 #' \dontrun{
-#'   createSplicingMap(bed = sample_bed, se.mats = sample_se.mats)
+#'   createSplicingMap(bed_file = sample_bed, SEMATS = sample_se.mats)
 #'   createSequenceMap(SEMATS = sample_se.mats, sequence = "CCCC")
 #' }
 "sample_se.mats"

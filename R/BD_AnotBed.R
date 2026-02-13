@@ -1,5 +1,4 @@
-#' Annotate BED Peaks with Genomic Regions
-#'
+
 #' Annotates each peak in a BED file with its genomic region type (CDS, UTR,
 #' intron, splice site, etc.) using Ensembl database annotations.
 #'
@@ -26,8 +25,7 @@
 #' region types, it is assigned to the first matching category in the order
 #' listed above. A peak must have >50% overlap with a region to be assigned.
 #'
-#'
-#'
+#' @noRd
 #' @examples
 #' \dontrun{
 #'   # Annotate peaks from a BED file

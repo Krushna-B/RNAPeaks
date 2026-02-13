@@ -13,8 +13,7 @@
 #'
 #' @return A character vector of target names in the desired display order.
 #'
-#'
-#'
+#' @noRd
 #' @examples
 #' \dontrun{
 #'   # Order by peak count

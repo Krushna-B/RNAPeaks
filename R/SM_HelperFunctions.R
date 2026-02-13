@@ -1,6 +1,3 @@
-# SM_HelperFunctions.R
-# Helper functions shared between Splicing Map and Sequence Map analyses
-
 #' Filter SEMATS data into Controls, Retained, and Excluded events
 #'
 #' @param SEMATS A data frame containing SE.MATS output
@@ -11,7 +8,7 @@
 #' @param Min_Count Minimum read count threshold (default 50)
 #'
 #' @return A list with three data frames: Retained, Excluded, Control
-#' @keywords internal
+#' @noRd
 filter_SEMATS_events <- function(SEMATS,
                                   p_valueRetainedAndExclusion = 0.05,
                                   p_valueControls = 0.95,
@@ -36,12 +33,18 @@ filter_SEMATS_events <- function(SEMATS,
   SEMATS$Total_Count_1 <- SEMATS$IN_Count_1 + SEMATS$SK_Count_1
   SEMATS$Total_Count_2 <- SEMATS$IN_Count_2 + SEMATS$SK_Count_2
 
-  # Calculate inclusion levels
+  # Calculate inclusion levels (filter out "NA" strings before conversion)
   SEMATS$Inc_1 <- sapply(SEMATS$IncLevel1, function(x) {
-    mean(as.numeric(strsplit(as.character(x), ",")[[1]]), na.rm = TRUE)
+    vals <- strsplit(as.character(x), ",")[[1]]
+    vals <- vals[vals != "NA" & vals != ""]
+    if (length(vals) == 0) return(NA_real_)
+    mean(as.numeric(vals))
   })
   SEMATS$Inc_2 <- sapply(SEMATS$IncLevel2, function(x) {
-    mean(as.numeric(strsplit(as.character(x), ",")[[1]]), na.rm = TRUE)
+    vals <- strsplit(as.character(x), ",")[[1]]
+    vals <- vals[vals != "NA" & vals != ""]
+    if (length(vals) == 0) return(NA_real_)
+    mean(as.numeric(vals))
   })
 
   # Filter by minimum count
@@ -81,7 +84,7 @@ filter_SEMATS_events <- function(SEMATS,
 #' @param WidthIntoIntron Width to extend into introns (default 250)
 #'
 #' @return A GRanges object with bins for all events
-#' @keywords internal
+#' @noRd
 make_bins_matrix <- function(MAT, WidthIntoExon, WidthIntoIntron) {
   n <- nrow(MAT)
 
@@ -132,9 +135,7 @@ make_bins_matrix <- function(MAT, WidthIntoExon, WidthIntoIntron) {
 
 #' Calculate binding frequency using vectorized batch
 #'
-#' Calculates protein binding frequency across all bins using
-#' vectorized operations and a single findOverlaps call.
-#'
+#' Calculates protein binding frequency across all bins
 #' @param bins_gr GRanges object from make_bins_matrix. If it has a 'group'
 #'   metadata column, results are returned per group.
 #' @param protein GRanges object of protein binding sites
@@ -143,7 +144,7 @@ make_bins_matrix <- function(MAT, WidthIntoExon, WidthIntoIntron) {
 #'
 #' @return Data frame with global_position and overlap_count columns.
 #'   If bins_gr has a 'group' column, includes group column.
-#' @keywords internal
+#' @noRd
 calculate_binding_frequency <- function(bins_gr, protein, bin_width, cores = 1) {
 
   n_bins <- length(bins_gr)
@@ -161,7 +162,6 @@ calculate_binding_frequency <- function(bins_gr, protein, bin_width, cores = 1) 
   overlapping_idx <- which(IRanges::overlapsAny(bins_gr, protein))
 
   if (length(overlapping_idx) == 0) {
-    message("No bins overlap protein binding sites")
     if (has_groups) {
       return(do.call(rbind, lapply(unique_groups, function(g) {
         data.frame(global_position = seq_len(total_positions), overlap_count = 0L, group = g)
@@ -173,8 +173,6 @@ calculate_binding_frequency <- function(bins_gr, protein, bin_width, cores = 1) 
   # Subset to overlapping bins only
   overlapping_bins <- bins_gr[overlapping_idx]
   n_overlapping <- length(overlapping_bins)
-
-  message(sprintf("Processing %d bins that overlap protein sites...", n_overlapping))
 
   # Pre-compute bin metadata
 
@@ -220,14 +218,11 @@ calculate_binding_frequency <- function(bins_gr, protein, bin_width, cores = 1) 
   bin_widths <- bins_end - bins_start + 1L
   total_1bp_positions <- sum(bin_widths)
 
-  message(sprintf("Expanding %d bins to %d 1bp positions...", n_overlapping, total_1bp_positions))
-
   # Vectorized expansion: create all 1bp positions at once
   # For each bin, we need positions from start to end
   bin_rep_idx <- rep(seq_len(n_overlapping), times = bin_widths)
 
-  # Calculate genomic positions using vectorized cumsum trick
-  # Create sequence 1,2,3,...,w1, 1,2,3,...,w2, etc.
+  # Calculate genomic positions
   position_in_bin <- sequence(bin_widths)
   genomic_positions <- bins_start[bin_rep_idx] + position_in_bin - 1L
 
@@ -238,8 +233,6 @@ calculate_binding_frequency <- function(bins_gr, protein, bin_width, cores = 1) 
     strand = bins_strand[bin_rep_idx]
   )
 
-  message("Finding overlaps with protein binding sites...")
-
   # Single findOverlaps call for ALL positions
   hits <- GenomicRanges::findOverlaps(all_positions_gr, protein, ignore.strand = FALSE)
 
@@ -247,7 +240,6 @@ calculate_binding_frequency <- function(bins_gr, protein, bin_width, cores = 1) 
   hit_query_idx <- S4Vectors::queryHits(hits)
 
   if (length(hit_query_idx) == 0) {
-    message("No position overlaps found")
     if (has_groups) {
       return(do.call(rbind, lapply(unique_groups, function(g) {
         data.frame(global_position = seq_len(total_positions), overlap_count = 0L, group = g)
@@ -258,8 +250,6 @@ calculate_binding_frequency <- function(bins_gr, protein, bin_width, cores = 1) 
 
   # Get unique hit positions (a position might overlap multiple protein regions)
   hit_query_idx <- unique(hit_query_idx)
-
-  message(sprintf("Found %d positions with overlaps, calculating global positions...", length(hit_query_idx)))
 
   # For hit positions, calculate global positions
   hit_bin_idx <- bin_rep_idx[hit_query_idx]
@@ -306,110 +296,12 @@ calculate_binding_frequency <- function(bins_gr, protein, bin_width, cores = 1) 
 }
 
 
-#' Find overlaps between bins and protein binding sites (legacy)
-#' @param bins GRanges object of bins
-#' @param protein GRanges object of protein binding sites
-#'
-#' @return Data frame with overlap information for each position
-#' @keywords internal
-find_overlaps <- function(bins, protein) {
-  # Pre-filter - only check bins that actually overlap protein ranges
-  overlapping_bins <- subsetByOverlaps(bins, protein)
-
-  if (length(overlapping_bins) == 0) {
-    return(data.frame(
-      event_id = integer(),
-      bin_index = integer(),
-      position = integer(),
-      has_overlap = logical()
-    ))
-  }
-
-  # Progress Bar
-  n <- length(overlapping_bins)
-  pb <- progress::progress_bar$new(
-    format = "  finding overlaps [:bar] :current/:total (:percent) eta::eta",
-    total = n, clear = FALSE, width = 120
-  )
-
-  results <- lapply(seq_along(overlapping_bins), function(i) {
-    pb$tick()
-    bin <- overlapping_bins[i]
-    if (GenomicRanges::start(bin) > GenomicRanges::end(bin)) {
-      return(NULL)
-    }
-    chr <- as.character(GenomicRanges::seqnames(bin))
-    chr_protein <- protein[GenomicRanges::seqnames(protein) == chr]
-    positions <- GenomicRanges::start(bin):GenomicRanges::end(bin)
-
-    # Every 1 bp position
-    pos_gr <- GenomicRanges::GRanges(chr, IRanges::IRanges(positions, width = 1),
-                                      strand = GenomicRanges::strand(bin))
-    overlaps <- GenomicRanges::countOverlaps(pos_gr, chr_protein, ignore.strand = FALSE) > 0
-    data.frame(
-      event_id = GenomicRanges::mcols(bin)$event_id,
-      geneID = GenomicRanges::mcols(bin)$geneID,
-      seqnames = chr,
-      strand = as.character(GenomicRanges::strand(bin)),
-      bin_index = ((i - 1) %% 4) + 1,  # 1-4 for each event
-      position = seq_along(positions),
-      genomic_position = positions,
-      has_overlap = overlaps
-    )
-  })
-  do.call(rbind, results)
-}
-
-
-#' Calculate overlap frequency at each position (legacy)
-#'
-#' @param overlap_df Data frame from find_overlaps
-#' @param total_events Total number of events
-#' @param bin_width Width of each bin
-#'
-#' @return Data frame with global_position and frequency columns
-#' @keywords internal
-calculate_overlap_frequency <- function(overlap_df, total_events, bin_width) {
-
-  # Flips Global Position for minus strand
-  overlap_df <- overlap_df %>%
-    dplyr::group_by(event_id) %>%
-    dplyr::mutate(
-      global_position = (bin_index - 1) * bin_width + position,
-      global_position = ifelse(
-        strand == "-",
-        (4 * bin_width) - global_position + 1,
-        global_position
-      )
-    ) %>%
-    dplyr::ungroup()
-
-  # Count overlaps at each global position
-  overlap_counts <- stats::aggregate(
-    has_overlap ~ global_position,
-    data = overlap_df,
-    FUN = sum
-  )
-  # Calculate frequency (overlaps / TOTAL events in dataset)
-
-  overlap_counts$frequency <- overlap_counts$has_overlap / total_events
-
-  # Ensure all positions are represented (fill missing with 0)
-  all_positions <- data.frame(global_position = 1:(4 * bin_width))
-  result <- merge(all_positions, overlap_counts[, c("global_position", "frequency")],
-                  by = "global_position", all.x = TRUE)
-  result$frequency[is.na(result$frequency)] <- 0
-
-  return(result)
-}
-
-
 #' Calculate moving average of frequency data
 #' @param freq_data Data frame with global_position and frequency columns
 #' @param window_size Window size for moving average (NULL or 0 to disable)
 #' @param bins Width of each bin region
 #' @return Data frame with additional moving_avg column
-#' @keywords internal
+#' @noRd
 calculate_moving_average <- function(freq_data, window_size = NULL, bins = NULL) {
 
   # Add bin column
@@ -455,7 +347,7 @@ calculate_moving_average <- function(freq_data, window_size = NULL, bins = NULL)
 #'   Caller is responsible for validating/capping this value.
 #'
 #' @return Data frame with global_position and match_count columns
-#' @keywords internal
+#' @noRd
 calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_width, cores = 1) {
 
   seq_length <- nchar(sequence)
@@ -496,7 +388,6 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
   )
 
   # Batch getSeq
-  message("Extracting ", length(extended_gr), " sequences in batch...")
   all_seqs <- tryCatch({
     Biostrings::getSeq(bsgenome_obj, extended_gr)
   }, error = function(e) {
@@ -516,7 +407,6 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
   valid_strands <- bins_strand[valid_idx]
 
   # Get all pattern matches
-  message("Finding pattern matches...")
   n_valid <- length(all_seqs)
 
   hits_all <- Biostrings::vmatchPattern(pattern, all_seqs, fixed = FALSE)
@@ -534,8 +424,6 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
     chunk_size <- max(500, ceiling(n_valid / (cores * 2)))
     idx_chunks <- split(seq_len(n_valid), ceiling(seq_len(n_valid) / chunk_size))
     n_chunks <- length(idx_chunks)
-
-    message(sprintf("Processing %d bins in %d chunks using %d cores...", n_valid, n_chunks, cores))
 
     # Use progressr for parallel progress reporting
     progressr::handlers(global = TRUE)
@@ -573,8 +461,6 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
 
       unlist(chunk_results)
     })
-
-    message("Done.")
 
   } else {
     # Sequential processing with progress bar
@@ -640,7 +526,7 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
 #'   \item{z_scores}{Data frame with z-scores for each position and comparison}
 #'   \item{significant_regions}{Data frame with start/end of significant regions}
 #'
-#' @export
+#' @noRd
 calculate_significance <- function(freq_data,
                                     z_threshold = 1.96,
                                     min_consecutive = 10,
@@ -741,13 +627,12 @@ calculate_significance <- function(freq_data,
 
 
 #' Add region labels to combined data
-#'
 #' @param Combined Data frame with Pos column
 #' @param WidthIntoExon Width into exon
 #' @param WidthIntoIntron Width into intron
 #'
 #' @return Data frame with Region column added
-#' @keywords internal
+#' @noRd
 add_regions <- function(Combined, WidthIntoExon = 50, WidthIntoIntron = 300) {
   bin_width <- WidthIntoExon + WidthIntoIntron
   Combined$Region <- NA
@@ -775,7 +660,6 @@ add_regions <- function(Combined, WidthIntoExon = 50, WidthIntoIntron = 300) {
 #' Creates a visualization of frequency data across splicing regions
 #' for Retained, Excluded, and Control groups. Used by both createSplicingMap
 #' and createSequenceMap.
-#'
 #' @param freq_data Data frame with global_position, frequency, moving_avg, and group
 #' @param WidthIntoExon Width into exon (default 50)
 #' @param WidthIntoIntron Width into intron (default 250)
@@ -784,7 +668,7 @@ add_regions <- function(Combined, WidthIntoExon = 50, WidthIntoIntron = 300) {
 #'   Should have columns: start_pos, end_pos, group. If NULL, no significance bars shown.
 #'
 #' @return A ggplot object
-#' @keywords internal
+#' @noRd
 plot_splicing_sequence_map <- function(freq_data,
                                         WidthIntoExon = 50,
                                         WidthIntoIntron = 250,
@@ -946,7 +830,7 @@ plot_splicing_sequence_map <- function(freq_data,
     ggplot2::scale_y_continuous(limits = c(y_min - exon_height * 1.5,
                                            y_max * 1.05 + y_range * 0.15)) +
 
-    ggplot2::labs(x = NULL, y = NULL, title = title) +
+    ggplot2::labs(x = NULL, y = "Frequency", title = title) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
       panel.grid.major = ggplot2::element_blank(),
@@ -955,13 +839,12 @@ plot_splicing_sequence_map <- function(freq_data,
       axis.line = ggplot2::element_blank(),
       axis.text.x = ggplot2::element_blank(),
       axis.ticks.x = ggplot2::element_blank(),
-      axis.text.y  = ggplot2::element_text(size = 11, color = "black"),
+      axis.text.y = ggplot2::element_text(size = 11, color = "black"),
       axis.ticks.y = ggplot2::element_line(color = "black"),
-      ggplot2::labs(x = NULL, y = "Frequency", title = title),
       panel.background = ggplot2::element_rect(fill = "transparent", colour = NA),
       plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
       plot.title = ggplot2::element_text(hjust = 0.5, size = 20,
-                                          color = "black", face = "bold.italic"),
+                                         color = "black", face = "bold.italic"),
       legend.position = "bottom"
     )
 

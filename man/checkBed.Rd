@@ -2,13 +2,17 @@
 % Please edit documentation in R/BD_CheckBed.R
 \name{checkBed}
 \alias{checkBed}
-\title{Validate and Normalize BED Format Data}
+\title{Validates a data frame as BED format and normalizes column names and
+chromosome identifiers. The function expects columns in standard BED order:
+chr, start, end, tag/name, score, strand.}
 \usage{
 checkBed(df)
 }
 \arguments{
 \item{df}{A data frame with at least 3 columns representing BED data.
-Columns are mapped by position: 1=chr, 2=start, 3=end, 4=tag, 5=score, 6=strand.}
+Columns are mapped by position: 1=chr, 2=start, 3=end, 4=tag, 5=score, 6=strand.
+If fewer than 6 columns are provided, missing columns are filled with defaults:
+tag="peak", score=0, strand="+".}
 }
 \value{
 A validated data frame with normalized column names (chr, start, end,
@@ -20,18 +24,26 @@ chromosome identifiers. The function expects columns in standard BED order:
 chr, start, end, tag/name, score, strand.
 }
 \details{
-The function performs the following validations:
+The function performs the following:
 \itemize{
-\item Requires at least 3 columns
-\item Checks that chromosome is character type
+\item Requires at least 3 columns (chr, start, end)
+\item Maps columns by position to canonical BED names
+\item Fills missing columns with defaults (tag="peak", score=0, strand="+")
+\item Validates chromosome is character type
 \item Verifies end >= start for all rows
 \item Validates strand values are "+" or "-"
 \item Removes "chr" prefix from chromosome names
+\item Converts chromosome names to uppercase
 }
 }
 \examples{
 \dontrun{
+  # Standard 6-column BED
   bed <- read.table("peaks.bed", header = FALSE)
   bed <- checkBed(bed)
+
+  # 3-column BED (will add defaults for tag, score, strand)
+  bed3 <- data.frame(chr = "chr1", start = 100, end = 200)
+  bed3 <- checkBed(bed3)
 }
 }

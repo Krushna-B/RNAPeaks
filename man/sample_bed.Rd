@@ -32,7 +32,7 @@ head(sample_bed)
 
 # Use with PlotGene
 \dontrun{
-  gtf <- LoadGTF("human")
+  gtf <- LoadGTF("Human")
   PlotGene(bed = sample_bed,geneID ="GAPDH", gtf=gtf)
 }
 }

@@ -1,16 +1,29 @@
 Package: RNAPeaks
+Type: Package
 Title: Visualize RNA-Binding Protein Peaks on Gene Structures
-Version: 0.1.0
-Authors@R:
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: Creates quality visualizations of RNA-binding protein
-    (RBP) peaks overlaid on gene structures. Supports single-gene plots,
-    multi-gene genomic region plots, and integrates with GTF annotations
-    from Ensembl via AnnotationHub.
+Version: 1.1.0
+Authors@R: c(
+    person("Krushna", "Bhanushali",
+           email = "Krushna.Bhanushali@unc.edu",
+           role = c("aut", "cre")))
+Description: RNAPeaks creates quality visualizations of RNA-binding
+    protein (RBP) peaks overlaid on gene structures. The package provides
+    functions for single-gene plots, multi-gene genomic region plots,
+    splicing maps that show RBP binding patterns around splice junctions, and sequence motif analysis.
+    It integrates with GTF annotations from Ensembl via AnnotationHub and
+    supports sequence motif analysis across splicing events.
 License: MIT + file LICENSE
+URL: https://github.com/Krushna-B/RNAPeaks
+BugReports: https://github.com/Krushna-B/RNAPeaks/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
+biocViews:
+    Visualization,
+    GeneExpression,
+    RNASeq,
+    AlternativeSplicing,
+    GenomeAnnotation
 Imports:
     ggplot2 (>= 3.4.0),
     dplyr,
@@ -30,14 +43,19 @@ Imports:
     future.apply,
     grid,
     magrittr,
-    tictoc
+    parallel,
+    stats,
+    utils
 Suggests:
     testthat (>= 3.0.0),
-    zoo,
-    microbenchmark,
+    knitr,
+    rmarkdown,
+    BiocStyle,
     ensembldb,
     BSgenome.Hsapiens.UCSC.hg38
 Config/testthat/edition: 3
-Depends: 
-    R (>= 3.5)
+Depends:
+    R (>= 4.3)
 LazyData: true
+LazyDataCompression: xz
+VignetteBuilder: knitr

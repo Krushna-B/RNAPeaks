@@ -2,133 +2,74 @@
 
 **Visualize RNA-Binding Protein Peaks on Gene Structures**
 
-[![Beta](https://img.shields.io/badge/status-beta-yellow.svg)](https://github.com/Krushna-B/RNAPeaks)
-[![R Version](https://img.shields.io/badge/R-%3E%3D4.0-blue.svg)](https://www.r-project.org/)
+[![R-CMD-check](https://github.com/Krushna-B/RNAPeaks/workflows/R-CMD-check/badge.svg)](https://github.com/Krushna-B/RNAPeaks/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-RNAPeaks is an R package for creating quality visualizations of RNA-binding protein (RBP) peaks overlaid on gene structure diagrams. It takes BED files containing protein binding sites and overlays them on gene annotations from Ensembl GTF files, enabling researchers to visualize where RBPs bind relative to exons, introns, and UTRs.
-
----
+RNAPeaks is an R/Bioconductor package for creating publication-quality visualizations of RNA-binding protein (RBP) peaks overlaid on gene structure diagrams. It takes BED files containing protein binding sites and overlays them on gene annotations from Ensembl GTF files, enabling researchers to visualize where RBPs bind relative to exons, introns, and UTRs.
 
 ## Features
 
 - **Single-gene visualization**: Plot RBP peaks on individual genes with `PlotGene()`
 - **Region-based visualization**: View multiple genes within a genomic window with `PlotRegion()`
-- **Automatic GTF integration**: Fetches Ensembl annotations via AnnotationHub (Human)
+- **Splicing maps**: Analyze RBP binding frequency around splice junctions with `createSplicingMap()`
+- **Sequence motif analysis**: Identify motif enrichment patterns around splice sites with `createSequenceMap()`
+- **Automatic GTF integration**: Fetches Ensembl annotations via AnnotationHub (Human/Mouse)
 - **Customizable styling**: Extensive options for colors, sizes, labels, and layout
-- **Region highlighting**: Highlight specific genomic regions of interest
-
----
 
 ## Installation
 
-### Prerequisites
-
-RNAPeaks requires R 4.0 or higher and several Bioconductor packages.
+### From Bioconductor (when available)
 
 ```r
-# Install Bioconductor if not already installed
 if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
-# Install Bioconductor dependencies
-BiocManager::install(c(
-    "GenomicRanges",
-    "IRanges",
-    "S4Vectors",
-    "BiocGenerics",
-    "GenomeInfoDb",
-    "AnnotationHub"
-))
-
-# Install CRAN dependencies
-install.packages(c("ggplot2", "dplyr", "scales", "magrittr"))
+BiocManager::install("RNAPeaks")
 ```
 
-### Install RNAPeaks
+### Development Version from GitHub
 
 ```r
-# Install from GitHub (recommended for beta)
-# install.packages("devtools")
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install(c(
+    "GenomicRanges", "IRanges", "S4Vectors", "BiocGenerics",
+    "GenomeInfoDb", "AnnotationHub", "Biostrings", "BSgenome"
+))
+
+# Install from GitHub
 devtools::install_github("Krushna-B/RNAPeaks")
 ```
 
-Or install from a local clone:
-
-```r
-devtools::install("/path/to/RNAPeaks")
-```
-
----
-
 ## Quick Start
 
-### 1. Load the Package
+### Load the Package
 
 ```r
 library(RNAPeaks)
 ```
 
-### 2. BED Data
-
-#### Using Included Sample Data (Recommended for Testing)
-
-RNAPeaks includes `sample_bed`, a dataset of K562 cell line RBP peaks ready to use:
+### Gene-Level Visualization
 
 ```r
-# sample_bed is available immediately after loading the package
-head(sample_bed)
-```
-
-#### Using Your Own BED File
-
-```r
-# Load your BED file
-bed <- read.table("path/to/your/peaks.bed", header = FALSE, sep = "\t")
-
-# Validate the BED format (success prints "Bed file is good.")
-bed <- checkBed(bed)
-```
-
-### 3. Load GTF Annotations (One-Time Setup)
-
-Loading GTF annotations from AnnotationHub can take several minutes on first run. We recommend saving the result for future sessions:
-
-```r
-# Load GTF (do this once per species)
+# Load GTF annotations (do once per session)
 gtf <- LoadGTF(species = "Human")
+saveRDS(gtf, "human_gtf.rds")  # Cache for future sessions
 
-# Save for future sessions
-saveRDS(gtf, "human_gtf.rds")
-
-# In future R sessions, load directly:
-# gtf <- readRDS("human_gtf.rds")
-```
-
-### 4. Generate Plots
-
-#### Plot peaks on a single gene:
-
-```r
-# Using included sample data
+# Plot RBP peaks on a gene using included sample data
 result <- PlotGene(
     bed = sample_bed,
     geneID = "GAPDH",
     gtf = gtf
 )
-
-# Access the plot
 result$plot
-
-# Access the filtered BED data
-result$csv
 ```
 
-#### Plot peaks across a genomic region:
+### Region-Level Visualization
 
 ```r
-# Using included sample data
-result <- PlotRegion(
+PlotRegion(
     bed = sample_bed,
     gtf = gtf,
     Chr = "12",
@@ -138,7 +79,37 @@ result <- PlotRegion(
 )
 ```
 
----
+### Splicing Map Analysis
+
+Analyze where RBPs bind relative to exon/intron boundaries in splicing events:
+
+```r
+# Using included sample data
+createSplicingMap(
+    bed_file = sample_bed,
+    SEMATS = sample_se.mats
+)
+```
+
+### Sequence Motif Analysis
+
+Identify sequence motif enrichment patterns around splice sites:
+```r
+library(BSgenome.Hsapiens.UCSC.hg38)
+
+# Search for YCAY motif (Y = C or T)
+createSequenceMap(
+    SEMATS = sample_se.mats,
+    sequence = "YCAY"
+)
+
+# Return data for custom analysis
+freq_data <- createSequenceMap(
+    SEMATS = sample_se.mats,
+    sequence = "CCCC",
+    return_data = TRUE
+)
+```
 
 ## Input Data Format
 
@@ -155,151 +126,43 @@ Your BED file should contain peak/binding site data with the following columns:
 | 5 | Score (optional) |
 | 6 | Strand ("+" or "-") |
 
-The `checkBed()` function automatically validates and standardizes your BED file format.
+The `checkBed()` function validates and standardizes your BED file format.
 
-### GTF Annotations
+### SE.MATS Format (for Splicing Analysis)
 
-RNAPeaks fetches GTF annotations from Ensembl via AnnotationHub. Currently supported:
+For `createSplicingMap()` and `createSequenceMap()`, provide SE.MATS output from rMATS with columns including: chr, strand, exonStart_0base, exonEnd, upstreamES, upstreamEE, downstreamES, downstreamEE, PValue, FDR, IncLevelDifference.
 
-- **Human**: Ensembl GRCh38 annotations
-- **Mouse**: Ensembl GRCm39 annotations
+## Included Sample Data
 
----
-
-## Customization Options
-
-RNAPeaks provides extensive styling options. Pass these as additional arguments:
-
-### Gene Structure Appearance
+- `sample_bed`: K562 cell line RBP binding peaks
+- `sample_se.mats`: Skipped exon alternative splicing events
 
 ```r
-PlotGene(
-    ...,
-    exon_fill = "navy",           # Exon/CDS color
-    utr_fill = "lightgray",       # UTR color
-    intron_color = "gray60",      # Intron line color
-    intron_linewidth = 0.9        # Intron line width
-)
+# View sample data
+head(sample_bed)
+head(sample_se.mats)
 ```
 
-### Peak Styling
+## Documentation
+
+See the package vignette for detailed usage:
 
 ```r
-PlotGene(
-    ...,
-    peak_col = "purple",          # Peak fill color
-    peak_alpha = 0.95,            # Peak opacity
-    peak_border_color = "black"   # Peak border color
-)
+browseVignettes("RNAPeaks")
 ```
 
-### Labels and Text
+Full function documentation:
 
 ```r
-PlotGene(
-    ...,
-    title_size = 25,
-    subtitle_size = 12,
-    label_size = 5,               # Protein labels
-    axis_text_size = 9
-)
+?PlotGene
+?PlotRegion
+?createSplicingMap
+?createSequenceMap
 ```
 
-### Region Highlighting
-
-```r
-PlotGene(
-    ...,
-    highlighted_region_start = 1000000,
-    highlighted_region_stop = 1005000,
-    highlighted_region_color = "pink",
-    highlighted_region_opacity = 0.30
-)
-```
-
-See `?PlotGene` or `?PlotRegion` for complete documentation of all styling parameters.
-
----
-
-## Example Workflow
-
-### Using Included Sample Data
-
-```r
-library(RNAPeaks)
-
-# Step 1: Load GTF (or use cached version)
-gtf <- LoadGTF(species = "Human")
-saveRDS(gtf, "human_gtf.rds")  # Cache for next time
-
-# Step 2: Generate single-gene plot with sample_bed
-result <- PlotGene(
-    bed = sample_bed,
-    geneID = "TP53",
-    gtf = gtf,
-    peak_col = "steelblue",
-    title_size = 20,
-    RNA_Peaks_File_Path = "TP53_peaks.pdf"
-)
-
-# Step 3: Generate region plot for broader context
-result <- PlotRegion(
-    bed = sample_bed,
-    gtf = gtf,
-    Chr = "17",
-    Start = 7560000,
-    End = 7600000,
-    Strand = "-",
-    RNA_Peaks_File_Path = "chr17_region.pdf"
-)
-```
-
-### Using Your Own BED File
-
-```r
-library(RNAPeaks)
-
-# Step 1: Load and validate your BED data
-bed <- read.table("peaks.bed", header = FALSE, sep = "\t")
-bed <- checkBed(bed)
-
-# Step 2: Load GTF (or use cached version)
-gtf <- LoadGTF(species = "Human")
-
-# Step 3: Generate plots
-result <- PlotGene(
-    bed = bed,
-    geneID = "TP53",
-    gtf = gtf
-)
-```
-
----
-
-## Troubleshooting
-
-### Common Issues
-
-**"No rows in GTF found"**
-- Ensure your gene ID matches Ensembl gene symbols (e.g., "TP53", "BRCA1")
-- Check that the chromosome naming matches (with or without "chr" prefix)
-- Verify the strand orientation
-
-**GTF loading is slow**
-- This is expected on first run. Save with `saveRDS()` and reload with `readRDS()` for subsequent sessions.
-
-**Empty plot or no peaks shown**
-- Verify your BED file coordinates overlap with the gene region
-- Check that the strand in your BED file matches the gene strand
-- Use `checkBed()` to validate your BED format
-
----
 ## Contributing
 
-RNAPeaks is currently in beta testing. We welcome feedback and bug reports:
-
-- Report issues on [GitHub Issues](https://github.com/Krushna-B/RNAPeaks/issues)
----
+Report issues and contribute at [GitHub](https://github.com/Krushna-B/RNAPeaks/issues).
 
 ## License
 
