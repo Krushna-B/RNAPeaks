@@ -13,7 +13,9 @@ RNAPeaks is an R/Bioconductor package for creating publication-quality visualiza
 - **Region-based visualization**: View multiple genes within a genomic window with `PlotRegion()`
 - **Splicing maps**: Analyze RBP binding frequency around splice junctions with `createSplicingMap()`
 - **Sequence motif analysis**: Identify motif enrichment patterns around splice sites with `createSequenceMap()`
+- **Statistical significance testing**: Bootstrap-based z-score testing to identify significant enrichment regions
 - **Automatic GTF integration**: Fetches Ensembl annotations via AnnotationHub (Human/Mouse)
+- **Parallel processing**: Multi-core support for faster analysis of large datasets
 - **Customizable styling**: Extensive options for colors, sizes, labels, and layout
 
 ## Installation
@@ -69,7 +71,7 @@ result$plot
 ### Region-Level Visualization
 
 ```r
-PlotRegion(
+result <- PlotRegion(
     bed = sample_bed,
     gtf = gtf,
     Chr = "12",
@@ -77,6 +79,7 @@ PlotRegion(
     End = 56050000,
     Strand = "+"
 )
+result$plot
 ```
 
 ### Splicing Map Analysis
@@ -89,11 +92,22 @@ createSplicingMap(
     bed_file = sample_bed,
     SEMATS = sample_se.mats
 )
+
+# With parallel processing and custom parameters
+createSplicingMap(
+    bed_file = sample_bed,
+    SEMATS = sample_se.mats,
+    cores = 4,
+    control_iterations = 20,      # Bootstrap iterations for control sampling
+    control_multiplier = 2.0,     # Sample size = (retained + excluded) * multiplier
+    show_significance = TRUE      # Show significant enrichment regions
+)
 ```
 
 ### Sequence Motif Analysis
 
 Identify sequence motif enrichment patterns around splice sites:
+
 ```r
 library(BSgenome.Hsapiens.UCSC.hg38)
 
@@ -101,6 +115,16 @@ library(BSgenome.Hsapiens.UCSC.hg38)
 createSequenceMap(
     SEMATS = sample_se.mats,
     sequence = "YCAY"
+)
+
+# With significance testing
+createSequenceMap(
+    SEMATS = sample_se.mats,
+    sequence = "YGCY",
+    control_iterations = 20,
+    z_threshold = 1.96,           # p < 0.05 two-tailed
+    min_consecutive = 10,         # Minimum positions for significant region
+    show_significance = TRUE
 )
 
 # Return data for custom analysis
@@ -111,31 +135,86 @@ freq_data <- createSequenceMap(
 )
 ```
 
+### Validating Bootstrap Normality
+
+The bootstrap sampling assumes normality. You can verify this:
+
+```r
+# Get diagnostics including raw bootstrap samples
+diag <- createSequenceMap(
+    SEMATS = sample_se.mats,
+    sequence = "YGCY",
+    return_diagnostics = TRUE
+)
+
+# Test normality at all positions (should be > 90%)
+mean(apply(diag$bootstrap_matrix, 1, function(x) shapiro.test(x)$p.value) > 0.05)
+```
+
+## API Reference
+
+### Main Functions
+
+| Function | Description |
+|----------|-------------|
+| `PlotGene()` | Plot RBP peaks on a single gene structure |
+| `PlotRegion()` | Plot RBP peaks across a genomic region with multiple genes |
+| `createSplicingMap()` | Analyze protein binding frequency around splice junctions |
+| `createSequenceMap()` | Analyze sequence motif frequency around splice junctions |
+
+### Helper Functions
+
+| Function | Description |
+|----------|-------------|
+| `LoadGTF()` | Load GTF annotation from AnnotationHub (Human/Mouse) |
+| `checkBed()` | Validate and normalize BED file format |
+
+### Key Parameters for Splicing/Sequence Maps
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `control_multiplier` | 2.0 | Sample size = (retained + excluded) * multiplier |
+| `control_iterations` | 20 | Number of bootstrap iterations for control group |
+| `z_threshold` | 1.96 | Z-score threshold for significance (1.96 = p < 0.05) |
+| `min_consecutive` | 10 | Minimum consecutive positions for significant region |
+| `show_significance` | TRUE | Display significance bars on plot |
+| `cores` | 1 | Number of cores for parallel processing |
+| `return_data` | FALSE | Return data frame instead of plot |
+| `return_diagnostics` | FALSE | Return bootstrap samples for normality testing |
+
 ## Input Data Format
 
 ### BED File Requirements
 
-Your BED file should contain peak/binding site data with the following columns:
+Your BED file should contain peak/binding site data. Columns are mapped by position:
 
-| Column | Description |
-|--------|-------------|
-| 1 | Chromosome (e.g., "chr1" or "1") |
-| 2 | Start position (0-based) |
-| 3 | End position |
-| 4 | Name/Target (protein identifier) |
-| 5 | Score (optional) |
-| 6 | Strand ("+" or "-") |
+| Column | Name | Description | Required |
+|--------|------|-------------|----------|
+| 1 | chr | Chromosome (e.g., "chr1" or "1") | Yes |
+| 2 | start | Start position (0-based) | Yes |
+| 3 | end | End position | Yes |
+| 4 | tag | Name/Target (protein identifier) | No (default: "peak") |
+| 5 | score | Score | No (default: 0) |
+| 6 | strand | Strand ("+" or "-") | No (default: "+") |
 
-The `checkBed()` function validates and standardizes your BED file format.
+The `checkBed()` function validates and standardizes your BED file, filling in defaults for missing columns.
 
 ### SE.MATS Format (for Splicing Analysis)
 
-For `createSplicingMap()` and `createSequenceMap()`, provide SE.MATS output from rMATS with columns including: chr, strand, exonStart_0base, exonEnd, upstreamES, upstreamEE, downstreamES, downstreamEE, PValue, FDR, IncLevelDifference.
+For `createSplicingMap()` and `createSequenceMap()`, provide SE.MATS output from rMATS with columns including:
+
+- `chr`, `strand` - Genomic location
+- `exonStart_0base`, `exonEnd` - Skipped exon coordinates
+- `upstreamES`, `upstreamEE` - Upstream exon coordinates
+- `downstreamES`, `downstreamEE` - Downstream exon coordinates
+- `PValue`, `FDR`, `IncLevelDifference` - Statistical results
+- `IJC_SAMPLE_1`, `SJC_SAMPLE_1`, `IJC_SAMPLE_2`, `SJC_SAMPLE_2` - Junction counts
+- `IncLevel1`, `IncLevel2` - Inclusion levels
 
 ## Included Sample Data
 
 - `sample_bed`: K562 cell line RBP binding peaks
-- `sample_se.mats`: Skipped exon alternative splicing events
+- `sample_se.mats`: Skipped exon alternative splicing events (87,736 events)
 
 ```r
 # View sample data
@@ -145,12 +224,6 @@ head(sample_se.mats)
 
 ## Documentation
 
-See the package vignette for detailed usage:
-
-```r
-browseVignettes("RNAPeaks")
-```
-
 Full function documentation:
 
 ```r
@@ -158,6 +231,8 @@ Full function documentation:
 ?PlotRegion
 ?createSplicingMap
 ?createSequenceMap
+?checkBed
+?LoadGTF
 ```
 
 ## Contributing
