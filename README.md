@@ -32,6 +32,15 @@ BiocManager::install(c(
 ))
 
 # Install from GitHub
+# Install CRAN dependencies
+install.packages(c("ggplot2", "dplyr", "scales", "magrittr"))
+```
+
+### Install RNAPeaks
+
+```r
+# Install from GitHub
+# install.packages("devtools")
 devtools::install_github("Krushna-B/RNAPeaks")
 ```
 
@@ -74,6 +83,24 @@ result$plot
 ```
 
 ### Splicing Map Analysis
+---
+
+## Input Data Format
+
+### BED File Requirements
+
+Your BED file should contain peak/binding site data with the following columns:
+
+| Column | Description |
+|--------|-------------|
+| 1 | Chromosome (e.g., "chr1" or "1") |
+| 2 | Start position (0-based) |
+| 3 | End position |
+| 4 | Name/Target (protein identifier) |
+| 5 | Score (optional) |
+| 6 | Strand ("+" or "-") |
+
+The `checkBed()` function automatically validates your BED file format.
 
 Analyze where RBPs bind relative to exon/intron boundaries in splicing events:
 
