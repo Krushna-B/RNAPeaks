@@ -31,7 +31,6 @@ BiocManager::install(c(
     "GenomeInfoDb", "AnnotationHub", "Biostrings", "BSgenome"
 ))
 
-# Install from GitHub
 # Install CRAN dependencies
 install.packages(c("ggplot2", "dplyr", "scales", "magrittr"))
 ```
