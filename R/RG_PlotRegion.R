@@ -222,7 +222,7 @@ PlotRegion <- function(Chr = NULL,
   }
 
   Plot <- Get_Multi_Plot_by_Region(
-    gtf = gtf,
+    gtf = gtf, #add gtf
     bed = bed,
     Chr = Chr,
     Start = Start,
