@@ -19,6 +19,8 @@ Get_Multi_Plot_by_Region <- function(Chr,
                                      geneID = NULL,
                                      TxID = NULL,
                                      Vertical_Offset_Step = 0.7,
+                                     total_arrows = 12,
+                                     max_per_intron = 5,
                                      ...) {
 
   # Fallback gene frame used by Prepare_Bed if none provided
@@ -122,7 +124,9 @@ Get_Multi_Plot_by_Region <- function(Chr,
       return(NULL)
     }
 
-    RG_make_intron_arrows(introns$Introns_Positions, gs$strand[1], Start = Start, End = End)
+    RG_make_intron_arrows(introns$Introns_Positions, gs$strand[1],
+                          total_arrows = total_arrows, max_per_intron = max_per_intron,
+                          Start = Start, End = End)
   })
 
   Arrows_all <- dplyr::bind_rows(arrows_list)

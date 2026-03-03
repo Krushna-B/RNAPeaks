@@ -51,6 +51,9 @@
 #'   and significance results. Useful for validating bootstrap assumptions.
 #'   Default is FALSE.
 #' @param verbose Logical. If TRUE, prints progress messages. Default is TRUE.
+#' @param progress_callback Optional function to report progress. Called with two
+#'   arguments: current iteration number and total iterations. Used by Shiny app
+#'   for progress display. Default is NULL (no callback).
 #'
 #' @return A ggplot object showing sequence frequency across the 4 regions
 #'   for Retained (blue), Excluded (red), and Control (black) groups.
@@ -111,10 +114,12 @@ createSequenceMap <- function(SEMATS,
                                cores = 1,
                                z_threshold = 1.96,
                                min_consecutive = 10,
+                               one_sided = TRUE,
                                show_significance = TRUE,
                                return_data = FALSE,
                                return_diagnostics = FALSE,
-                               verbose = TRUE) {
+                               verbose = TRUE,
+                               progress_callback = NULL) {
 
   # Load default genome if not provided
   if (is.null(genome)) {
@@ -140,6 +145,11 @@ createSequenceMap <- function(SEMATS,
   }
 
   if (verbose) message("Processing groups: ", paste(groups, collapse = ", "))
+  .report_progress <- function(current, total, detail = NULL) {
+    if (is.function(progress_callback)) {
+      try(progress_callback(current, total, detail), silent = TRUE)
+    }
+  }
 
   # Cap cores at max available - 1
   max_cores <- parallel::detectCores() - 1
@@ -195,8 +205,8 @@ createSequenceMap <- function(SEMATS,
     freq_data <- calculate_sequence_frequency(bins_gr,
                                                sequence,
                                                bsgenome_obj = genome,
-                                               bin_width,
-                                              cores = cores)
+                                               bin_width
+                                              )
 
     total_events <- length(unique(bins_gr$event_id))
     freq_data$frequency <- freq_data$match_count / total_events
@@ -218,18 +228,21 @@ createSequenceMap <- function(SEMATS,
 
   if ("Retained" %in% groups) {
     if (verbose) message("Processing Retained events...")
+    .report_progress(1, 100, "Processing Retained events...")
     results_list$Retained <- process_group(filtered_events$Retained, "Retained")
     results_list$Retained$moving_avg_sd <- 0
   }
 
   if ("Excluded" %in% groups) {
     if (verbose) message("Processing Excluded events...")
+    .report_progress(5, 100, "Processing Excluded events...")
     results_list$Excluded <- process_group(filtered_events$Excluded, "Excluded")
     results_list$Excluded$moving_avg_sd <- 0
   }
 
   if ("Control" %in% groups) {
     if (verbose) message("Processing Control events with sampling...")
+    .report_progress(10, 100, "Preparing control sampling...")
 
     control_data <- filtered_events$Control
     n_controls <- nrow(control_data)
@@ -263,24 +276,57 @@ createSequenceMap <- function(SEMATS,
       results_list$Control <- process_group(control_data, "Control")
       results_list$Control$moving_avg_sd <- 0
     } else {
-      # sampling
-      iteration_results <- vector("list", control_iterations)
+      # Pre-generate all random samples
+      all_sampled_indices <- lapply(seq_len(control_iterations), function(i) {
+        sample(n_controls, sample_size, replace = FALSE)
+      })
 
-      pb <- progress::progress_bar$new(
-        format = "  Sampling iterations [:bar] :current/:total (:percent) eta::eta",
-        total = control_iterations, clear = FALSE, width = 80
-      )
+      # sampling - parallel or sequential based on cores
+      if (cores > 1 && .Platform$OS.type == "unix") {
+        if (verbose) message(sprintf("  Running %d iterations in parallel (%d cores)...",
+                                     control_iterations, cores))
 
-      for (iter in seq_len(control_iterations)) {
-        pb$tick()
+        # Use mclapply (fork-based, no serialization overhead)
+        iteration_results <- parallel::mclapply(
+          seq_len(control_iterations),
+          function(iter) {
+            sampled_controls <- control_data[all_sampled_indices[[iter]], ]
+            iter_result <- process_group(sampled_controls, "Control")
+            iter_result$moving_avg
+          },
+          mc.cores = cores,
+          mc.set.seed = TRUE
+        )
+      } else {
+        # Sequential with progress bar (Windows or cores = 1)
+        if (cores > 1 && .Platform$OS.type != "unix") {
+          if (verbose) message("  Note: Parallel not supported on Windows, running sequentially")
+        }
 
-        # Random sample of controls
-        sampled_indices <- sample(n_controls, sample_size, replace = FALSE)
-        sampled_controls <- control_data[sampled_indices, ]
+        iteration_results <- vector("list", control_iterations)
 
-        # Process this sample
-        iter_result <- process_group(sampled_controls, "Control")
-        iteration_results[[iter]] <- iter_result$moving_avg
+        pb <- progress::progress_bar$new(
+          format = "  Sampling iterations [:bar] :current/:total (:percent) eta::eta",
+          total = control_iterations, clear = FALSE, width = 80
+        )
+        loop_start <- 10
+        loop_end <- 90
+
+
+        for (iter in seq_len(control_iterations)) {
+          pb$tick()
+          # Shiny/UI progress callback
+          progress_pct <- loop_start + (iter / control_iterations) * (loop_end - loop_start)
+          .report_progress(
+            progress_pct,
+            100,
+            sprintf("Control sampling iteration %d/%d", iter, control_iterations)
+          )
+
+          sampled_controls <- control_data[all_sampled_indices[[iter]], ]
+          iter_result <- process_group(sampled_controls, "Control")
+          iteration_results[[iter]] <- iter_result$moving_avg
+        }
       }
 
       # Combine results and calculate mean/sd
@@ -327,6 +373,7 @@ createSequenceMap <- function(SEMATS,
     )
     return(diagnostics)
   }
+  .report_progress(92, 100, "Combining results...")
 
   # Calculate significance if Control group is present and has SD
   sig_regions <- NULL
@@ -335,11 +382,13 @@ createSequenceMap <- function(SEMATS,
                           na.rm = TRUE)
     if (control_has_sd) {
       if (verbose) message("Calculating significance...")
+      .report_progress(96, 100, "Calculating significance...")
       sig_result <- calculate_significance(
         combined_data,
         z_threshold = z_threshold,
         min_consecutive = min_consecutive,
-        compare_to = "Control"
+        compare_to = "Control",
+        one_sided = one_sided
       )
       sig_regions <- sig_result$significant_regions
 
@@ -356,9 +405,10 @@ createSequenceMap <- function(SEMATS,
   }
 
   # Plot using the shared plotting function
+  .report_progress(100, 100, "Complete")
   plot_splicing_sequence_map(combined_data,
                              WidthIntoExon = WidthIntoExon,
                              WidthIntoIntron = WidthIntoIntron,
-                             title = paste0("Sequence Frequency: ", sequence),
+                             title = paste0(""),
                              sig_regions = sig_regions)
 }

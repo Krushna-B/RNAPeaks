@@ -32,8 +32,8 @@ head(sample_bed)
 
 # Use with PlotGene
 \dontrun{
-  gtf <- LoadGTF("Human")
-  PlotGene(bed = sample_bed,geneID ="GAPDH", gtf=gtf)
+  data(gtf_human)
+  PlotGene(bed = sample_bed, geneID = "GAPDH", gtf = gtf_human)
 }
 }
 \keyword{datasets}

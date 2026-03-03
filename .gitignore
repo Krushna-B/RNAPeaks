@@ -7,3 +7,8 @@
 CLAUDE.md
 benchmarks/*
 tests/*
+
+#Deployment credentials
+inst/shiny-deploy/deploy.R
+**/deploy.R
+rsconnect/

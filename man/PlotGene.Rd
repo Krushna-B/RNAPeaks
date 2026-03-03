@@ -21,10 +21,8 @@ PlotGene(
   exon_width = 0.5,
   utr_width = 0.3,
   exon_col = "black",
-  title_size = NULL,
-  subtitle_size = NULL,
-  label_size = NULL,
-  xlab_size = NULL,
+  total_arrows = 6,
+  max_per_intron = 2,
   RNA_Peaks_File_Path = "~/Desktop/RNAPeaks.pdf",
   Bed_File_Path = "~/Desktop/BEDFILE_PEAKS.csv",
   ...
@@ -67,6 +65,13 @@ of peaks), "Target" (alphabetically), or "Region" (by genomic clustering).}
 
 \item{exon_col}{Color for exon/CDS regions.}
 
+\item{RNA_Peaks_File_Path}{File path to save the output PDF plot.}
+
+\item{Bed_File_Path}{File path to save the filtered BED data as CSV.}
+
+\item{...}{Additional styling arguments passed to internal plotting functions.
+See Styling Parameters section below.}
+
 \item{title_size}{Font size for plot title.}
 
 \item{subtitle_size}{Font size for plot subtitle.}
@@ -74,13 +79,6 @@ of peaks), "Target" (alphabetically), or "Region" (by genomic clustering).}
 \item{label_size}{Font size for protein labels.}
 
 \item{xlab_size}{Font size for x-axis labels.}
-
-\item{RNA_Peaks_File_Path}{File path to save the output PDF plot.}
-
-\item{Bed_File_Path}{File path to save the filtered BED data as CSV.}
-
-\item{...}{Additional styling arguments passed to internal plotting functions.
-See Styling Parameters section below.}
 }
 \value{
 A named list containing:

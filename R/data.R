@@ -25,10 +25,42 @@
 #'
 #' # Use with PlotGene
 #' \dontrun{
-#'   gtf <- LoadGTF("Human")
-#'   PlotGene(bed = sample_bed,geneID ="GAPDH", gtf=gtf)
+#'   data(gtf_human)
+#'   PlotGene(bed = sample_bed, geneID = "GAPDH", gtf = gtf_human)
 #' }
 "sample_bed"
+
+#' Human GTF Gene Annotation
+#'
+#' Pre-loaded Ensembl GTF annotation for human genes (GRCh38).
+#' This bundled dataset eliminates the need to download from AnnotationHub,
+#' enabling offline use and faster loading.
+#'
+#' @format A data frame containing GTF annotation with columns including:
+#' \describe{
+#'   \item{seqnames}{Chromosome}
+#'   \item{start}{Feature start position}
+#'   \item{end}{Feature end position}
+#'   \item{strand}{Strand (+ or -)}
+#'   \item{type}{Feature type (gene, transcript, exon, CDS, UTR, etc.)}
+#'   \item{gene_id}{Ensembl gene ID}
+#'   \item{gene_name}{Gene symbol}
+#'   \item{transcript_id}{Ensembl transcript ID}
+#'   \item{gene_biotype}{Gene biotype (protein_coding, lncRNA, etc.)}
+#' }
+#'
+#' @source Ensembl via AnnotationHub (AH110867)
+#'
+#' @examples
+#' # Load the bundled GTF
+#' data(gtf_human)
+#'
+#' # Use with PlotGene (no download required)
+#' \dontrun{
+#'   data(sample_bed)
+#'   PlotGene(bed = sample_bed, geneID = "GAPDH", gtf = gtf_human)
+#' }
+"gtf_human"
 
 #' Sample SE.MATS Output
 #'

@@ -21,10 +21,12 @@ createSplicingMap(
   cores = 1,
   z_threshold = 1.96,
   min_consecutive = 10,
+  one_sided = TRUE,
   show_significance = TRUE,
   return_data = FALSE,
   return_diagnostics = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  progress_callback = NULL
 )
 }
 \arguments{
@@ -93,6 +95,10 @@ and significance results. Useful for validating bootstrap assumptions.
 Default is FALSE.}
 
 \item{verbose}{Logical. If TRUE, prints progress messages. Default is TRUE.}
+
+\item{progress_callback}{Optional function to report progress. Called with two
+arguments: current iteration number and total iterations. Used by Shiny app
+for progress display. Default is NULL (no callback).}
 }
 \value{
 A ggplot object showing protein binding frequency across the 4 regions

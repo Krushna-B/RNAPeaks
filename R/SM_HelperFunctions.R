@@ -348,7 +348,7 @@ calculate_moving_average <- function(freq_data, window_size = NULL, bins = NULL)
 #'
 #' @return Data frame with global_position and match_count columns
 #' @noRd
-calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_width, cores = 1) {
+calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_width) {
 
   seq_length <- nchar(sequence)
 
@@ -411,93 +411,33 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
 
   hits_all <- Biostrings::vmatchPattern(pattern, all_seqs, fixed = FALSE)
 
-  starts_all <- BiocGenerics::start(hits_all)
-  # Convert S4 IntegerList to regular R list for parallel serialization
-  starts_all <- as.list(starts_all)
+  # Convert to data frame for vectorized operations
+  hits_df <- suppressMessages(as.data.frame(hits_all))
 
   total_positions <- 4 * bin_width
 
-  # Process and collect global positions of matches
-  if (cores > 1) {
-    # Parallel processing - each chunk returns global positions of matches
-    # Dynamic chunk size
-    chunk_size <- max(500, ceiling(n_valid / (cores * 2)))
-    idx_chunks <- split(seq_len(n_valid), ceiling(seq_len(n_valid) / chunk_size))
-    n_chunks <- length(idx_chunks)
+  if (nrow(hits_df) > 0) {
+    # Add metadata using group as index into vectors
+    hits_df$bin_idx <- valid_bin_indices[hits_df$group]
+    hits_df$strand <- valid_strands[hits_df$group]
+    hits_df$bin_length <- valid_bin_lengths[hits_df$group]
 
-    # Use progressr for parallel progress reporting
-    progressr::handlers(global = TRUE)
-    progressr::handlers("txtprogressbar")
+    # Filter: keep only starts within bin length
+    hits_df <- hits_df[hits_df$start <= hits_df$bin_length, ]
 
-    all_match_positions <- progressr::with_progress({
-      p <- progressr::progressor(steps = 100)
-
-      chunk_results <- future.apply::future_lapply(idx_chunks, function(chunk_indices) {
-        match_positions <- vector("list", length(chunk_indices))
-
-        for (pos in seq_along(chunk_indices)) {
-          idx <- chunk_indices[pos]
-          bin_length <- valid_bin_lengths[idx]
-          starts <- starts_all[[idx]]
-          starts <- starts[starts <= bin_length]
-
-          if (length(starts) > 0) {
-            bin_idx <- valid_bin_indices[idx]
-            strand <- valid_strands[idx]
-
-            # Calculate global positions (strand-aware)
-            if (strand == "+") {
-              global_pos <- (bin_idx - 1) * bin_width + starts
-            } else {
-              global_pos <- (4 - bin_idx) * bin_width + (bin_width - starts + 1)
-            }
-            match_positions[[pos]] <- global_pos
-          }
-        }
-
-        p()  # Signal chunk completed
-        unlist(match_positions)
-      }, future.seed = TRUE)
-
-      unlist(chunk_results)
-    })
-
-  } else {
-    # Sequential processing with progress bar
-    pb <- progress::progress_bar$new(
-      format = "  processing [:bar] :current/:total (:percent) eta::eta",
-      total = n_valid, clear = FALSE, width = 120
-    )
-
-    match_positions <- vector("list", n_valid)
-
-    for (i in seq_len(n_valid)) {
-      pb$tick()
-
-      bin_length <- valid_bin_lengths[i]
-      starts <- starts_all[[i]]
-      starts <- starts[starts <= bin_length]
-
-      if (length(starts) > 0) {
-        bin_idx <- valid_bin_indices[i]
-        strand <- valid_strands[i]
-
-        # Calculate global positions (strand-aware)
-        if (strand == "+") {
-          global_pos <- (bin_idx - 1) * bin_width + starts
-        } else {
-          global_pos <- (4 - bin_idx) * bin_width + (bin_width - starts + 1)
-        }
-        match_positions[[i]] <- global_pos
-      }
+    if (nrow(hits_df) > 0) {
+      # Calculate global positions (fully vectorized)
+      is_plus <- hits_df$strand == "+"
+      hits_df$global_pos <- ifelse(
+        is_plus,
+        (hits_df$bin_idx - 1L) * bin_width + hits_df$start,
+        (4L - hits_df$bin_idx) * bin_width + hits_df$start
+      )
+      # hits_df$global_pos <- (hits_df$bin_idx - 1L) * bin_width + hits_df$start
+      match_count <- tabulate(hits_df$global_pos, nbins = total_positions)
+    } else {
+      match_count <- integer(total_positions)
     }
-
-    all_match_positions <- unlist(match_positions)
-  }
-
-  # Use tabulate to count matches at each position
-  if (length(all_match_positions) > 0) {
-    match_count <- tabulate(all_match_positions, nbins = total_positions)
   } else {
     match_count <- integer(total_positions)
   }
@@ -521,6 +461,8 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
 #' @param min_consecutive Minimum consecutive significant positions to form a region
 #'   (default 10). Helps reduce false positives from noise.
 #' @param compare_to Which group to compare against. Default "Control".
+#' @param one_sided Logical. If TRUE, only test for enrichment (z > threshold).
+#'   If FALSE (default), test for both enrichment and depletion (|z| > threshold).
 #'
 #' @return A list with:
 #'   \item{z_scores}{Data frame with z-scores for each position and comparison}
@@ -530,7 +472,8 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
 calculate_significance <- function(freq_data,
                                     z_threshold = 1.96,
                                     min_consecutive = 10,
-                                    compare_to = "Control") {
+                                    compare_to = "Control",
+                                    one_sided = TRUE) {
 
   # Get Control data (must have SD from bootstrap)
   control_data <- freq_data %>%
@@ -564,6 +507,8 @@ calculate_significance <- function(freq_data,
     merged <- dplyr::left_join(grp_data, control_data, by = "global_position")
 
     # Calculate z-scores (handle zero SD)
+    # For one-sided test, only consider enrichment (z >= threshold)
+    # For two-sided test, consider both enrichment and depletion (|z| >= threshold)
     merged <- merged %>%
       dplyr::mutate(
         z_score = dplyr::if_else(
@@ -571,10 +516,14 @@ calculate_significance <- function(freq_data,
           (grp_freq - control_mean) / control_sd,
           0
         ),
-        significant = abs(z_score) >= z_threshold,
+        significant = if (one_sided) {
+          z_score >= z_threshold
+        } else {
+          abs(z_score) >= z_threshold
+        },
         direction = dplyr::case_when(
           z_score >= z_threshold ~ "enriched",
-          z_score <= -z_threshold ~ "depleted",
+          !one_sided & z_score <= -z_threshold ~ "depleted",
           TRUE ~ "ns"
         ),
         comparison = paste0(grp, "_vs_", compare_to)
@@ -601,12 +550,14 @@ calculate_significance <- function(freq_data,
           group = grp
         )
 
-        # Add mean z-score for each region
-        regions$mean_z <- sapply(seq_len(nrow(regions)), function(i) {
-          idx <- merged$global_position >= regions$start_pos[i] &
-                 merged$global_position <= regions$end_pos[i]
-          mean(merged$z_score[idx], na.rm = TRUE)
-        })
+        # Add mean z-score for each region (vectorized using cumsum approach)
+        z_cumsum <- c(0, cumsum(merged$z_score))
+        count_cumsum <- c(0, cumsum(!is.na(merged$z_score)))
+        start_idx <- starts[sig_runs]
+        end_idx <- ends[sig_runs]
+        region_sums <- z_cumsum[end_idx + 1] - z_cumsum[start_idx]
+        region_counts <- count_cumsum[end_idx + 1] - count_cumsum[start_idx]
+        regions$mean_z <- region_sums / pmax(region_counts, 1)
 
         regions$direction <- ifelse(regions$mean_z > 0, "enriched", "depleted")
 
