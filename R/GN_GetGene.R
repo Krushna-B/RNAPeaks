@@ -1,5 +1,3 @@
-
-
 #' Retrieves gene or transcript annotation from a GTF data frame or
 #' automatically loads annotations from AnnotationHub for Human or Mouse.
 #'

@@ -11,7 +11,7 @@ Description: RNAPeaks creates quality visualizations of RNA-binding
     functions for single-gene plots, multi-gene genomic region plots,
     splicing maps that show RBP binding patterns around splice junctions, and sequence motif analysis.
     It integrates with GTF annotations from Ensembl via AnnotationHub and
-    supports sequence motif analysis across splicing events.
+    supports sequence motif analysis across splicing events. It also provides a web UI hosted on localhost, to create plots. 
 License: MIT + file LICENSE
 URL: https://github.com/Krushna-B/RNAPeaks
 BugReports: https://github.com/Krushna-B/RNAPeaks/issues
@@ -52,7 +52,8 @@ Suggests:
     rmarkdown,
     BiocStyle,
     ensembldb,
-    BSgenome.Hsapiens.UCSC.hg38
+    BSgenome.Hsapiens.UCSC.hg38,
+    shiny (>= 1.7.0)
 Config/testthat/edition: 3
 Depends:
     R (>= 4.3)

@@ -167,10 +167,8 @@ PlotGene <- function(bed = NULL,
                      exon_width = 0.5,
                      utr_width = 0.3,
                      exon_col = "black",
-                     title_size = NULL,
-                     subtitle_size = NULL,
-                     label_size = NULL,
-                     xlab_size = NULL,
+                     total_arrows = 6,
+                     max_per_intron = 2,
                      RNA_Peaks_File_Path = "~/Desktop/RNAPeaks.pdf",
                      Bed_File_Path = "~/Desktop/BEDFILE_PEAKS.csv",
                      ...) {
@@ -214,12 +212,18 @@ PlotGene <- function(bed = NULL,
     exon_width = exon_width,
     utr_width = utr_width,
     exon_col = exon_col,
+    total_arrows = total_arrows,
+    max_per_intron = max_per_intron,
     ...
   )
 
-  # Save to Desktop
-  ggplot2::ggsave(RNA_Peaks_File_Path, Plot, height = 12, width = 16)
-  utils::write.csv(bed, Bed_File_Path, row.names = FALSE)
+  # Save files if paths are provided
+  if (!is.null(RNA_Peaks_File_Path)) {
+    ggplot2::ggsave(RNA_Peaks_File_Path, Plot, height = 12, width = 16)
+  }
+  if (!is.null(Bed_File_Path)) {
+    utils::write.csv(bed, Bed_File_Path, row.names = FALSE)
+  }
 
   Plot_and_Peaks <- list(plot = Plot, csv = bed)
   return(Plot_and_Peaks)

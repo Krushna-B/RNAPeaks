@@ -25,6 +25,8 @@ PlotRegion(
   exon_width = 0.5,
   utr_width = 0.3,
   exon_col = "black",
+  total_arrows = 12,
+  max_per_intron = 5,
   RNA_Peaks_File_Path = "~/Desktop/RNAPeaks.pdf",
   Bed_File_Path = "~/Desktop/BEDFILE_PEAKS.csv",
   ...
@@ -89,7 +91,7 @@ A named list containing:
 Access with \code{result$plot} and \code{result$csv}.
 }
 \description{
-Creates a publication-quality visualization of RNA-binding protein peaks
+Creates a quality visualization of RNA-binding protein peaks
 overlaid on multiple gene structures within a specified genomic region.
 Unlike \code{PlotGene()}, this function can display multiple genes that fall
 within the specified coordinates.

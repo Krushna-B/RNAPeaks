@@ -51,6 +51,9 @@
 #'   and significance results. Useful for validating bootstrap assumptions.
 #'   Default is FALSE.
 #' @param verbose Logical. If TRUE, prints progress messages. Default is TRUE.
+#' @param progress_callback Optional function to report progress. Called with two
+#'   arguments: current iteration number and total iterations. Used by Shiny app
+#'   for progress display. Default is NULL (no callback).
 #'
 #' @return A ggplot object showing protein binding frequency across the 4 regions
 #'   for Retained (blue), Excluded (red), and Control (black) groups.
@@ -109,10 +112,12 @@ createSplicingMap <- function(bed_file,
                                cores = 1,
                                z_threshold = 1.96,
                                min_consecutive = 10,
+                               one_sided = TRUE,
                                show_significance = TRUE,
                                return_data = FALSE,
                                return_diagnostics = FALSE,
-                               verbose = TRUE) {
+                               verbose = TRUE,
+                               progress_callback = NULL) {
 
   # Load BED file if path provided
   if (is.character(bed_file)) {
@@ -147,7 +152,13 @@ createSplicingMap <- function(bed_file,
 
   if (verbose) message("Processing groups: ", paste(groups, collapse = ", "))
 
-  # Cap cores at max available - 1
+  .report_progress <- function(current, total, detail = NULL) {
+    if (is.function(progress_callback)) {
+      try(progress_callback(current, total, detail), silent = TRUE)
+    }
+  }
+
+  # Cap cores at max available
   max_cores <- parallel::detectCores() - 1
   if (is.na(max_cores) || max_cores < 1) max_cores <- 1
   cores <- min(cores, max_cores)
@@ -165,7 +176,7 @@ createSplicingMap <- function(bed_file,
 
   bin_width <- WidthIntoExon + WidthIntoIntron + 1
 
-  # Helper function to process a group (or sampled subset)
+  # Helper function to process a group
   process_group <- function(data, group_name, all_data_n = NULL) {
     if (nrow(data) == 0) {
       if (verbose) message("No events found for group: ", group_name)
@@ -207,19 +218,21 @@ createSplicingMap <- function(bed_file,
 
   if ("Retained" %in% groups) {
     if (verbose) message("Processing Retained events...")
+    .report_progress(1, 100, "Processing Retained events...")
     results_list$Retained <- process_group(filtered_events$Retained, "Retained")
     results_list$Retained$moving_avg_sd <- 0
   }
 
   if ("Excluded" %in% groups) {
     if (verbose) message("Processing Excluded events...")
+    .report_progress(5, 100, "Processing Excluded events...")
     results_list$Excluded <- process_group(filtered_events$Excluded, "Excluded")
     results_list$Excluded$moving_avg_sd <- 0
   }
 
   if ("Control" %in% groups) {
     if (verbose) message("Processing Control events with sampling...")
-
+    .report_progress(10, 100, "Preparing control sampling...")
     control_data <- filtered_events$Control
     n_controls <- nrow(control_data)
 
@@ -255,13 +268,27 @@ createSplicingMap <- function(bed_file,
       # Bootstrap sampling
       iteration_results <- vector("list", control_iterations)
 
+      pb <- NULL
+
       pb <- progress::progress_bar$new(
-        format = "  Sampling iterations [:bar] :current/:total (:percent) eta::eta",
-        total = control_iterations, clear = FALSE, width = 80
+          format = "  Sampling iterations [:bar] :current/:total (:percent) eta::eta",
+          total = control_iterations, clear = FALSE, width = 80
       )
+
+
+      loop_start <- 10
+      loop_end <- 90
 
       for (iter in seq_len(control_iterations)) {
         pb$tick()
+
+        # Shiny/UI progress callback
+        progress_pct <- loop_start + (iter / control_iterations) * (loop_end - loop_start)
+        .report_progress(
+          progress_pct,
+          100,
+          sprintf("Control sampling iteration %d/%d", iter, control_iterations)
+        )
 
         # Random sample of controls
         sampled_indices <- sample(n_controls, sample_size, replace = FALSE)
@@ -318,7 +345,7 @@ createSplicingMap <- function(bed_file,
     return(combined_data)
   }
 
-  # Return diagnostics if requested (for normality testing)
+  # Return diagnostics if requested
   if (return_diagnostics) {
     diagnostics <- list(
       data = combined_data,
@@ -329,10 +356,12 @@ createSplicingMap <- function(bed_file,
     )
     return(diagnostics)
   }
+  .report_progress(92, 100, "Combining results...")
 
   # Calculate significance if Control group is present and has SD
   sig_regions <- NULL
   if (show_significance && "Control" %in% groups) {
+    .report_progress(96, 100, "Calculating significance...")
     control_has_sd <- any(combined_data$moving_avg_sd[combined_data$group == "Control"] > 0,
                           na.rm = TRUE)
     if (control_has_sd) {
@@ -341,7 +370,8 @@ createSplicingMap <- function(bed_file,
         combined_data,
         z_threshold = z_threshold,
         min_consecutive = min_consecutive,
-        compare_to = "Control"
+        compare_to = "Control",
+        one_sided = one_sided
       )
       sig_regions <- sig_result$significant_regions
 
@@ -358,10 +388,11 @@ createSplicingMap <- function(bed_file,
   }
 
   # Plot using the shared plotting function
+  .report_progress(100, 100, "Complete")
   plot_splicing_sequence_map(combined_data,
                               WidthIntoExon = WidthIntoExon,
                               WidthIntoIntron = WidthIntoIntron,
-                              title = paste0("Splicing Map Peaks"),
+                              title = paste0(""),
                               sig_regions = sig_regions)
 }
 

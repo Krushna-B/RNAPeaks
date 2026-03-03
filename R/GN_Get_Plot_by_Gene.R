@@ -11,6 +11,8 @@ Get_Plot_by_Gene<-function(bed,
                            exon_width=0.2,
                            utr_width=0.3,
                            exon_col="navy",
+                           total_arrows = 6,
+                           max_per_intron = 2,
                            ...){
 
   #Return prepared bed with labeled coordinates positions for proteins
@@ -40,7 +42,8 @@ Get_Plot_by_Gene<-function(bed,
   introns <- Compute_Intron_Positions(gs$Gene_s, gs$Intron_s)
 
   #Gets arrow positions
-  arrow_df <- make_intron_arrows(introns$Introns_Positions,gs$Gene_s$strand[1], 20,max_per_intron=3)
+  arrow_df <- make_intron_arrows(introns$Introns_Positions, gs$Gene_s$strand[1],
+                                  total_arrows = total_arrows, max_per_intron = max_per_intron)
 
   # Plot for Gene using ggplot2
   do.call(

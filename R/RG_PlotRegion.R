@@ -1,6 +1,6 @@
 #' Plot RNA-Binding Protein Peaks on a Genomic Region
 #'
-#' Creates a publication-quality visualization of RNA-binding protein peaks
+#' Creates a quality visualization of RNA-binding protein peaks
 #' overlaid on multiple gene structures within a specified genomic region.
 #' Unlike `PlotGene()`, this function can display multiple genes that fall
 #' within the specified coordinates.
@@ -180,6 +180,8 @@ PlotRegion <- function(Chr = NULL,
                        exon_width = 0.5,
                        utr_width = 0.3,
                        exon_col = "black",
+                       total_arrows = 12,
+                       max_per_intron = 5,
                        RNA_Peaks_File_Path = "~/Desktop/RNAPeaks.pdf",
                        Bed_File_Path = "~/Desktop/BEDFILE_PEAKS.csv",
                        ...) {
@@ -238,12 +240,18 @@ PlotRegion <- function(Chr = NULL,
     utr_width = utr_width,
     exon_col = exon_col,
     utr_col = utr_col,
+    total_arrows = total_arrows,
+    max_per_intron = max_per_intron,
     ...
   )
 
-  # Save to Desktop
-  ggplot2::ggsave(RNA_Peaks_File_Path, Plot, height = 12, width = 16)
-  utils::write.csv(bed, Bed_File_Path, row.names = FALSE)
+  # Save files if paths are provided
+  if (!is.null(RNA_Peaks_File_Path)) {
+    ggplot2::ggsave(RNA_Peaks_File_Path, Plot, height = 12, width = 16)
+  }
+  if (!is.null(Bed_File_Path)) {
+    utils::write.csv(bed, Bed_File_Path, row.names = FALSE)
+  }
 
   Plot_and_Peaks <- list(plot = Plot, csv = bed)
   return(Plot_and_Peaks)
