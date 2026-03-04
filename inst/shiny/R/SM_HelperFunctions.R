@@ -133,6 +133,131 @@ make_bins_matrix <- function(MAT, WidthIntoExon, WidthIntoIntron) {
 }
 
 
+#' Precompute protein binding overlaps for all events (for caching)
+#'
+#' Computes protein binding overlaps for each event separately and returns a matrix
+#' where each column represents one event's overlaps across all positions.
+#' This enables fast bootstrap sampling by just summing cached columns.
+#'
+#' @param events_data Data frame with event data (SE.MATS format)
+#' @param protein GRanges object of protein binding sites
+#' @param WidthIntoExon Width into exon
+#' @param WidthIntoIntron Width into intron
+#' @param verbose Print progress messages
+#'
+#' @return A matrix with dimensions (n_positions x n_events) where each cell
+#'   contains 1 if a protein binding site overlaps that position for that event.
+#' @noRd
+precompute_binding_cache <- function(events_data,
+                                      protein,
+                                      WidthIntoExon,
+                                      WidthIntoIntron,
+                                      verbose = FALSE) {
+
+  n_events <- nrow(events_data)
+  bin_width <- WidthIntoExon + WidthIntoIntron + 1
+  total_positions <- 4 * bin_width
+
+  # Build bins for ALL events at once
+  bins_gr <- make_bins_matrix(events_data, WidthIntoExon, WidthIntoIntron)
+
+  # Initialize cache matrix (positions x events)
+  cache_matrix <- matrix(0L, nrow = total_positions, ncol = n_events)
+
+  # Pre-filter bins that overlap protein ranges
+  overlapping_idx <- which(IRanges::overlapsAny(bins_gr, protein))
+
+  if (length(overlapping_idx) == 0) {
+    if (verbose) message("  No overlaps found with protein binding sites")
+    return(cache_matrix)
+  }
+
+  # Subset to overlapping bins only
+  overlapping_bins <- bins_gr[overlapping_idx]
+
+  # Pre-compute metadata
+  bins_chr <- as.character(GenomicRanges::seqnames(overlapping_bins))
+  bins_start <- GenomicRanges::start(overlapping_bins)
+  bins_end <- GenomicRanges::end(overlapping_bins)
+  bins_strand <- as.character(GenomicRanges::strand(overlapping_bins))
+  bins_event_id <- GenomicRanges::mcols(overlapping_bins)$event_id
+
+  # Calculate bin indices (1-4) based on original position
+  bin_indices <- ((overlapping_idx - 1) %% 4) + 1
+
+  # Filter out invalid bins
+  valid_mask <- bins_start <= bins_end
+  if (!all(valid_mask)) {
+    bins_chr <- bins_chr[valid_mask]
+    bins_start <- bins_start[valid_mask]
+    bins_end <- bins_end[valid_mask]
+    bins_strand <- bins_strand[valid_mask]
+    bins_event_id <- bins_event_id[valid_mask]
+    bin_indices <- bin_indices[valid_mask]
+  }
+
+  n_overlapping <- sum(valid_mask)
+  if (n_overlapping == 0) {
+    return(cache_matrix)
+  }
+
+  # Calculate bin widths and expand to 1bp positions
+  bin_widths <- bins_end - bins_start + 1L
+  bin_rep_idx <- rep(seq_len(n_overlapping), times = bin_widths)
+
+  # Calculate genomic positions
+  position_in_bin <- sequence(bin_widths)
+  genomic_positions <- bins_start[bin_rep_idx] + position_in_bin - 1L
+
+  # Create 1bp GRanges for all positions
+  all_positions_gr <- GenomicRanges::GRanges(
+    seqnames = bins_chr[bin_rep_idx],
+    ranges = IRanges::IRanges(start = genomic_positions, width = 1L),
+    strand = bins_strand[bin_rep_idx]
+  )
+
+  # Find overlaps with protein binding sites
+
+  hits <- GenomicRanges::findOverlaps(all_positions_gr, protein, ignore.strand = FALSE)
+  hit_query_idx <- S4Vectors::queryHits(hits)
+
+  if (length(hit_query_idx) == 0) {
+    return(cache_matrix)
+  }
+
+  # Get metadata for hit positions
+  hit_bin_rep_idx <- bin_rep_idx[hit_query_idx]
+  hit_bin_indices <- bin_indices[hit_bin_rep_idx]
+  hit_event_ids <- bins_event_id[hit_bin_rep_idx]
+  hit_strands <- bins_strand[hit_bin_rep_idx]
+  hit_position_in_bin <- position_in_bin[hit_query_idx]
+
+  # Calculate global positions
+  is_plus <- hit_strands == "+"
+  hit_global_pos <- ifelse(
+    is_plus,
+    (hit_bin_indices - 1L) * bin_width + hit_position_in_bin,
+    (4L - hit_bin_indices) * bin_width + hit_position_in_bin
+  )
+
+  # Fill cache matrix
+  for (i in seq_along(hit_global_pos)) {
+    pos <- hit_global_pos[i]
+    evt <- hit_event_ids[i]
+    if (pos >= 1 && pos <= total_positions && evt >= 1 && evt <= n_events) {
+      cache_matrix[pos, evt] <- 1L
+    }
+  }
+
+  if (verbose) {
+    message(sprintf("  Cached %d events, %d positions, %d total overlaps",
+                    n_events, total_positions, sum(cache_matrix)))
+  }
+
+  return(cache_matrix)
+}
+
+
 #' Calculate binding frequency using vectorized batch
 #'
 #' Calculates protein binding frequency across all bins
@@ -447,6 +572,133 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
     global_position = seq_len(total_positions),
     match_count = match_count
   )
+}
+
+
+#' Precompute sequence motif matches for all events (for caching)
+#'
+#' Computes motif matches for each event separately and returns a matrix
+#' where each column represents one event's matches across all positions.
+#' This enables fast bootstrap sampling by just summing cached columns.
+#'
+#' @param events_data Data frame with event data (SE.MATS format)
+#' @param sequence Target sequence motif
+#' @param bsgenome_obj BSgenome object
+#' @param WidthIntoExon Width into exon
+#' @param WidthIntoIntron Width into intron
+#' @param verbose Print progress messages
+#'
+#' @return A matrix with dimensions (n_positions x n_events) where each cell
+#'   contains 1 if the motif was found at that position for that event, 0 otherwise.
+#' @noRd
+precompute_sequence_cache <- function(events_data,
+                                       sequence,
+                                       bsgenome_obj,
+                                       WidthIntoExon,
+                                       WidthIntoIntron,
+                                       verbose = FALSE) {
+
+  n_events <- nrow(events_data)
+  bin_width <- WidthIntoExon + WidthIntoIntron + 1
+  total_positions <- 4 * bin_width
+  seq_length <- nchar(sequence)
+
+  # Convert sequence to DNAString for matching (handles IUPAC codes)
+  pattern <- Biostrings::DNAString(sequence)
+
+  # Build bins for ALL events at once
+  bins_gr <- make_bins_matrix(events_data, WidthIntoExon, WidthIntoIntron)
+
+  # Pre-compute all metadata vectors
+  bins_chr <- as.character(GenomicRanges::seqnames(bins_gr))
+  bins_start <- GenomicRanges::start(bins_gr)
+  bins_end <- GenomicRanges::end(bins_gr)
+  bins_strand <- as.character(GenomicRanges::strand(bins_gr))
+  bins_event_id <- GenomicRanges::mcols(bins_gr)$event_id
+  bin_indices <- ((seq_along(bins_gr) - 1) %% 4) + 1
+  bin_lengths <- bins_end - bins_start + 1
+
+  # Calculate extended ends for sequence extraction
+  chr_lengths <- GenomeInfoDb::seqlengths(bsgenome_obj)
+  extended_ends <- pmin(bins_end + seq_length - 1, chr_lengths[bins_chr])
+
+  # Filter out bins with invalid chromosomes
+
+  valid_idx <- which(!is.na(extended_ends) & extended_ends >= bins_start)
+
+  if (length(valid_idx) == 0) {
+    warning("No sequences could be extracted for caching.")
+    return(matrix(0, nrow = total_positions, ncol = n_events))
+  }
+
+  # Create GRanges for batch sequence extraction
+  extended_gr <- GenomicRanges::GRanges(
+    seqnames = bins_chr[valid_idx],
+    ranges = IRanges::IRanges(start = bins_start[valid_idx], end = extended_ends[valid_idx]),
+    strand = bins_strand[valid_idx]
+  )
+
+  # Batch getSeq
+  all_seqs <- tryCatch({
+    Biostrings::getSeq(bsgenome_obj, extended_gr)
+  }, error = function(e) {
+    warning("Batch sequence extraction failed: ", e$message)
+    return(NULL)
+  })
+
+  if (is.null(all_seqs)) {
+    return(matrix(0, nrow = total_positions, ncol = n_events))
+  }
+
+  # Subset metadata to valid indices
+  valid_bin_indices <- bin_indices[valid_idx]
+  valid_bin_lengths <- bin_lengths[valid_idx]
+  valid_strands <- bins_strand[valid_idx]
+  valid_event_ids <- bins_event_id[valid_idx]
+
+  # Get all pattern matches
+  hits_all <- Biostrings::vmatchPattern(pattern, all_seqs, fixed = FALSE)
+  hits_df <- suppressMessages(as.data.frame(hits_all))
+
+  # Initialize cache matrix (positions x events)
+  cache_matrix <- matrix(0L, nrow = total_positions, ncol = n_events)
+
+  if (nrow(hits_df) > 0) {
+    # Add metadata
+    hits_df$bin_idx <- valid_bin_indices[hits_df$group]
+    hits_df$strand <- valid_strands[hits_df$group]
+    hits_df$bin_length <- valid_bin_lengths[hits_df$group]
+    hits_df$event_id <- valid_event_ids[hits_df$group]
+
+    # Filter: keep only starts within bin length
+    hits_df <- hits_df[hits_df$start <= hits_df$bin_length, ]
+
+    if (nrow(hits_df) > 0) {
+      # Calculate global positions
+      is_plus <- hits_df$strand == "+"
+      hits_df$global_pos <- ifelse(
+        is_plus,
+        (hits_df$bin_idx - 1L) * bin_width + hits_df$start,
+        (4L - hits_df$bin_idx) * bin_width + hits_df$start
+      )
+
+      # Fill cache matrix: mark 1 for each (position, event) pair with a match
+      for (i in seq_len(nrow(hits_df))) {
+        pos <- hits_df$global_pos[i]
+        evt <- hits_df$event_id[i]
+        if (pos >= 1 && pos <= total_positions && evt >= 1 && evt <= n_events) {
+          cache_matrix[pos, evt] <- 1L
+        }
+      }
+    }
+  }
+
+  if (verbose) {
+    message(sprintf("  Cached %d events, %d positions, %d total matches",
+                    n_events, total_positions, sum(cache_matrix)))
+  }
+
+  return(cache_matrix)
 }
 
 
