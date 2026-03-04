@@ -224,7 +224,7 @@ PlotRegion <- function(Chr = NULL,
   }
 
   Plot <- Get_Multi_Plot_by_Region(
-    gtf = gtf,
+    gtf = gtf, #add gtf
     bed = bed,
     Chr = Chr,
     Start = Start,
@@ -245,9 +245,13 @@ PlotRegion <- function(Chr = NULL,
     ...
   )
 
-  # Save to Desktop
-  ggplot2::ggsave(RNA_Peaks_File_Path, Plot, height = 12, width = 16)
-  utils::write.csv(bed, Bed_File_Path, row.names = FALSE)
+  # Save files if paths are provided
+  if (!is.null(RNA_Peaks_File_Path)) {
+    ggplot2::ggsave(RNA_Peaks_File_Path, Plot, height = 12, width = 16)
+  }
+  if (!is.null(Bed_File_Path)) {
+    utils::write.csv(bed, Bed_File_Path, row.names = FALSE)
+  }
 
   Plot_and_Peaks <- list(plot = Plot, csv = bed)
   return(Plot_and_Peaks)
