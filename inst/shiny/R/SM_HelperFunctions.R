@@ -457,15 +457,20 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
 #'
 #' @param freq_data Data frame with columns: global_position, moving_avg, group,
 #'   and moving_avg_sd (for Control group from bootstrap)
-#' @param z_threshold Z-score threshold for significance (default 1.96 for p < 0.05)
+#' @param z_threshold Z-score threshold for significance (default 1.96 for p < 0.05).
+#'   Only used when use_fdr = FALSE.
 #' @param min_consecutive Minimum consecutive significant positions to form a region
 #'   (default 10). Helps reduce false positives from noise.
 #' @param compare_to Which group to compare against. Default "Control".
 #' @param one_sided Logical. If TRUE, only test for enrichment (z > threshold).
-#'   If FALSE (default), test for both enrichment and depletion (|z| > threshold).
+#'   If FALSE, test for both enrichment and depletion.
+#' @param use_fdr Logical. If TRUE, use FDR-corrected p-values for significance.
+#'   If FALSE (default), use z_threshold directly.
+#' @param fdr_threshold FDR threshold for significance when use_fdr = TRUE.
+#'   Default 0.05.
 #'
 #' @return A list with:
-#'   \item{z_scores}{Data frame with z-scores for each position and comparison}
+#'   \item{z_scores}{Data frame with z-scores, p-values, and adjusted p-values}
 #'   \item{significant_regions}{Data frame with start/end of significant regions}
 #'
 #' @noRd
@@ -473,7 +478,9 @@ calculate_significance <- function(freq_data,
                                     z_threshold = 1.96,
                                     min_consecutive = 10,
                                     compare_to = "Control",
-                                    one_sided = TRUE) {
+                                    one_sided = TRUE,
+                                    use_fdr = TRUE,
+                                    fdr_threshold = 0.05) {
 
   # Get Control data (must have SD from bootstrap)
   control_data <- freq_data %>%
@@ -507,8 +514,6 @@ calculate_significance <- function(freq_data,
     merged <- dplyr::left_join(grp_data, control_data, by = "global_position")
 
     # Calculate z-scores (handle zero SD)
-    # For one-sided test, only consider enrichment (z >= threshold)
-    # For two-sided test, consider both enrichment and depletion (|z| >= threshold)
     merged <- merged %>%
       dplyr::mutate(
         z_score = dplyr::if_else(
@@ -516,18 +521,44 @@ calculate_significance <- function(freq_data,
           (grp_freq - control_mean) / control_sd,
           0
         ),
-        significant = if (one_sided) {
-          z_score >= z_threshold
+        # Calculate p-values (one-sided: upper tail, two-sided: both tails)
+        p_value = if (one_sided) {
+          stats::pnorm(z_score, lower.tail = FALSE)
         } else {
-          abs(z_score) >= z_threshold
+          2 * stats::pnorm(-abs(z_score))
         },
-        direction = dplyr::case_when(
-          z_score >= z_threshold ~ "enriched",
-          !one_sided & z_score <= -z_threshold ~ "depleted",
-          TRUE ~ "ns"
-        ),
         comparison = paste0(grp, "_vs_", compare_to)
       )
+
+    # Apply FDR correction (Benjamini-Hochberg)
+    merged$p_adjusted <- stats::p.adjust(merged$p_value, method = "BH")
+
+    # Determine significance based on method
+    if (use_fdr) {
+      merged <- merged %>%
+        dplyr::mutate(
+          significant = p_adjusted < fdr_threshold,
+          direction = dplyr::case_when(
+            p_adjusted < fdr_threshold & z_score > 0 ~ "enriched",
+            !one_sided & p_adjusted < fdr_threshold & z_score < 0 ~ "depleted",
+            TRUE ~ "ns"
+          )
+        )
+    } else {
+      merged <- merged %>%
+        dplyr::mutate(
+          significant = if (one_sided) {
+            z_score >= z_threshold
+          } else {
+            abs(z_score) >= z_threshold
+          },
+          direction = dplyr::case_when(
+            z_score >= z_threshold ~ "enriched",
+            !one_sided & z_score <= -z_threshold ~ "depleted",
+            TRUE ~ "ns"
+          )
+        )
+    }
 
     z_scores_list[[grp]] <- merged
 
@@ -617,6 +648,8 @@ add_regions <- function(Combined, WidthIntoExon = 50, WidthIntoIntron = 300) {
 #' @param title Plot title
 #' @param sig_regions Data frame with significant regions from calculate_significance.
 #'   Should have columns: start_pos, end_pos, group. If NULL, no significance bars shown.
+#' @param retained_cutoff IncLevelDifference cutoff for Retained group (for legend label)
+#' @param excluded_cutoff IncLevelDifference cutoff for Excluded group (for legend label)
 #'
 #' @return A ggplot object
 #' @noRd
@@ -624,7 +657,9 @@ plot_splicing_sequence_map <- function(freq_data,
                                         WidthIntoExon = 50,
                                         WidthIntoIntron = 250,
                                         title = NULL,
-                                        sig_regions = NULL) {
+                                        sig_regions = NULL,
+                                        retained_cutoff = 0.1,
+                                        excluded_cutoff = -0.1) {
 
   bin_width <- WidthIntoExon + WidthIntoIntron
   gap <- 80
@@ -744,10 +779,15 @@ plot_splicing_sequence_map <- function(freq_data,
     }
   }
 
+  # Create dynamic legend labels based on cutoffs
+  retained_label <- sprintf("\u0394\u03A8 > %g", retained_cutoff)
+  excluded_label <- sprintf("\u0394\u03A8 < %g", excluded_cutoff)
+
   plot <- plot +
     ggplot2::geom_line(linewidth = 0.8, alpha = 0.7) +
     ggplot2::scale_color_manual(
       values = c("Retained" = "blue", "Excluded" = "red", "Control" = "black"),
+      labels = c("Retained" = retained_label, "Excluded" = excluded_label, "Control" = "Control"),
       name = "Event Type"
     ) +
 
@@ -824,11 +864,6 @@ plot_splicing_sequence_map <- function(freq_data,
       return(schematic_pos)
     }
 
-    # Calculate max y value per bin for positioning bars just above data
-    bin_max_y <- freq_data %>%
-      dplyr::group_by(bin) %>%
-      dplyr::summarise(max_y = max(moving_avg, na.rm = TRUE), .groups = "drop")
-
     # Split significance regions at bin boundaries
     split_regions <- list()
     for (i in seq_len(nrow(sig_regions))) {
@@ -875,14 +910,14 @@ plot_splicing_sequence_map <- function(freq_data,
           schematic_end = global_to_schematic(end_pos)
         )
 
-      # Join with bin max y values and set bar position just above data
+      # Set bar position at uniform height above overall max
+      # Different groups get slightly different heights to avoid overlap
       sig_regions_split <- sig_regions_split %>%
-        dplyr::left_join(bin_max_y, by = "bin") %>%
         dplyr::mutate(
-          bar_y = max_y + y_range * dplyr::case_when(
-            group == "Retained" ~ 0.06,
-            group == "Excluded" ~ 0.03,
-            TRUE ~ 0.045
+          bar_y = y_max + y_range * dplyr::case_when(
+            group == "Retained" ~ 0.08,
+            group == "Excluded" ~ 0.04,
+            TRUE ~ 0.06
           )
         )
 

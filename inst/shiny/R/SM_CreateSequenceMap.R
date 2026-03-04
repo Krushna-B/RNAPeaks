@@ -37,10 +37,16 @@
 #' @param cores Integer number of cores for parallel processing. Default is 1
 #'   (sequential). Set higher for faster processing on multi-core systems.
 #' @param z_threshold Z-score threshold for significance testing. Default is 1.96
-#'   (corresponds to p < 0.05 two-tailed).
+#'   (corresponds to p < 0.05 two-tailed). Only used when use_fdr = FALSE.
 #' @param min_consecutive Minimum number of consecutive significant positions
 #'   required to form a significant region. Default is 10. Helps reduce false
 #'   positives from noise.
+#' @param one_sided Logical. If TRUE (default), only test for enrichment
+#'   (frequency > control). If FALSE, test for both enrichment and depletion.
+#' @param use_fdr Logical. If TRUE, use FDR-corrected p-values (Benjamini-Hochberg)
+#'   for significance testing. If FALSE (default), use z_threshold directly.
+#' @param fdr_threshold FDR threshold for significance when use_fdr = TRUE.
+#'   Default is 0.05.
 #' @param show_significance Logical. If TRUE (default), displays colored bars above
 #'   the plot indicating regions where Retained/Excluded differ significantly
 #'   from Control based on z-test.
@@ -115,6 +121,8 @@ createSequenceMap <- function(SEMATS,
                                z_threshold = 1.96,
                                min_consecutive = 10,
                                one_sided = TRUE,
+                               use_fdr = TRUE,
+                               fdr_threshold = 0.05,
                                show_significance = TRUE,
                                return_data = FALSE,
                                return_diagnostics = FALSE,
@@ -388,7 +396,9 @@ createSequenceMap <- function(SEMATS,
         z_threshold = z_threshold,
         min_consecutive = min_consecutive,
         compare_to = "Control",
-        one_sided = one_sided
+        one_sided = one_sided,
+        use_fdr = use_fdr,
+        fdr_threshold = fdr_threshold
       )
       sig_regions <- sig_result$significant_regions
 
@@ -410,5 +420,7 @@ createSequenceMap <- function(SEMATS,
                              WidthIntoExon = WidthIntoExon,
                              WidthIntoIntron = WidthIntoIntron,
                              title = paste0(""),
-                             sig_regions = sig_regions)
+                             sig_regions = sig_regions,
+                             retained_cutoff = retained_IncLevelDifference,
+                             excluded_cutoff = exclusion_IncLevelDifference)
 }
