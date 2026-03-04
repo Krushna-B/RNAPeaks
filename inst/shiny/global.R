@@ -6,10 +6,7 @@ options(shiny.maxRequestSize = 500 * 1024^2)
 # Set BioConductor repositories
 options(repos = BiocManager::repositories())
 
-# Load required packages
-library(shiny)
-library(bslib)
-library(bsicons)
+# Core packages
 library(rtracklayer)
 library(ggplot2)
 library(dplyr)
@@ -22,26 +19,17 @@ library(Biostrings)
 library(scales)
 library(grid)
 library(slider)
-library(progress)
 library(magrittr)
 
-# Get the app directory (works on shinyapps.io)
+# Get app directory
 app_dir <- getwd()
-message("App directory: ", app_dir)
-message("Files in app directory: ", paste(list.files(app_dir), collapse = ", "))
 
-# Always source bundled R files and data for shinyapps.io compatibility
-message("Sourcing bundled R files...")
-
+# Source bundled R files
 r_dir <- file.path(app_dir, "R")
-data_dir <- file.path(app_dir, "data")
 
-message("R directory: ", r_dir)
-message("Data directory: ", data_dir)
-message("R files: ", paste(list.files(r_dir), collapse = ", "))
-message("Data files: ", paste(list.files(data_dir), collapse = ", "))
 
-# BED file operations
+
+# BED operations
 source(file.path(r_dir, "BD_CheckBed.R"))
 source(file.path(r_dir, "BD_FilterBed.R"))
 source(file.path(r_dir, "BD_OrderPeak.R"))
@@ -69,7 +57,6 @@ source(file.path(r_dir, "SM_HelperFunctions.R"))
 source(file.path(r_dir, "SM_CreateSequenceMap.R"))
 source(file.path(r_dir, "Splicing_Map.R"))
 
-# Data is loaded directly in app.R for simplicity
-message("Data loading handled in app.R")
 
-message("RNAPeaks Shiny app initialized successfully")
+
+

@@ -1,9 +1,10 @@
 # RNAPeaks Shiny Application
+APP_VERSION <- "1.2.0"
 
-# Set max upload size to 30 MB (must be before shiny loads)
-options(shiny.maxRequestSize = 30 * 1024^2)
+# Null coalescing operator (explicit definition for clarity)
+`%||%` <- function(x, y) if (is.null(x)) y else x
 
-# Load sample data (small files)
+# Load sample data
 load("data/sample_bed.rda")
 load("data/sample_se.mats.rda")
 
@@ -30,165 +31,6 @@ bootswatch = "flatly",
   font_scale = 0.98,
   radius = "1rem"
 )
-
-# Custom CSS
-custom_css <- "
-/* Navbar */
-.main-navbar {
-  background: var(--bs-body-bg);
-  padding: 0.75rem 1.5rem;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: -1rem -1rem 1.5rem -1rem;
-  border-bottom: 1px solid var(--bs-border-color);
-}
-.navbar-brand {
-  font-weight: 700;
-  font-size: 1.25rem;
-  color: var(--bs-body-color);
-  text-decoration: none;
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-.navbar-brand:hover { opacity: 0.7; color: var(--bs-body-color); }
-.navbar-links { display: flex; gap: 0.25rem; }
-.nav-link-item {
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  color: var(--bs-secondary);
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.9rem;
-  transition: all 0.15s;
-  cursor: pointer;
-}
-.nav-link-item:hover { background: var(--bs-tertiary-bg); color: var(--bs-body-color); }
-.nav-link-item.active { background: var(--bs-primary); color: white; }
-
-/* Home page cards */
-.function-card {
-  transition: transform 0.2s, box-shadow 0.2s;
-  cursor: pointer;
-  border: none;
-  border-radius: 16px;
-}
-.function-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.15); }
-
-/* Hero section */
-.hero-section {
-  padding: 80px 20px;
-  text-align: center;
-  background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-  color: white;
-  border-radius: 24px;
-  margin-bottom: 2rem;
-  position: relative;
-  overflow: hidden;
-}
-.hero-section::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background:
-    radial-gradient(ellipse at 20% 50%, rgba(120, 80, 220, 0.25) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 20%, rgba(80, 150, 255, 0.2) 0%, transparent 40%),
-    radial-gradient(ellipse at 60% 80%, rgba(200, 100, 180, 0.15) 0%, transparent 45%);
-  pointer-events: none;
-}
-.hero-section > * { position: relative; z-index: 1; }
-.hero-section h1 { font-size: 3.5rem; font-weight: 700; margin-bottom: 0.75rem; letter-spacing: -0.02em; color: #ffffff; }
-.hero-section p { font-size: 1.25rem; color: #ffffff; opacity: 0.9; }
-.card-icon { font-size: 3rem; margin-bottom: 1rem; color: var(--bs-primary); }
-
-/* Sidebar styling */
-.sidebar-section {
-  margin-bottom: 1.25rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--bs-border-color);
-}
-.sidebar-section:last-child { border-bottom: none; margin-bottom: 0; }
-.sidebar-section h6 {
-  color: var(--bs-primary);
-  font-weight: 600;
-  margin-bottom: 0.75rem;
-  text-transform: uppercase;
-  font-size: 0.7rem;
-  letter-spacing: 0.05em;
-}
-
-/* Generate button at top */
-.generate-btn-section {
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid var(--bs-primary);
-}
-.generate-btn-section .btn {
-  width: 100%;
-  padding: 0.75rem;
-  font-weight: 600;
-  font-size: 1rem;
-}
-
-/* Plot card */
-.plot-card {
-  background: var(--bs-body-bg);
-  border: 1px solid var(--bs-border-color);
-  border-radius: 12px;
-  overflow: hidden;
-  height: 100%;
-}
-.plot-card-header {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  min-height: 52px;
-  border-bottom: 1px solid var(--bs-border-color);
-  background: var(--bs-tertiary-bg);
-}
-.plot-card-body {
-  padding: 1rem;
-  min-height: 500px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-/* Download dropdown */
-.download-dropdown .dropdown-toggle { display: flex; align-items: center; gap: 0.5rem; }
-.download-dropdown .dropdown-menu { min-width: 140px; }
-.download-dropdown .dropdown-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; }
-
-/* Alert box styling */
-.alert-box {
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-}
-.alert-box.alert-info { background: #e0f2fe; border-left: 4px solid #0ea5e9; }
-.alert-box.alert-warning { background: #fef3c7; border-left: 4px solid #f59e0b; }
-.alert-box.alert-error { background: #fee2e2; border-left: 4px solid #ef4444; }
-.alert-box.alert-success { background: #d1fae5; border-left: 4px solid #10b981; }
-.alert-box-icon { font-size: 1.25rem; flex-shrink: 0; }
-.alert-box-content { flex: 1; }
-.alert-box-title { font-weight: 600; margin-bottom: 0.25rem; }
-.alert-box-message { font-size: 0.9rem; opacity: 0.9; }
-
-/* Page content area */
-.page-content { padding: 0 0.5rem; }
-
-/* File input styling */
-.shiny-input-container .form-label { font-weight: 500; font-size: 0.85rem; }
-.upload-hint { font-size: 0.75rem; color: var(--bs-secondary); margin-top: 0.25rem; }
-"
 
 
 # UI COMPONENTS
@@ -238,6 +80,26 @@ alert_box <- function(type, title, message) {
       div(class = "alert-box-message", message)
     )
   )
+}
+
+# Helper function to format error messages for users
+format_error_message <- function(e) {
+  msg <- e$message
+  # Make common errors more user-friendly
+  if (grepl("cannot open", msg, ignore.case = TRUE)) {
+    return("Unable to read the uploaded file. Please check the file format.")
+  }
+  if (grepl("subscript out of bounds", msg, ignore.case = TRUE)) {
+    return("The data format appears incorrect. Please verify your input file structure.")
+  }
+  if (grepl("Gene .* not found|No gene found", msg, ignore.case = TRUE)) {
+    return(msg)
+  }
+  if (grepl("BSgenome", msg, ignore.case = TRUE)) {
+    return("BSgenome.Hsapiens.UCSC.hg38 package is required for sequence analysis. Please install it.")
+  }
+  # Return original message if no special handling
+  msg
 }
 
 
@@ -552,7 +414,7 @@ sequence_map_page <- function() {
 # MAIN UI
 ui <- page_fluid(
   theme = light_theme,
-  tags$head(tags$style(HTML(custom_css))),
+  tags$head(tags$link(rel = "stylesheet", type = "text/css", href = "styles.css")),
   uiOutput("main_content")
 )
 
@@ -596,9 +458,7 @@ server <- function(input, output, session) {
     rv$gtf_human_cached
   }
 
-  # --------------------------------------------------------------------------
   # PLOT GENE
-  # --------------------------------------------------------------------------
   pg_bed_data <- reactive({
     if (input$pg_bed_source == "sample") sample_bed
     else { req(input$pg_bed_file); read.table(input$pg_bed_file$datapath, header = FALSE, sep = "\t", stringsAsFactors = FALSE) }
@@ -688,9 +548,8 @@ server <- function(input, output, session) {
     content = function(file) { req(rv$pg_result); write.csv(rv$pg_result$csv, file, row.names = FALSE) }
   )
 
-  # --------------------------------------------------------------------------
+
   # PLOT REGION
-  # --------------------------------------------------------------------------
   pr_bed_data <- reactive({
     if (input$pr_bed_source == "sample") sample_bed
     else { req(input$pr_bed_file); read.table(input$pr_bed_file$datapath, header = FALSE, sep = "\t", stringsAsFactors = FALSE) }
@@ -777,9 +636,7 @@ server <- function(input, output, session) {
     content = function(file) { req(rv$pr_result); write.csv(rv$pr_result$csv, file, row.names = FALSE) }
   )
 
-  # --------------------------------------------------------------------------
   # SPLICING MAP
-  # --------------------------------------------------------------------------
   sm_bed_data <- reactive({
     if (input$sm_bed_source == "sample") sample_bed
     else { req(input$sm_bed_file); read.table(input$sm_bed_file$datapath, header = FALSE, sep = "\t", stringsAsFactors = FALSE) }
@@ -873,9 +730,7 @@ server <- function(input, output, session) {
     content = function(file) { req(rv$sm_result); ggplot2::ggsave(file, rv$sm_result, width = 12, height = 8, device = "pdf") }
   )
 
-  # --------------------------------------------------------------------------
   # SEQUENCE MAP
-  # --------------------------------------------------------------------------
   sqm_mats_data <- reactive({
     if (input$sqm_mats_source == "sample") sample_se.mats
     else { req(input$sqm_mats_file); read.table(input$sqm_mats_file$datapath, header = TRUE, sep = "\t", stringsAsFactors = FALSE) }
