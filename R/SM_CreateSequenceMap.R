@@ -284,63 +284,84 @@ createSequenceMap <- function(SEMATS,
       results_list$Control <- process_group(control_data, "Control")
       results_list$Control$moving_avg_sd <- 0
     } else {
+      #Pre-compute motif matches for all control events once
+      if (verbose) message("  Pre-computing sequence cache for all control events...")
+      .report_progress(12, 100, "Building sequence cache...")
+
+      cache_matrix <- precompute_sequence_cache(
+        events_data = control_data,
+        sequence = sequence,
+        bsgenome_obj = genome,
+        WidthIntoExon = WidthIntoExon,
+        WidthIntoIntron = WidthIntoIntron,
+        verbose = verbose
+      )
+
+      if (verbose) message("  Cache built. Running bootstrap iterations...")
+      .report_progress(20, 100, "Running bootstrap iterations...")
+
       # Pre-generate all random samples
       all_sampled_indices <- lapply(seq_len(control_iterations), function(i) {
         sample(n_controls, sample_size, replace = FALSE)
       })
 
-      # sampling - parallel or sequential based on cores
-      if (cores > 1 && .Platform$OS.type == "unix") {
-        if (verbose) message(sprintf("  Running %d iterations in parallel (%d cores)...",
-                                     control_iterations, cores))
-
-        # Use mclapply (fork-based, no serialization overhead)
-        iteration_results <- parallel::mclapply(
-          seq_len(control_iterations),
-          function(iter) {
-            sampled_controls <- control_data[all_sampled_indices[[iter]], ]
-            iter_result <- process_group(sampled_controls, "Control")
-            iter_result$moving_avg
-          },
-          mc.cores = cores,
-          mc.set.seed = TRUE
-        )
-      } else {
-        # Sequential with progress bar (Windows or cores = 1)
-        if (cores > 1 && .Platform$OS.type != "unix") {
-          if (verbose) message("  Note: Parallel not supported on Windows, running sequentially")
+      # Helper to apply moving average to a frequency vector
+      apply_moving_avg <- function(freq_vec) {
+        if (is.null(moving_average) || moving_average <= 0) {
+          return(freq_vec)
         }
+        # Apply moving average per bin
+        result <- numeric(length(freq_vec))
+        for (b in 1:4) {
+          start_idx <- (b - 1) * bin_width + 1
+          end_idx <- b * bin_width
+          bin_data <- freq_vec[start_idx:end_idx]
+          result[start_idx:end_idx] <- slider::slide_dbl(
+            bin_data,
+            mean,
+            .before = floor(moving_average / 2),
+            .after = ceiling(moving_average / 2) - 1,
+            .complete = FALSE
+          )
+        }
+        result
+      }
 
-        iteration_results <- vector("list", control_iterations)
+      # Bootstrap sampling using cached matrix
+      iteration_results <- vector("list", control_iterations)
 
-        pb <- progress::progress_bar$new(
-          format = "  Sampling iterations [:bar] :current/:total (:percent) eta::eta",
-          total = control_iterations, clear = FALSE, width = 80
-        )
-        loop_start <- 10
-        loop_end <- 90
+      # Progress tracking
+      loop_start <- 20
+      loop_end <- 90
 
+      for (iter in seq_len(control_iterations)) {
+        # Get sampled event indices
+        sampled_ids <- all_sampled_indices[[iter]]
 
-        for (iter in seq_len(control_iterations)) {
-          pb$tick()
-          # Shiny/UI progress callback
+        # Sum cached columns for sampled events (this is the key speedup!)
+        match_counts <- rowSums(cache_matrix[, sampled_ids, drop = FALSE])
+
+        # Calculate frequency
+        freq_vec <- match_counts / sample_size
+
+        # Apply moving average
+        iteration_results[[iter]] <- apply_moving_avg(freq_vec)
+
+        # Progress callback (only every 10 iterations to reduce overhead)
+        if (iter %% 10 == 0 || iter == control_iterations) {
           progress_pct <- loop_start + (iter / control_iterations) * (loop_end - loop_start)
           .report_progress(
             progress_pct,
             100,
-            sprintf("Control sampling iteration %d/%d", iter, control_iterations)
+            sprintf("Bootstrap iteration %d/%d", iter, control_iterations)
           )
-
-          sampled_controls <- control_data[all_sampled_indices[[iter]], ]
-          iter_result <- process_group(sampled_controls, "Control")
-          iteration_results[[iter]] <- iter_result$moving_avg
         }
       }
 
       # Combine results and calculate mean/sd
       freq_matrix <- do.call(cbind, iteration_results)
       mean_freq <- rowMeans(freq_matrix, na.rm = TRUE)
-      sd_freq <- apply(freq_matrix, 1, sd, na.rm = TRUE)
+      sd_freq <- apply(freq_matrix, 1, stats::sd, na.rm = TRUE)
 
       results_list$Control <- data.frame(
         global_position = 1:(4 * bin_width),

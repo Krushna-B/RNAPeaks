@@ -273,20 +273,58 @@ createSplicingMap <- function(bed_file,
       results_list$Control <- process_group(control_data, "Control")
       results_list$Control$moving_avg_sd <- 0
     } else {
-      # Bootstrap sampling
+      # Bootstrap sampling with CACHING for performance
       iteration_results <- vector("list", control_iterations)
 
-      pb <- NULL
+      # Helper function to apply moving average to a frequency vector
+      apply_moving_avg <- function(freq_vec) {
+        if (is.null(moving_average) || moving_average <= 0) {
+          return(freq_vec)
+        }
+        # Apply moving average per bin (4 bins)
+        result <- numeric(length(freq_vec))
+        half_window <- floor((moving_average - 1) / 2)
+        for (b in 1:4) {
+          bin_start <- (b - 1) * bin_width + 1
+          bin_end <- b * bin_width
+          bin_vals <- freq_vec[bin_start:bin_end]
+          smoothed <- slider::slide_dbl(bin_vals, mean,
+                                         .before = half_window,
+                                         .after = half_window,
+                                         .complete = FALSE)
+          result[bin_start:bin_end] <- smoothed
+        }
+        return(result)
+      }
+
+      # Pre-compute binding overlaps for all control events once
+      if (verbose) message("  Pre-computing binding cache for all control events...")
+      .report_progress(10, 100, "Building control binding cache...")
+
+      cache_matrix <- precompute_binding_cache(
+        events_data = control_data,
+        protein = buckets,
+        WidthIntoExon = WidthIntoExon,
+        WidthIntoIntron = WidthIntoIntron,
+        verbose = verbose
+      )
+
+      if (verbose) message("  Cache built. Starting bootstrap iterations...")
+
+      # Pre-generate all random samples for reproducibility and efficiency
+      all_sampled_indices <- lapply(seq_len(control_iterations), function(i) {
+        sample(n_controls, sample_size, replace = FALSE)
+      })
 
       pb <- progress::progress_bar$new(
           format = "  Sampling iterations [:bar] :current/:total (:percent) eta::eta",
           total = control_iterations, clear = FALSE, width = 80
       )
 
-
-      loop_start <- 10
+      loop_start <- 20
       loop_end <- 90
 
+      # Bootstrap using cache
       for (iter in seq_len(control_iterations)) {
         pb$tick()
 
@@ -298,13 +336,17 @@ createSplicingMap <- function(bed_file,
           sprintf("Control sampling iteration %d/%d", iter, control_iterations)
         )
 
-        # Random sample of controls
-        sampled_indices <- sample(n_controls, sample_size, replace = FALSE)
-        sampled_controls <- control_data[sampled_indices, ]
+        # Get pre-generated sample indices
+        sampled_ids <- all_sampled_indices[[iter]]
 
-        # Process this sample
-        iter_result <- process_group(sampled_controls, "Control")
-        iteration_results[[iter]] <- iter_result$moving_avg
+        # Sum overlaps from cached columns (vectorized, very fast)
+        overlap_counts <- rowSums(cache_matrix[, sampled_ids, drop = FALSE])
+
+        # Calculate frequency
+        freq_vec <- overlap_counts / sample_size
+
+        # Apply moving average and store
+        iteration_results[[iter]] <- apply_moving_avg(freq_vec)
       }
 
       # Combine results and calculate mean/sd
