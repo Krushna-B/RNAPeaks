@@ -911,7 +911,20 @@ plot_splicing_sequence_map <- function(freq_data,
                                         title = NULL,
                                         sig_regions = NULL,
                                         retained_cutoff = 0.1,
-                                        excluded_cutoff = -0.1) {
+                                        excluded_cutoff = -0.1,
+                                        retained_col = "blue",
+                                        excluded_col = "red",
+                                        control_col = "black",
+                                        line_width = 0.8,
+                                        line_alpha = 0.7,
+                                        ribbon_alpha = 0.3,
+                                        title_size = 20,
+                                        title_color = "black",
+                                        axis_text_size = 11,
+                                        boundary_col = "gray70",
+                                        exon_col = "navy",
+                                        legend_position = "bottom",
+                                        ylab = "Frequency") {
 
   bin_width <- WidthIntoExon + WidthIntoIntron
   gap <- 80
@@ -965,7 +978,7 @@ plot_splicing_sequence_map <- function(freq_data,
     xmax = c(boundary1, boundary3, region_starts[4] + bin_width),
     ymin = rep(y_min - exon_height, 3),
     ymax = rep(y_min, 3),
-    fill = c("white", "navy", "white")
+    fill = c("white", exon_col, "white")
   )
 
   # Intron lines
@@ -1018,7 +1031,7 @@ plot_splicing_sequence_map <- function(freq_data,
       dplyr::filter(moving_avg_sd > 0)
     if (nrow(ribbon_data) > 0) {
       # Map group names to colors for ribbon fill
-      group_colors <- c("Retained" = "blue", "Excluded" = "red", "Control" = "gray50")
+      group_colors <- c("Retained" = retained_col, "Excluded" = excluded_col, "Control" = control_col)
       ribbon_data$ribbon_fill <- group_colors[as.character(ribbon_data$group)]
 
       plot <- plot +
@@ -1027,7 +1040,7 @@ plot_splicing_sequence_map <- function(freq_data,
                                           ymin = ymin, ymax = ymax,
                                           group = interaction(bin, group),
                                           fill = ribbon_fill),
-                             alpha = 0.3, color = NA, inherit.aes = FALSE)
+                             alpha = ribbon_alpha, color = NA, inherit.aes = FALSE)
     }
   }
 
@@ -1036,9 +1049,9 @@ plot_splicing_sequence_map <- function(freq_data,
   excluded_label <- sprintf("\u0394\u03A8 < %g", excluded_cutoff)
 
   plot <- plot +
-    ggplot2::geom_line(linewidth = 0.8, alpha = 0.7) +
+    ggplot2::geom_line(linewidth = line_width, alpha = line_alpha) +
     ggplot2::scale_color_manual(
-      values = c("Retained" = "blue", "Excluded" = "red", "Control" = "black"),
+      values = c("Retained" = retained_col, "Excluded" = excluded_col, "Control" = control_col),
       labels = c("Retained" = retained_label, "Excluded" = excluded_label, "Control" = "Control"),
       name = "Event Type"
     ) +
@@ -1046,7 +1059,7 @@ plot_splicing_sequence_map <- function(freq_data,
     # Vertical dashed lines at boundaries
     ggplot2::geom_vline(data = boundary_lines,
                         ggplot2::aes(xintercept = xintercept),
-                        linetype = "dashed", color = "gray70", linewidth = 0.5) +
+                        linetype = "dashed", color = boundary_col, linewidth = 0.5) +
 
     # Break symbols
     ggplot2::annotate("text", x = break_x, y = y_min,
@@ -1073,7 +1086,7 @@ plot_splicing_sequence_map <- function(freq_data,
     ggplot2::scale_y_continuous(limits = c(y_min - exon_height * 1.5,
                                            y_max * 1.05 + y_range * 0.15)) +
 
-    ggplot2::labs(x = NULL, y = "Frequency", title = title) +
+    ggplot2::labs(x = NULL, y = ylab, title = title) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
       panel.grid.major = ggplot2::element_blank(),
@@ -1082,13 +1095,13 @@ plot_splicing_sequence_map <- function(freq_data,
       axis.line = ggplot2::element_blank(),
       axis.text.x = ggplot2::element_blank(),
       axis.ticks.x = ggplot2::element_blank(),
-      axis.text.y = ggplot2::element_text(size = 11, color = "black"),
+      axis.text.y = ggplot2::element_text(size = axis_text_size, color = "black"),
       axis.ticks.y = ggplot2::element_line(color = "black"),
       panel.background = ggplot2::element_rect(fill = "transparent", colour = NA),
       plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-      plot.title = ggplot2::element_text(hjust = 0.5, size = 20,
-                                         color = "black", face = "bold.italic"),
-      legend.position = "bottom"
+      plot.title = ggplot2::element_text(hjust = 0.5, size = title_size,
+                                         color = title_color, face = "bold.italic"),
+      legend.position = legend_position
     )
 
   # Add significance bars if provided

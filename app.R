@@ -336,6 +336,23 @@ splicing_map_page <- function() {
           sidebar_section("Significance",
             numericInput("sm_z_threshold", "Z-score Threshold:", value = 1.96, min = 1, max = 3, step = 0.1),
             numericInput("sm_min_consec", "Min Consecutive:", value = 10, min = 1, max = 50, step = 1)
+          ),
+
+          sidebar_section("Appearance",
+            textInput("sm_title", "Plot Title:", value = "", placeholder = "Leave blank for no title"),
+            fluidRow(
+              column(4, selectInput("sm_retained_col", "Retained:", choices = c("Blue" = "blue", "Navy" = "navy", "Teal" = "teal", "Purple" = "purple", "Red" = "red", "Black" = "black"), selected = "blue")),
+              column(4, selectInput("sm_excluded_col", "Excluded:", choices = c("Red" = "red", "Orange" = "orange", "Pink" = "hotpink", "Blue" = "blue", "Black" = "black", "Green" = "darkgreen"), selected = "red")),
+              column(4, selectInput("sm_control_col", "Control:", choices = c("Black" = "black", "Gray" = "gray50", "Dark Gray" = "gray30", "Blue" = "blue", "Green" = "darkgreen"), selected = "black"))
+            ),
+            fluidRow(
+              column(6, numericInput("sm_line_width", "Line Width:", value = 0.8, min = 0.2, max = 3, step = 0.1)),
+              column(6, numericInput("sm_axis_text_size", "Axis Text Size:", value = 11, min = 6, max = 20, step = 1))
+            ),
+            numericInput("sm_title_size", "Title Size:", value = 20, min = 8, max = 40, step = 1),
+            selectInput("sm_exon_col", "Skipped Exon Color:",
+              choices = c("Navy" = "navy", "Blue" = "blue", "Black" = "black", "Dark Green" = "darkgreen", "Purple" = "purple4", "Dark Gray" = "gray30"),
+              selected = "navy")
           )
         ),
 
@@ -406,6 +423,23 @@ sequence_map_page <- function() {
           sidebar_section("Significance",
             numericInput("sqm_z_threshold", "Z-score Threshold:", value = 1.96, min = 1, max = 3, step = 0.1),
             numericInput("sqm_min_consec", "Min Consecutive:", value = 10, min = 1, max = 50, step = 1)
+          ),
+
+          sidebar_section("Appearance",
+            textInput("sqm_title", "Plot Title:", value = "", placeholder = "Leave blank for no title"),
+            fluidRow(
+              column(4, selectInput("sqm_retained_col", "Retained:", choices = c("Blue" = "blue", "Navy" = "navy", "Teal" = "teal", "Purple" = "purple", "Red" = "red", "Black" = "black"), selected = "blue")),
+              column(4, selectInput("sqm_excluded_col", "Excluded:", choices = c("Red" = "red", "Orange" = "orange", "Pink" = "hotpink", "Blue" = "blue", "Black" = "black", "Green" = "darkgreen"), selected = "red")),
+              column(4, selectInput("sqm_control_col", "Control:", choices = c("Black" = "black", "Gray" = "gray50", "Dark Gray" = "gray30", "Blue" = "blue", "Green" = "darkgreen"), selected = "black"))
+            ),
+            fluidRow(
+              column(6, numericInput("sqm_line_width", "Line Width:", value = 0.8, min = 0.2, max = 3, step = 0.1)),
+              column(6, numericInput("sqm_axis_text_size", "Axis Text Size:", value = 11, min = 6, max = 20, step = 1))
+            ),
+            numericInput("sqm_title_size", "Title Size:", value = 20, min = 8, max = 40, step = 1),
+            selectInput("sqm_exon_col", "Skipped Exon Color:",
+              choices = c("Navy" = "navy", "Blue" = "blue", "Black" = "black", "Dark Green" = "darkgreen", "Purple" = "purple4", "Dark Gray" = "gray30"),
+              selected = "navy")
           )
         ),
 
@@ -716,6 +750,14 @@ server <- function(input, output, session) {
           control_iterations = input$sm_control_iter,
           z_threshold = input$sm_z_threshold,
           min_consecutive = input$sm_min_consec,
+          title = input$sm_title,
+          retained_col = input$sm_retained_col,
+          excluded_col = input$sm_excluded_col,
+          control_col = input$sm_control_col,
+          line_width = input$sm_line_width,
+          axis_text_size = input$sm_axis_text_size,
+          title_size = input$sm_title_size,
+          exon_col = input$sm_exon_col,
           progress_callback = function(current, total, detail = NULL) {
             # createSplicingMap reports 0..100
             target <- max(0, min(1, current / total))
@@ -802,6 +844,14 @@ server <- function(input, output, session) {
           control_iterations = input$sqm_control_iter,
           z_threshold = input$sqm_z_threshold,
           min_consecutive = input$sqm_min_consec,
+          title = input$sqm_title,
+          retained_col = input$sqm_retained_col,
+          excluded_col = input$sqm_excluded_col,
+          control_col = input$sqm_control_col,
+          line_width = input$sqm_line_width,
+          axis_text_size = input$sqm_axis_text_size,
+          title_size = input$sqm_title_size,
+          exon_col = input$sqm_exon_col,
           progress_callback = function(current, total, detail = NULL) {
             # createSequenceMap reports 0..100
             target <- max(0, min(1, current / total))
