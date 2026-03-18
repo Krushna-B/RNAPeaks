@@ -8,7 +8,7 @@ Authors@R: c(
            role = c("aut", "cre")),
     person("Gilbert", "Giri",
            email = "Ggiri@unc.edu",
-           role = c("aut", "cre")))
+           role = c("aut")))
 Description: RNAPeaks creates publicaition quality visualizations of RNA-binding
     protein (RBP) peaks overlaid on gene structures. Key features include                                                                                                                                 
       single-gene visualization with PlotGene(), multi-gene genomic region                                                                                                                                    
