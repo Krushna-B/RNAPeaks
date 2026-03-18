@@ -52,7 +52,18 @@ Gene_strcuture_nc<-function(gtf,levels,peaks_width,exon_width,utr_width,exon_col
 Gene_strcuture_prot<-function(gtf,levels,peaks_width,exon_width,utr_width,exon_col,utr_col){
 
   if(!("CDS" %in% gtf$type) ){
-    return(NULL)
+    # Region window contains no CDS (e.g. zoomed into a pure UTR).
+    has_utr  <- any(gtf$type %in% c("five_prime_utr", "three_prime_utr"))
+    has_exon <- any(gtf$type == "exon")
+    if (!has_utr && !has_exon) return(NULL)
+    if (has_utr) {
+      # UTR rows drive the visualization — drop redundant exon rows so they
+      # don't get colored as CDS (dark blue).
+      gtf <- gtf[gtf$type != "exon", ]
+    } else {
+      # No UTR annotation in window; remap exon rows so something renders.
+      gtf$type[gtf$type == "exon"] <- "CDS"
+    }
   }
 
   gtf<-gtf[which(gtf$type %in% c("CDS","five_prime_utr","three_prime_utr")),]
