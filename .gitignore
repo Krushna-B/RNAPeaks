@@ -12,3 +12,4 @@ tests/*
 inst/shiny-deploy/deploy.R
 **/deploy.R
 rsconnect/
+launchApp.R
