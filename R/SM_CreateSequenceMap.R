@@ -60,9 +60,23 @@
 #' @param progress_callback Optional function to report progress. Called with two
 #'   arguments: current iteration number and total iterations. Used by Shiny app
 #'   for progress display. Default is NULL (no callback).
+#' @param title Character string for the plot title. Default is "" (no title).
+#' @param retained_col Color for the Retained group line. Default is "blue".
+#' @param excluded_col Color for the Excluded group line. Default is "red".
+#' @param control_col Color for the Control group line. Default is "black".
+#' @param line_width Numeric line width for the frequency lines. Default is 0.8.
+#' @param line_alpha Numeric alpha (opacity) for the frequency lines. Default is 0.7.
+#' @param ribbon_alpha Numeric alpha for the SD ribbon around Control. Default is 0.3.
+#' @param title_size Numeric font size for the plot title. Default is 20.
+#' @param title_color Color for the plot title text. Default is "black".
+#' @param axis_text_size Numeric font size for y-axis tick labels. Default is 11.
+#' @param boundary_col Color for the dashed vertical boundary lines. Default is "gray70".
+#' @param exon_col Fill color for the skipped (middle) exon in the schematic. Default is "navy".
+#' @param legend_position Position of the legend. Default is "bottom".
+#' @param ylab Label for the y-axis. Default is "Frequency".
 #'
 #' @return A ggplot object showing sequence frequency across the 4 regions
-#'   for Retained (blue), Excluded (red), and Control (black) groups.
+#'   for Retained, Excluded, and Control groups.
 #'   Significant regions (z-test vs Control) are shown as colored bars above
 #'   the plot. Returns a data frame if return_data = TRUE.
 #'
@@ -127,7 +141,21 @@ createSequenceMap <- function(SEMATS,
                                return_data = FALSE,
                                return_diagnostics = FALSE,
                                verbose = TRUE,
-                               progress_callback = NULL) {
+                               progress_callback = NULL,
+                               title = "",
+                               retained_col = "blue",
+                               excluded_col = "red",
+                               control_col = "black",
+                               line_width = 0.8,
+                               line_alpha = 0.7,
+                               ribbon_alpha = 0.3,
+                               title_size = 20,
+                               title_color = "black",
+                               axis_text_size = 11,
+                               boundary_col = "gray70",
+                               exon_col = "navy",
+                               legend_position = "bottom",
+                               ylab = "Frequency") {
 
   # Load default genome if not provided
   if (is.null(genome)) {
@@ -440,8 +468,21 @@ createSequenceMap <- function(SEMATS,
   plot_splicing_sequence_map(combined_data,
                              WidthIntoExon = WidthIntoExon,
                              WidthIntoIntron = WidthIntoIntron,
-                             title = paste0(""),
+                             title = title,
                              sig_regions = sig_regions,
                              retained_cutoff = retained_IncLevelDifference,
-                             excluded_cutoff = exclusion_IncLevelDifference)
+                             excluded_cutoff = exclusion_IncLevelDifference,
+                             retained_col = retained_col,
+                             excluded_col = excluded_col,
+                             control_col = control_col,
+                             line_width = line_width,
+                             line_alpha = line_alpha,
+                             ribbon_alpha = ribbon_alpha,
+                             title_size = title_size,
+                             title_color = title_color,
+                             axis_text_size = axis_text_size,
+                             boundary_col = boundary_col,
+                             exon_col = exon_col,
+                             legend_position = legend_position,
+                             ylab = ylab)
 }
