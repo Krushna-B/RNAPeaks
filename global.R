@@ -21,6 +21,15 @@ library(grid)
 library(slider)
 library(magrittr)
 
+# Explicitly expose operators and functions into the global environment
+# so sourced R files can use them without package:: prefix
+`%>%` <- magrittr::`%>%`
+convertWidth <- grid::convertWidth
+grobWidth    <- grid::grobWidth
+textGrob     <- grid::textGrob
+gpar         <- grid::gpar
+unit         <- grid::unit
+
 # Source RNAPeaks functions directly from the package R/ directory
 r_dir <- "R"
 
