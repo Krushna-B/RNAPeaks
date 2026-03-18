@@ -6,12 +6,6 @@ options(shiny.maxRequestSize = 500 * 1024^2)
 # Set BioConductor repositories
 options(repos = BiocManager::repositories())
 
-# Install RNAPeaks from GitHub if not available
-if (!requireNamespace("RNAPeaks", quietly = TRUE)) {
-  if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")
-  remotes::install_github("Krushna-B/RNAPeaks")
-}
-
 # Load RNAPeaks and its dependencies
 library(RNAPeaks)
 library(rtracklayer)
