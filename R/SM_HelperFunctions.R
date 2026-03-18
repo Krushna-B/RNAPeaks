@@ -52,17 +52,17 @@ filter_SEMATS_events <- function(SEMATS,
                            SEMATS$Total_Count_2 > Min_Count), ]
 
   # Generate event categories
-  Excluded <- SEMATS %>%
+  Excluded <- SEMATS magrittr::`%>%`
     dplyr::filter(PValue < p_valueRetainedAndExclusion,
                   FDR < p_valueRetainedAndExclusion,
                   IncLevelDifference > exclusion_IncLevelDifference)
 
-  Retained <- SEMATS %>%
+  Retained <- SEMATS magrittr::`%>%`
     dplyr::filter(PValue < p_valueRetainedAndExclusion,
                   FDR < p_valueRetainedAndExclusion,
                   IncLevelDifference < retained_IncLevelDifference)
 
-  Control <- SEMATS %>%
+  Control <- SEMATS magrittr::`%>%`
     dplyr::filter(PValue > p_valueControls,
                   FDR > p_valueControls,
                   Inc_1 > 0.9,
@@ -280,7 +280,7 @@ calculate_binding_frequency <- function(bins_gr, protein, bin_width, cores = 1) 
   if (has_groups) {
     bins_groups <- as.character(GenomicRanges::mcols(bins_gr)$group)
     unique_groups <- unique(bins_groups)
-    group_to_idx <- setNames(seq_along(unique_groups), unique_groups)
+    group_to_idx <- stats::setNames(seq_along(unique_groups), unique_groups)
   }
 
   # Pre-filter bins that overlap protein ranges
@@ -430,7 +430,7 @@ calculate_binding_frequency <- function(bins_gr, protein, bin_width, cores = 1) 
 calculate_moving_average <- function(freq_data, window_size = NULL, bins = NULL) {
 
   # Add bin column
-  freq_data <- freq_data %>%
+  freq_data <- freq_data magrittr::`%>%`
     dplyr::mutate(
       bin = dplyr::case_when(
         global_position <= bins ~ 1,
@@ -438,24 +438,24 @@ calculate_moving_average <- function(freq_data, window_size = NULL, bins = NULL)
         global_position <= bins * 3 ~ 3,
         TRUE ~ 4
       )
-    ) %>%
+    ) magrittr::`%>%`
     dplyr::arrange(global_position)
 
   # Apply moving average only if window_size is provided
   if (!is.null(window_size) && window_size > 0) {
 
-    freq_data <- freq_data %>%
-      dplyr::arrange(bin, global_position) %>%
-      dplyr::group_by(bin) %>%
+    freq_data <- freq_data magrittr::`%>%`
+      dplyr::arrange(bin, global_position) magrittr::`%>%`
+      dplyr::group_by(bin) magrittr::`%>%`
       dplyr::mutate(moving_avg = slider::slide_dbl(frequency,
                                                     mean,
                                                     .before = floor((window_size - 1) / 2),
                                                     .after = floor((window_size - 1) / 2),
-                                                    .complete = FALSE)) %>%
+                                                    .complete = FALSE)) magrittr::`%>%`
       dplyr::ungroup()
   } else {
     # No moving average - just copy frequency to moving_avg
-    freq_data <- freq_data %>%
+    freq_data <- freq_data magrittr::`%>%`
       dplyr::mutate(moving_avg = frequency)
   }
   return(freq_data)
@@ -735,9 +735,9 @@ calculate_significance <- function(freq_data,
                                     fdr_threshold = 0.05) {
 
   # Get Control data (must have SD from bootstrap)
-  control_data <- freq_data %>%
-    dplyr::filter(group == compare_to) %>%
-    dplyr::select(global_position, moving_avg, moving_avg_sd) %>%
+  control_data <- freq_data magrittr::`%>%`
+    dplyr::filter(group == compare_to) magrittr::`%>%`
+    dplyr::select(global_position, moving_avg, moving_avg_sd) magrittr::`%>%`
     dplyr::rename(control_mean = moving_avg, control_sd = moving_avg_sd)
 
   if (nrow(control_data) == 0) {
@@ -757,16 +757,16 @@ calculate_significance <- function(freq_data,
   sig_regions_list <- list()
 
   for (grp in other_groups) {
-    grp_data <- freq_data %>%
-      dplyr::filter(group == grp) %>%
-      dplyr::select(global_position, moving_avg) %>%
+    grp_data <- freq_data magrittr::`%>%`
+      dplyr::filter(group == grp) magrittr::`%>%`
+      dplyr::select(global_position, moving_avg) magrittr::`%>%`
       dplyr::rename(grp_freq = moving_avg)
 
     # Merge with control
     merged <- dplyr::left_join(grp_data, control_data, by = "global_position")
 
     # Calculate z-scores (handle zero SD)
-    merged <- merged %>%
+    merged <- merged magrittr::`%>%`
       dplyr::mutate(
         z_score = dplyr::if_else(
           control_sd > 0,
@@ -787,7 +787,7 @@ calculate_significance <- function(freq_data,
 
     # Determine significance based on method
     if (use_fdr) {
-      merged <- merged %>%
+      merged <- merged magrittr::`%>%`
         dplyr::mutate(
           significant = p_adjusted < fdr_threshold,
           direction = dplyr::case_when(
@@ -797,7 +797,7 @@ calculate_significance <- function(freq_data,
           )
         )
     } else {
-      merged <- merged %>%
+      merged <- merged magrittr::`%>%`
         dplyr::mutate(
           significant = if (one_sided) {
             z_score >= z_threshold
@@ -918,7 +918,7 @@ plot_splicing_sequence_map <- function(freq_data,
 
   # Ensure bin column exists
   if (!"bin" %in% names(freq_data)) {
-    freq_data <- freq_data %>%
+    freq_data <- freq_data magrittr::`%>%`
       dplyr::mutate(
         bin = dplyr::case_when(
           global_position <= bin_width ~ 1,
@@ -982,7 +982,7 @@ plot_splicing_sequence_map <- function(freq_data,
   break_x <- c(bin_width + gap / 2, 3 * bin_width + gap + gap / 2)
 
   # Align data to proper region
-  freq_data <- freq_data %>%
+  freq_data <- freq_data magrittr::`%>%`
     dplyr::mutate(
       position_in_bin = global_position - (bin - 1) * (bin_width + 1),
       schematic_position = dplyr::case_when(
@@ -999,7 +999,7 @@ plot_splicing_sequence_map <- function(freq_data,
 
   # Add ribbon data for groups with standard deviation
   if ("moving_avg_sd" %in% names(freq_data)) {
-    freq_data <- freq_data %>%
+    freq_data <- freq_data magrittr::`%>%`
       dplyr::mutate(
         ymin = moving_avg - moving_avg_sd,
         ymax = moving_avg + moving_avg_sd
@@ -1014,7 +1014,7 @@ plot_splicing_sequence_map <- function(freq_data,
 
   # Add ribbon for standard deviation if available
   if ("moving_avg_sd" %in% names(freq_data)) {
-    ribbon_data <- freq_data %>%
+    ribbon_data <- freq_data magrittr::`%>%`
       dplyr::filter(moving_avg_sd > 0)
     if (nrow(ribbon_data) > 0) {
       # Map group names to colors for ribbon fill
@@ -1156,7 +1156,7 @@ plot_splicing_sequence_map <- function(freq_data,
       sig_regions_split <- dplyr::bind_rows(split_regions)
 
       # Convert to schematic coordinates
-      sig_regions_split <- sig_regions_split %>%
+      sig_regions_split <- sig_regions_split magrittr::`%>%`
         dplyr::mutate(
           schematic_start = global_to_schematic(start_pos),
           schematic_end = global_to_schematic(end_pos)
@@ -1164,7 +1164,7 @@ plot_splicing_sequence_map <- function(freq_data,
 
       # Set bar position at uniform height above overall max
       # Different groups get slightly different heights to avoid overlap
-      sig_regions_split <- sig_regions_split %>%
+      sig_regions_split <- sig_regions_split magrittr::`%>%`
         dplyr::mutate(
           bar_y = y_max + y_range * dplyr::case_when(
             group == "Retained" ~ 0.08,
