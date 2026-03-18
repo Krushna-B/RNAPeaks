@@ -10,70 +10,6 @@
     "has_parameters": false
   },
   "packages": {
-    "AnnotationDbi": {
-      "Source": "Bioconductor",
-      "Repository": "https://bioconductor.org/packages/3.20/bioc",
-      "description": {
-        "Package": "AnnotationDbi",
-        "Title": "Manipulation of SQLite-based annotations in Bioconductor",
-        "Description": "Implements a user-friendly interface for querying SQLite-based annotation data packages.",
-        "biocViews": "Annotation, Microarray, Sequencing, GenomeAnnotation",
-        "URL": "https://bioconductor.org/packages/AnnotationDbi",
-        "Video": "https://www.youtube.com/watch?v=8qvGNTVz3Ik",
-        "BugReports": "https://github.com/Bioconductor/AnnotationDbi/issues",
-        "Version": "1.68.0",
-        "License": "Artistic-2.0",
-        "Encoding": "UTF-8",
-        "Author": "Hervé Pagès, Marc Carlson, Seth Falcon, Nianhua Li",
-        "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>",
-        "Depends": "R (>= 2.7.0), methods, stats4, BiocGenerics (>= 0.29.2),\nBiobase (>= 1.17.0), IRanges",
-        "Imports": "DBI, RSQLite, S4Vectors (>= 0.9.25), stats, KEGGREST",
-        "Suggests": "utils, hgu95av2.db, GO.db, org.Sc.sgd.db, org.At.tair.db,\nRUnit, TxDb.Hsapiens.UCSC.hg19.knownGene, org.Hs.eg.db,\nreactome.db, AnnotationForge, graph, EnsDb.Hsapiens.v75,\nBiocStyle, knitr",
-        "VignetteBuilder": "knitr",
-        "Collate": "00RTobjs.R AllGenerics.R AllClasses.R unlist2.R utils.R SQL.R\nFlatBimap.R AnnDbObj-lowAPI.R Bimap.R GOTerms.R\nBimapFormatting.R Bimap-envirAPI.R flatten.R\nmethods-AnnotationDb.R methods-SQLiteConnection.R\nmethods-geneCentricDbs.R methods-geneCentricDbs-keys.R\nmethods-ReactomeDb.R methods-OrthologyDb.R loadDb.R\ncreateAnnObjs-utils.R createAnnObjs.NCBIORG_DBs.R\ncreateAnnObjs.NCBICHIP_DBs.R createAnnObjs.ORGANISM_DB.R\ncreateAnnObjs.YEASTCHIP_DB.R createAnnObjs.COELICOLOR_DB.R\ncreateAnnObjs.ARABIDOPSISCHIP_DB.R createAnnObjs.MALARIA_DB.R\ncreateAnnObjs.YEAST_DB.R createAnnObjs.YEASTNCBI_DB.R\ncreateAnnObjs.ARABIDOPSIS_DB.R createAnnObjs.GO_DB.R\ncreateAnnObjs.KEGG_DB.R createAnnObjs.PFAM_DB.R\nAnnDbPkg-templates-common.R AnnDbPkg-checker.R\nprint.probetable.R makeMap.R inpIDMapper.R\ntest_AnnotationDbi_package.R",
-        "git_url": "https://git.bioconductor.org/packages/AnnotationDbi",
-        "git_branch": "RELEASE_3_20",
-        "git_last_commit": "6a2aa33",
-        "git_last_commit_date": "2024-10-29",
-        "Repository": "Bioconductor 3.20",
-        "Date/Publication": "2024-11-08",
-        "NeedsCompilation": "no",
-        "Packaged": "2024-11-08 20:56:31 UTC; biocbuild",
-        "Built": "R 4.4.1; ; 2024-11-09 21:37:11 UTC; unix"
-      }
-    },
-    "AnnotationHub": {
-      "Source": "Bioconductor",
-      "Repository": "https://bioconductor.org/packages/3.20/bioc",
-      "description": {
-        "Package": "AnnotationHub",
-        "Type": "Package",
-        "Title": "Client to access AnnotationHub resources",
-        "Version": "3.14.0",
-        "Authors@R": "\n    c(person(\"Bioconductor Package\", \"Maintainer\", email=\"maintainer@bioconductor.org\",\n             role=\"cre\"),\n      person(\"Martin\", \"Morgan\", role=\"aut\"),\n      person(\"Marc\", \"Carlson\", role=\"ctb\"),\n      person(\"Dan\", \"Tenenbaum\", role=\"ctb\"),\n      person(\"Sonali\", \"Arora\", role=\"ctb\"),\n      person(\"Valerie\", \"Oberchain\", role=\"ctb\"),\n      person(\"Kayla\", \"Morrell\", role=\"ctb\"),\n      person(\"Lori\", \"Shepherd\", role=\"aut\"))",
-        "biocViews": "Infrastructure, DataImport, GUI, ThirdPartyClient",
-        "Description": "This package provides a client for the Bioconductor\n    AnnotationHub web resource. The AnnotationHub web resource\n    provides a central location where genomic files (e.g., VCF, bed,\n    wig) and other resources from standard locations (e.g., UCSC,\n    Ensembl) can be discovered. The resource includes metadata about\n    each resource, e.g., a textual description, tags, and date of\n    modification. The client creates and manages a local cache of\n    files retrieved by the user, helping with quick and reproducible\n    access.",
-        "License": "Artistic-2.0",
-        "Depends": "BiocGenerics (>= 0.15.10), BiocFileCache (>= 1.5.1)",
-        "Imports": "utils, methods, grDevices, RSQLite, BiocManager, BiocVersion,\ncurl, rappdirs, AnnotationDbi (>= 1.31.19), S4Vectors, httr,\nyaml, dplyr",
-        "Suggests": "IRanges, GenomicRanges, GenomeInfoDb, VariantAnnotation,\nRsamtools, rtracklayer, BiocStyle, knitr, AnnotationForge,\nrBiopaxParser, RUnit, txdbmaker, MSnbase, mzR, Biostrings,\nCompoundDb, keras, ensembldb, SummarizedExperiment,\nExperimentHub, gdsfmt, rmarkdown, HubPub",
-        "Enhances": "AnnotationHubData",
-        "Collate": "AnnotationHubOption.R AllGenerics.R Hub-class.R db-utils.R\nAnnotationHub-class.R AnnotationHubResource-class.R\nBEDResource-class.R ProteomicsResource-class.R\nEpigenomeResource-class.R EnsDbResource-class.R utilities.R\nsql-utils.R Hub-utils.R cache-utils.R zzz.R",
-        "VignetteBuilder": "knitr",
-        "BugReports": "https://github.com/Bioconductor/AnnotationHub/issues",
-        "NeedsCompilation": "yes",
-        "git_url": "https://git.bioconductor.org/packages/AnnotationHub",
-        "git_branch": "RELEASE_3_20",
-        "git_last_commit": "f93a396",
-        "git_last_commit_date": "2024-10-29",
-        "Repository": "Bioconductor 3.20",
-        "Date/Publication": "2024-11-08",
-        "Packaged": "2024-11-08 20:57:14 UTC; biocbuild",
-        "Author": "Bioconductor Package Maintainer [cre],\n  Martin Morgan [aut],\n  Marc Carlson [ctb],\n  Dan Tenenbaum [ctb],\n  Sonali Arora [ctb],\n  Valerie Oberchain [ctb],\n  Kayla Morrell [ctb],\n  Lori Shepherd [aut]",
-        "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>",
-        "Built": "R 4.4.1; ; 2024-11-09 21:37:13 UTC; unix"
-      }
-    },
     "BH": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -95,38 +31,6 @@
         "Repository": "CRAN",
         "Date/Publication": "2025-12-14 10:20:02 UTC",
         "Built": "R 4.4.3; ; 2025-12-14 12:53:25 UTC; unix"
-      }
-    },
-    "BSgenome": {
-      "Source": "Bioconductor",
-      "Repository": "https://bioconductor.org/packages/3.20/bioc",
-      "description": {
-        "Package": "BSgenome",
-        "Title": "Software infrastructure for efficient representation of full\ngenomes and their SNPs",
-        "Description": "Infrastructure shared by all the Biostrings-based genome data\n\tpackages.",
-        "biocViews": "Genetics, Infrastructure, DataRepresentation,\nSequenceMatching, Annotation, SNP",
-        "URL": "https://bioconductor.org/packages/BSgenome",
-        "BugReports": "https://github.com/Bioconductor/BSgenome/issues",
-        "Version": "1.74.0",
-        "License": "Artistic-2.0",
-        "Encoding": "UTF-8",
-        "Authors@R": "person(\"Hervé\", \"Pagès\", role=c(\"aut\", \"cre\"),\n\t\t  email=\"hpages.on.github@gmail.com\")",
-        "Depends": "R (>= 2.8.0), methods, BiocGenerics (>= 0.13.8), S4Vectors (>=\n0.17.28), IRanges (>= 2.13.16), GenomeInfoDb (>= 1.25.6),\nGenomicRanges (>= 1.31.10), Biostrings (>= 2.47.6), BiocIO,\nrtracklayer",
-        "Imports": "utils, stats, matrixStats, XVector, Rsamtools",
-        "Suggests": "BiocManager, BSgenome.Celegans.UCSC.ce2,\nBSgenome.Hsapiens.UCSC.hg38,\nBSgenome.Hsapiens.UCSC.hg38.masked,\nBSgenome.Mmusculus.UCSC.mm10, BSgenome.Rnorvegicus.UCSC.rn5,\nBSgenome.Scerevisiae.UCSC.sacCer1,\nBSgenome.Hsapiens.NCBI.GRCh38,\nTxDb.Hsapiens.UCSC.hg38.knownGene,\nTxDb.Mmusculus.UCSC.mm10.knownGene,\nSNPlocs.Hsapiens.dbSNP144.GRCh38,\nXtraSNPlocs.Hsapiens.dbSNP144.GRCh38, hgu95av2probe, RUnit,\nBSgenomeForge",
-        "LazyLoad": "yes",
-        "Collate": "utils.R OnDiskLongTable_old-class.R OnDiskLongTable-class.R\nOnDiskNamedSequences-class.R SNPlocs-class.R\nODLT_SNPlocs-class.R OldFashionSNPlocs-class.R\nInjectSNPsHandler-class.R XtraSNPlocs-class.R BSgenome-class.R\navailable.genomes.R injectSNPs.R getSeq-methods.R\nextractAt-methods.R bsapply.R BSgenomeViews-class.R\nBSgenome-utils.R export-methods.R AdvancedBSgenomeForge.R",
-        "git_url": "https://git.bioconductor.org/packages/BSgenome",
-        "git_branch": "RELEASE_3_20",
-        "git_last_commit": "7ab2eb4",
-        "git_last_commit_date": "2024-10-29",
-        "Repository": "Bioconductor 3.20",
-        "Date/Publication": "2024-11-08",
-        "NeedsCompilation": "no",
-        "Packaged": "2024-11-08 21:19:26 UTC; biocbuild",
-        "Author": "Hervé Pagès [aut, cre]",
-        "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>",
-        "Built": "R 4.4.1; ; 2024-11-09 21:40:11 UTC; unix"
       }
     },
     "Biobase": {
@@ -159,38 +63,6 @@
         "Author": "R. Gentleman [aut],\n  V. Carey [aut],\n  M. Morgan [aut],\n  S. Falcon [aut],\n  Haleema Khan [ctb] ('esApply' and 'BiobaseDevelopment' vignette\n    translation from Sweave to Rmarkdown / HTML),\n  Bioconductor Package Maintainer [cre]",
         "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>",
         "Built": "R 4.4.1; aarch64-apple-darwin20; 2024-11-09 21:39:02 UTC; unix"
-      }
-    },
-    "BiocFileCache": {
-      "Source": "Bioconductor",
-      "Repository": "https://bioconductor.org/packages/3.20/bioc",
-      "description": {
-        "Package": "BiocFileCache",
-        "Title": "Manage Files Across Sessions",
-        "Version": "2.14.0",
-        "Authors@R": "c(person(\"Lori\", \"Shepherd\",\n      email = \"lori.shepherd@roswellpark.org\",\n      role = c(\"aut\", \"cre\")),\n    person(\"Martin\", \"Morgan\",\n      email = \"martin.morgan@roswellpark.org\",\n      role = \"aut\"))",
-        "Description": "This package creates a persistent on-disk cache of files\n    that the user can add, update, and retrieve. It is useful for\n    managing resources (such as custom Txdb objects) that are costly\n    or difficult to create, web resources, and data files used across\n    sessions.",
-        "Depends": "R (>= 3.4.0), dbplyr (>= 1.0.0)",
-        "Imports": "methods, stats, utils, dplyr, RSQLite, DBI, filelock, curl,\nhttr",
-        "BugReports": "https://github.com/Bioconductor/BiocFileCache/issues",
-        "DevelopmentURL": "https://github.com/Bioconductor/BiocFileCache",
-        "License": "Artistic-2.0",
-        "Encoding": "UTF-8",
-        "RoxygenNote": "7.2.3",
-        "biocViews": "DataImport",
-        "VignetteBuilder": "knitr",
-        "Suggests": "testthat, knitr, BiocStyle, rmarkdown, rtracklayer",
-        "git_url": "https://git.bioconductor.org/packages/BiocFileCache",
-        "git_branch": "RELEASE_3_20",
-        "git_last_commit": "66862c5",
-        "git_last_commit_date": "2024-10-29",
-        "Repository": "Bioconductor 3.20",
-        "Date/Publication": "2024-11-08",
-        "NeedsCompilation": "no",
-        "Packaged": "2024-11-08 21:12:42 UTC; biocbuild",
-        "Author": "Lori Shepherd [aut, cre],\n  Martin Morgan [aut]",
-        "Maintainer": "Lori Shepherd <lori.shepherd@roswellpark.org>",
-        "Built": "R 4.4.1; ; 2024-11-09 21:39:07 UTC; unix"
       }
     },
     "BiocGenerics": {
@@ -371,38 +243,6 @@
         "Author": "Hervé Pagès [aut, cre],\n  Patrick Aboyoun [aut],\n  Robert Gentleman [aut],\n  Saikat DebRoy [aut],\n  Vince Carey [ctb],\n  Nicolas Delhomme [ctb],\n  Felix Ernst [ctb],\n  Wolfgang Huber [ctb] ('matchprobes' vignette),\n  Beryl Kanali [ctb] (Converted 'MultipleAlignments' vignette from Sweave\n    to RMarkdown),\n  Haleema Khan [ctb] (Converted 'matchprobes' vignette from Sweave to\n    RMarkdown),\n  Aidan Lakshman [ctb],\n  Kieran O'Neill [ctb],\n  Valerie Obenchain [ctb],\n  Marcel Ramos [ctb],\n  Albert Vill [ctb],\n  Jen Wokaty [ctb] (Converted 'matchprobes' vignette from Sweave to\n    RMarkdown),\n  Erik Wright [ctb]",
         "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>",
         "Built": "R 4.4.2; aarch64-apple-darwin20; 2024-12-18 19:00:04 UTC; unix"
-      }
-    },
-    "DBI": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Package": "DBI",
-        "Title": "R Database Interface",
-        "Version": "1.3.0",
-        "Date": "2026-02-11",
-        "Authors@R": "c(\n    person(\"R Special Interest Group on Databases (R-SIG-DB)\", role = \"aut\"),\n    person(\"Hadley\", \"Wickham\", role = \"aut\"),\n    person(\"Kirill\", \"Müller\", , \"kirill@cynkra.com\", role = c(\"aut\", \"cre\"),\n           comment = c(ORCID = \"0000-0002-1416-3412\")),\n    person(\"R Consortium\", role = \"fnd\")\n  )",
-        "Description": "A database interface definition for communication between R\n    and relational database management systems.  All classes in this\n    package are virtual and need to be extended by the various R/DBMS\n    implementations.",
-        "License": "LGPL (>= 2.1)",
-        "URL": "https://dbi.r-dbi.org, https://github.com/r-dbi/DBI",
-        "BugReports": "https://github.com/r-dbi/DBI/issues",
-        "Depends": "methods, R (>= 3.0.0)",
-        "Suggests": "arrow, blob, callr, covr, DBItest (>= 1.8.2), dbplyr,\ndownlit, dplyr, glue, hms, knitr, magrittr, nanoarrow (>=\n0.3.0.1), otel, otelsdk, RMariaDB, rmarkdown, rprojroot,\nRSQLite (>= 1.1-2), testthat (>= 3.0.0), vctrs, xml2",
-        "VignetteBuilder": "knitr",
-        "Config/autostyle/scope": "line_breaks",
-        "Config/autostyle/strict": "false",
-        "Config/Needs/check": "r-dbi/DBItest",
-        "Config/Needs/website": "r-dbi/DBItest, r-dbi/dbitemplate, adbi,\nAzureKusto, bigrquery, DatabaseConnector, dittodb, duckdb,\nimplyr, lazysf, odbc, pool, RAthena, IMSMWU/RClickhouse, RH2,\nRJDBC, RMariaDB, RMySQL, RPostgres, RPostgreSQL, RPresto,\nRSQLite, sergeant, sparklyr, withr",
-        "Config/testthat/edition": "3",
-        "Encoding": "UTF-8",
-        "RoxygenNote": "7.3.3.9000",
-        "NeedsCompilation": "no",
-        "Packaged": "2026-02-24 17:22:33 UTC; kirill",
-        "Author": "R Special Interest Group on Databases (R-SIG-DB) [aut],\n  Hadley Wickham [aut],\n  Kirill Müller [aut, cre] (ORCID:\n    <https://orcid.org/0000-0002-1416-3412>),\n  R Consortium [fnd]",
-        "Maintainer": "Kirill Müller <kirill@cynkra.com>",
-        "Repository": "CRAN",
-        "Date/Publication": "2026-02-25 06:31:27 UTC",
-        "Built": "R 4.4.3; ; 2026-02-25 09:34:21 UTC; unix"
       }
     },
     "DelayedArray": {
@@ -588,38 +428,6 @@
         "Built": "R 4.4.2; aarch64-apple-darwin20; 2024-12-07 20:03:13 UTC; unix"
       }
     },
-    "KEGGREST": {
-      "Source": "Bioconductor",
-      "Repository": "https://bioconductor.org/packages/3.20/bioc",
-      "description": {
-        "Package": "KEGGREST",
-        "Version": "1.46.0",
-        "Title": "Client-side REST access to the Kyoto Encyclopedia of Genes and\nGenomes (KEGG)",
-        "Authors@R": "c(\n    person(\"Dan\", \"Tenenbaum\", role = \"aut\"),\n    person(\"Bioconductor Package\", \"Maintainer\", role = c(\"aut\", \"cre\"),\n           email = \"maintainer@bioconductor.org\"),\n    person(\"Martin\", \"Morgan\", role = \"ctb\"),\n    person(\"Kozo\", \"Nishida\", role = \"ctb\"),\n    person(\"Marcel\", \"Ramos\", role = \"ctb\"),\n    person(\"Kristina\", \"Riemer\", role = \"ctb\"),\n    person(\"Lori\", \"Shepherd\", role = \"ctb\"),\n    person(\"Jeremy\", \"Volkening\", role = \"ctb\")\n    )",
-        "Depends": "R (>= 3.5.0)",
-        "Imports": "methods, httr, png, Biostrings",
-        "Suggests": "RUnit, BiocGenerics, BiocStyle, knitr, markdown",
-        "Description": "\n    A package that provides a client interface to the Kyoto\n    Encyclopedia of Genes and Genomes (KEGG) REST API. Only\n    for academic use by academic users belonging to academic\n    institutions (see <https://www.kegg.jp/kegg/rest/>).\n    Note that KEGGREST is based on KEGGSOAP by J. Zhang, R. Gentleman,\n    and Marc Carlson, and KEGG (python package) by Aurelien Mazurie.",
-        "URL": "https://bioconductor.org/packages/KEGGREST",
-        "BugReports": "https://github.com/Bioconductor/KEGGREST/issues",
-        "License": "Artistic-2.0",
-        "VignetteBuilder": "knitr",
-        "biocViews": "Annotation, Pathways, ThirdPartyClient, KEGG",
-        "RoxygenNote": "7.1.1",
-        "Date": "2024-06-17",
-        "git_url": "https://git.bioconductor.org/packages/KEGGREST",
-        "git_branch": "RELEASE_3_20",
-        "git_last_commit": "b34820c",
-        "git_last_commit_date": "2024-10-29",
-        "Repository": "Bioconductor 3.20",
-        "Date/Publication": "2024-11-08",
-        "NeedsCompilation": "no",
-        "Packaged": "2024-11-08 22:52:31 UTC; biocbuild",
-        "Author": "Dan Tenenbaum [aut],\n  Bioconductor Package Maintainer [aut, cre],\n  Martin Morgan [ctb],\n  Kozo Nishida [ctb],\n  Marcel Ramos [ctb],\n  Kristina Riemer [ctb],\n  Lori Shepherd [ctb],\n  Jeremy Volkening [ctb]",
-        "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>",
-        "Built": "R 4.4.1; ; 2024-11-09 21:55:46 UTC; unix"
-      }
-    },
     "Matrix": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -758,67 +566,6 @@
         "Date/Publication": "2025-03-22 11:30:06 UTC",
         "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-03-22 12:51:36 UTC; unix",
         "Archs": "RCurl.so.dSYM"
-      }
-    },
-    "RNAPeaks": {
-      "Source": "github",
-      "Repository": null,
-      "description": {
-        "Package": "RNAPeaks",
-        "Type": "Package",
-        "Title": "RNA-Binding Protein Peak Visualization and Analysis",
-        "Version": "1.2.0",
-        "Authors@R": "c(\nperson(\"Krushna\", \"Bhanushali\",\nemail = \"Krushna.Bhanushali@unc.edu\",\nrole = c(\"aut\", \"cre\")),\nperson(\"Gilbert\", \"Giri\",\nemail = \"Ggiri@unc.edu\",\nrole = c(\"aut\")))",
-        "Description": "RNAPeaks creates publicaition quality visualizations of RNA-binding\nprotein (RBP) peaks overlaid on gene structures. Key features include\nsingle-gene visualization with PlotGene(), multi-gene genomic region\nplots with PlotRegion(), splicing maps analyzing RBP binding frequency\naround splice junctions, and sequence motif frequency analysis with\nIUPAC ambiguity code support.The package provides an interactive Shiny web interface\nfor users without R programming experience. Includes sample datasets\nfor immediate exploration.",
-        "License": "MIT + file LICENSE",
-        "URL": "https://github.com/Krushna-B/RNAPeaks",
-        "BugReports": "https://github.com/Krushna-B/RNAPeaks/issues",
-        "Encoding": "UTF-8",
-        "Roxygen": "list(markdown = TRUE)",
-        "RoxygenNote": "7.3.3",
-        "biocViews": "Visualization,\nGeneExpression,\nRNASeq,\nAlternativeSplicing,\nGenomeAnnotation",
-        "Imports": "ggplot2 (>= 3.4.0),\ndplyr,\nGenomicRanges,\nIRanges,\nS4Vectors,\nBiocGenerics,\nGenomeInfoDb,\nAnnotationHub,\nBiostrings,\nBSgenome,\nscales,\nslider,\nprogress,\nfuture,\ngrid,\nmagrittr,\nparallel,\nstats,\nutils",
-        "Suggests": "testthat (>= 3.0.0),\nknitr,\nrmarkdown,\nBiocStyle,\nensembldb,\nBSgenome.Hsapiens.UCSC.hg38,\nshiny (>= 1.7.0),\nrtracklayer,\nbslib,\nbsicons",
-        "Config/testthat/edition": "3",
-        "Depends": "R (>= 4.3)",
-        "LazyData": "true",
-        "LazyDataCompression": "xz",
-        "VignetteBuilder": "knitr"
-      }
-    },
-    "RSQLite": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Package": "RSQLite",
-        "Title": "SQLite Interface for R",
-        "Version": "2.4.6",
-        "Date": "2026-02-05",
-        "Authors@R": "c(\n    person(\"Kirill\", \"Müller\", , \"kirill@cynkra.com\", role = c(\"aut\", \"cre\"),\n           comment = c(ORCID = \"0000-0002-1416-3412\")),\n    person(\"Hadley\", \"Wickham\", role = \"aut\"),\n    person(c(\"David\", \"A.\"), \"James\", role = \"aut\"),\n    person(\"Seth\", \"Falcon\", role = \"aut\"),\n    person(\"D. Richard\", \"Hipp\", role = \"ctb\",\n           comment = \"for the included SQLite sources\"),\n    person(\"Dan\", \"Kennedy\", role = \"ctb\",\n           comment = \"for the included SQLite sources\"),\n    person(\"Joe\", \"Mistachkin\", role = \"ctb\",\n           comment = \"for the included SQLite sources\"),\n    person(, \"SQLite Authors\", role = \"ctb\",\n           comment = \"for the included SQLite sources\"),\n    person(\"Liam\", \"Healy\", role = \"ctb\",\n           comment = \"for the included SQLite sources\"),\n    person(\"R Consortium\", role = \"fnd\"),\n    person(, \"RStudio\", role = \"cph\")\n  )",
-        "Description": "Embeds the SQLite database engine in R and provides an\n    interface compliant with the DBI package. The source for the SQLite\n    engine (version 3.51.2) and for various extensions is included.\n    System libraries will never be consulted because this package relies\n    on static linking for the plugins it includes; this also ensures a\n    consistent experience across all installations.",
-        "License": "LGPL (>= 2.1)",
-        "URL": "https://rsqlite.r-dbi.org, https://github.com/r-dbi/RSQLite",
-        "BugReports": "https://github.com/r-dbi/RSQLite/issues",
-        "Depends": "R (>= 3.1.0)",
-        "Imports": "bit64, blob (>= 1.2.0), DBI (>= 1.2.0), memoise, methods,\npkgconfig, rlang",
-        "Suggests": "callr, cli, DBItest (>= 1.8.0), decor, gert, gh, hms, knitr,\nmagrittr, rmarkdown, rvest, testthat (>= 3.0.0), withr, xml2",
-        "LinkingTo": "cpp11 (>= 0.4.0)",
-        "VignetteBuilder": "knitr",
-        "Config/Needs/website": "r-dbi/dbitemplate",
-        "Config/autostyle/scope": "line_breaks",
-        "Config/autostyle/strict": "false",
-        "Config/testthat/edition": "3",
-        "Encoding": "UTF-8",
-        "RoxygenNote": "7.3.3.9000",
-        "Collate": "'SQLiteConnection.R' 'SQLKeywords_SQLiteConnection.R'\n'SQLiteDriver.R' 'SQLite.R' 'SQLiteResult.R' 'coerce.R'\n'compatRowNames.R' 'copy.R' 'cpp11.R' 'datasetsDb.R'\n'dbAppendTable_SQLiteConnection.R' 'dbBeginTransaction.R'\n'dbBegin_SQLiteConnection.R' 'dbBind_SQLiteResult.R'\n'dbClearResult_SQLiteResult.R' 'dbColumnInfo_SQLiteResult.R'\n'dbCommit_SQLiteConnection.R' 'dbConnect_SQLiteConnection.R'\n'dbConnect_SQLiteDriver.R' 'dbDataType_SQLiteConnection.R'\n'dbDataType_SQLiteDriver.R' 'dbDisconnect_SQLiteConnection.R'\n'dbExistsTable_SQLiteConnection_Id.R'\n'dbExistsTable_SQLiteConnection_character.R'\n'dbFetch_SQLiteResult.R' 'dbGetException_SQLiteConnection.R'\n'dbGetInfo_SQLiteConnection.R' 'dbGetInfo_SQLiteDriver.R'\n'dbGetPreparedQuery.R'\n'dbGetPreparedQuery_SQLiteConnection_character_data.frame.R'\n'dbGetRowCount_SQLiteResult.R'\n'dbGetRowsAffected_SQLiteResult.R'\n'dbGetStatement_SQLiteResult.R' 'dbHasCompleted_SQLiteResult.R'\n'dbIsValid_SQLiteConnection.R' 'dbIsValid_SQLiteDriver.R'\n'dbIsValid_SQLiteResult.R' 'dbListResults_SQLiteConnection.R'\n'dbListTables_SQLiteConnection.R'\n'dbQuoteIdentifier_SQLiteConnection_SQL.R'\n'dbQuoteIdentifier_SQLiteConnection_character.R'\n'dbReadTable_SQLiteConnection_character.R'\n'dbRemoveTable_SQLiteConnection_character.R'\n'dbRollback_SQLiteConnection.R' 'dbSendPreparedQuery.R'\n'dbSendPreparedQuery_SQLiteConnection_character_data.frame.R'\n'dbSendQuery_SQLiteConnection_character.R'\n'dbUnloadDriver_SQLiteDriver.R'\n'dbUnquoteIdentifier_SQLiteConnection_SQL.R'\n'dbWriteTable_SQLiteConnection_character_character.R'\n'dbWriteTable_SQLiteConnection_character_data.frame.R'\n'db_bind.R' 'deprecated.R' 'export.R' 'fetch_SQLiteResult.R'\n'import-standalone-check_suggested.R'\n'import-standalone-purrr.R' 'initExtension.R' 'initRegExp.R'\n'isSQLKeyword_SQLiteConnection_character.R'\n'make.db.names_SQLiteConnection_character.R' 'pkgconfig.R'\n'show_SQLiteConnection.R' 'sqlData_SQLiteConnection.R'\n'table.R' 'transactions.R' 'utils.R' 'version.R' 'zzz.R'",
-        "NeedsCompilation": "yes",
-        "Packaged": "2026-02-05 19:29:15 UTC; kirill",
-        "Author": "Kirill Müller [aut, cre] (ORCID:\n    <https://orcid.org/0000-0002-1416-3412>),\n  Hadley Wickham [aut],\n  David A. James [aut],\n  Seth Falcon [aut],\n  D. Richard Hipp [ctb] (for the included SQLite sources),\n  Dan Kennedy [ctb] (for the included SQLite sources),\n  Joe Mistachkin [ctb] (for the included SQLite sources),\n  SQLite Authors [ctb] (for the included SQLite sources),\n  Liam Healy [ctb] (for the included SQLite sources),\n  R Consortium [fnd],\n  RStudio [cph]",
-        "Maintainer": "Kirill Müller <kirill@cynkra.com>",
-        "Repository": "CRAN",
-        "Date/Publication": "2026-02-06 10:50:07 UTC",
-        "Built": "R 4.4.3; aarch64-apple-darwin20; 2026-02-07 08:33:03 UTC; unix",
-        "Archs": "RSQLite.so.dSYM"
       }
     },
     "Rcpp": {
@@ -1244,65 +991,6 @@
         "Archs": "base64enc.so.dSYM"
       }
     },
-    "bit": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Package": "bit",
-        "Title": "Classes and Methods for Fast Memory-Efficient Boolean Selections",
-        "Version": "4.6.0",
-        "Authors@R": "c(\n    person(\"Michael\", \"Chirico\", email = \"MichaelChirico4@gmail.com\", role = c(\"aut\", \"cre\")),\n    person(\"Jens\", \"Oehlschlägel\", role = \"aut\"),\n    person(\"Brian\", \"Ripley\", role = \"ctb\")\n  )",
-        "Depends": "R (>= 3.4.0)",
-        "Suggests": "testthat (>= 3.0.0), roxygen2, knitr, markdown, rmarkdown,\nmicrobenchmark, bit64 (>= 4.0.0), ff (>= 4.0.0)",
-        "Description": "Provided are classes for boolean and skewed boolean vectors,\n    fast boolean methods, fast unique and non-unique integer sorting,\n    fast set operations on sorted and unsorted sets of integers, and\n    foundations for ff (range index, compression, chunked processing).",
-        "License": "GPL-2 | GPL-3",
-        "LazyLoad": "yes",
-        "ByteCompile": "yes",
-        "Encoding": "UTF-8",
-        "URL": "https://github.com/r-lib/bit",
-        "VignetteBuilder": "knitr, rmarkdown",
-        "RoxygenNote": "7.3.2",
-        "Config/testthat/edition": "3",
-        "NeedsCompilation": "yes",
-        "Packaged": "2025-03-05 07:18:45 UTC; michael",
-        "Author": "Michael Chirico [aut, cre],\n  Jens Oehlschlägel [aut],\n  Brian Ripley [ctb]",
-        "Maintainer": "Michael Chirico <MichaelChirico4@gmail.com>",
-        "Repository": "CRAN",
-        "Date/Publication": "2025-03-06 10:50:01 UTC",
-        "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-03-06 11:44:58 UTC; unix",
-        "Archs": "bit.so.dSYM"
-      }
-    },
-    "bit64": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Package": "bit64",
-        "Title": "A S3 Class for Vectors of 64bit Integers",
-        "Version": "4.6.0-1",
-        "Authors@R": "c(\n    person(\"Michael\", \"Chirico\", email = \"michaelchirico4@gmail.com\", role = c(\"aut\", \"cre\")),\n    person(\"Jens\", \"Oehlschlägel\", role = \"aut\"),\n    person(\"Leonardo\", \"Silvestri\", role = \"ctb\"),\n    person(\"Ofek\", \"Shilon\", role = \"ctb\")\n  )",
-        "Depends": "R (>= 3.4.0), bit (>= 4.0.0)",
-        "Description": "\n  Package 'bit64' provides serializable S3 atomic 64bit (signed) integers.\n  These are useful for handling database keys and exact counting in +-2^63.\n  WARNING: do not use them as replacement for 32bit integers, integer64 are not\n  supported for subscripting by R-core and they have different semantics when\n  combined with double, e.g. integer64 + double => integer64.\n  Class integer64 can be used in vectors, matrices, arrays and data.frames.\n  Methods are available for coercion from and to logicals, integers, doubles,\n  characters and factors as well as many elementwise and summary functions.\n  Many fast algorithmic operations such as 'match' and 'order' support inter-\n  active data exploration and manipulation and optionally leverage caching.",
-        "License": "GPL-2 | GPL-3",
-        "LazyLoad": "yes",
-        "ByteCompile": "yes",
-        "URL": "https://github.com/r-lib/bit64",
-        "Encoding": "UTF-8",
-        "Imports": "graphics, methods, stats, utils",
-        "Suggests": "testthat (>= 3.0.3), withr",
-        "Config/testthat/edition": "3",
-        "Config/needs/development": "testthat",
-        "RoxygenNote": "7.3.2",
-        "NeedsCompilation": "yes",
-        "Packaged": "2025-01-16 14:04:20 UTC; michael",
-        "Author": "Michael Chirico [aut, cre],\n  Jens Oehlschlägel [aut],\n  Leonardo Silvestri [ctb],\n  Ofek Shilon [ctb]",
-        "Maintainer": "Michael Chirico <michaelchirico4@gmail.com>",
-        "Repository": "CRAN",
-        "Date/Publication": "2025-01-16 16:00:07 UTC",
-        "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-01-16 17:38:09 UTC; unix",
-        "Archs": "bit64.so.dSYM"
-      }
-    },
     "bitops": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -1324,35 +1012,6 @@
         "Date/Publication": "2024-10-03 23:00:54 UTC",
         "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-01-25 18:36:01 UTC; unix",
         "Archs": "bitops.so.dSYM"
-      }
-    },
-    "blob": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Package": "blob",
-        "Title": "A Simple S3 Class for Representing Vectors of Binary Data\n('BLOBS')",
-        "Version": "1.3.0",
-        "Authors@R": "c(\n    person(\"Hadley\", \"Wickham\", role = \"aut\"),\n    person(\"Kirill\", \"Müller\", , \"kirill@cynkra.com\", role = \"cre\"),\n    person(\"RStudio\", role = c(\"cph\", \"fnd\"))\n  )",
-        "Description": "R's raw vector is useful for storing a single binary object.\n    What if you want to put a vector of them in a data frame? The 'blob'\n    package provides the blob object, a list of raw vectors, suitable for\n    use as a column in data frame.",
-        "License": "MIT + file LICENSE",
-        "URL": "https://blob.tidyverse.org, https://github.com/tidyverse/blob",
-        "BugReports": "https://github.com/tidyverse/blob/issues",
-        "Imports": "methods, rlang, vctrs (>= 0.2.1)",
-        "Suggests": "covr, crayon, pillar (>= 1.2.1), testthat (>= 3.0.0)",
-        "Config/autostyle/scope": "line_breaks",
-        "Config/autostyle/strict": "false",
-        "Config/Needs/website": "tidyverse/tidytemplate",
-        "Config/testthat/edition": "3",
-        "Encoding": "UTF-8",
-        "RoxygenNote": "7.3.3.9000",
-        "NeedsCompilation": "no",
-        "Packaged": "2026-01-13 06:57:54 UTC; kirill",
-        "Author": "Hadley Wickham [aut],\n  Kirill Müller [cre],\n  RStudio [cph, fnd]",
-        "Maintainer": "Kirill Müller <kirill@cynkra.com>",
-        "Repository": "CRAN",
-        "Date/Publication": "2026-01-14 09:10:14 UTC",
-        "Built": "R 4.4.3; ; 2026-01-14 10:50:26 UTC; unix"
       }
     },
     "bsicons": {
@@ -1606,39 +1265,6 @@
         "Archs": "curl.so.dSYM"
       }
     },
-    "dbplyr": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Type": "Package",
-        "Package": "dbplyr",
-        "Title": "A 'dplyr' Back End for Databases",
-        "Version": "2.5.1",
-        "Authors@R": "c(\n    person(\"Hadley\", \"Wickham\", , \"hadley@posit.co\", role = c(\"aut\", \"cre\")),\n    person(\"Maximilian\", \"Girlich\", role = \"aut\"),\n    person(\"Edgar\", \"Ruiz\", role = \"aut\"),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"))\n  )",
-        "Description": "A 'dplyr' back end for databases that allows you to work with\n    remote database tables as if they are in-memory data frames.  Basic\n    features works with any database that has a 'DBI' back end; more\n    advanced features require 'SQL' translation to be provided by the\n    package author.",
-        "License": "MIT + file LICENSE",
-        "URL": "https://dbplyr.tidyverse.org/, https://github.com/tidyverse/dbplyr",
-        "BugReports": "https://github.com/tidyverse/dbplyr/issues",
-        "Depends": "R (>= 3.6)",
-        "Imports": "blob (>= 1.2.0), cli (>= 3.6.1), DBI (>= 1.1.3), dplyr (>=\n1.1.2), glue (>= 1.6.2), lifecycle (>= 1.0.3), magrittr,\nmethods, pillar (>= 1.9.0), purrr (>= 1.0.1), R6 (>= 2.2.2),\nrlang (>= 1.1.1), tibble (>= 3.2.1), tidyr (>= 1.3.0),\ntidyselect (>= 1.2.1), utils, vctrs (>= 0.6.3), withr (>=\n2.5.0)",
-        "Suggests": "bit64, covr, knitr, Lahman, nycflights13, odbc (>= 1.4.2),\nRMariaDB (>= 1.2.2), rmarkdown, RPostgres (>= 1.4.5),\nRPostgreSQL, RSQLite (>= 2.3.8), testthat (>= 3.1.10)",
-        "VignetteBuilder": "knitr",
-        "Config/Needs/website": "tidyverse/tidytemplate",
-        "Config/testthat/edition": "3",
-        "Config/testthat/parallel": "TRUE",
-        "Encoding": "UTF-8",
-        "Language": "en-gb",
-        "RoxygenNote": "7.3.3",
-        "Collate": "'db-sql.R' 'utils-check.R' 'import-standalone-types-check.R'\n'import-standalone-obj-type.R' 'utils.R' 'sql.R' 'escape.R'\n'translate-sql-cut.R' 'translate-sql-quantile.R'\n'translate-sql-string.R' 'translate-sql-paste.R'\n'translate-sql-helpers.R' 'translate-sql-window.R'\n'translate-sql-conditional.R' 'backend-.R' 'backend-access.R'\n'backend-hana.R' 'backend-hive.R' 'backend-impala.R'\n'verb-copy-to.R' 'backend-mssql.R' 'backend-mysql.R'\n'backend-odbc.R' 'backend-oracle.R' 'backend-postgres.R'\n'backend-postgres-old.R' 'backend-redshift.R'\n'backend-snowflake.R' 'backend-spark-sql.R' 'backend-sqlite.R'\n'backend-teradata.R' 'build-sql.R' 'data-cache.R'\n'data-lahman.R' 'data-nycflights13.R' 'db-escape.R' 'db-io.R'\n'db.R' 'dbplyr.R' 'explain.R' 'ident.R'\n'import-standalone-s3-register.R' 'join-by-compat.R'\n'join-cols-compat.R' 'lazy-join-query.R' 'lazy-ops.R'\n'lazy-query.R' 'lazy-select-query.R' 'lazy-set-op-query.R'\n'memdb.R' 'optimise-utils.R' 'pillar.R' 'progress.R'\n'sql-build.R' 'query-join.R' 'query-select.R'\n'query-semi-join.R' 'query-set-op.R' 'query.R' 'reexport.R'\n'remote.R' 'rows.R' 'schema.R' 'simulate.R' 'sql-clause.R'\n'sql-expr.R' 'src-sql.R' 'src_dbi.R' 'table-name.R'\n'tbl-lazy.R' 'tbl-sql.R' 'test-frame.R' 'testthat.R'\n'tidyeval-across.R' 'tidyeval.R' 'translate-sql.R'\n'utils-format.R' 'verb-arrange.R' 'verb-compute.R'\n'verb-count.R' 'verb-distinct.R' 'verb-do-query.R' 'verb-do.R'\n'verb-expand.R' 'verb-fill.R' 'verb-filter.R' 'verb-group_by.R'\n'verb-head.R' 'verb-joins.R' 'verb-mutate.R'\n'verb-pivot-longer.R' 'verb-pivot-wider.R' 'verb-pull.R'\n'verb-select.R' 'verb-set-ops.R' 'verb-slice.R'\n'verb-summarise.R' 'verb-uncount.R' 'verb-window.R' 'zzz.R'",
-        "NeedsCompilation": "no",
-        "Packaged": "2025-09-09 16:38:28 UTC; hadleywickham",
-        "Author": "Hadley Wickham [aut, cre],\n  Maximilian Girlich [aut],\n  Edgar Ruiz [aut],\n  Posit Software, PBC [cph, fnd]",
-        "Maintainer": "Hadley Wickham <hadley@posit.co>",
-        "Repository": "CRAN",
-        "Date/Publication": "2025-09-10 07:51:05 UTC",
-        "Built": "R 4.4.1; ; 2025-09-10 10:09:52 UTC; unix"
-      }
-    },
     "digest": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -1750,34 +1376,6 @@
         "Date/Publication": "2024-05-15 09:00:07 UTC",
         "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-02-01 04:44:26 UTC; unix",
         "Archs": "fastmap.so.dSYM"
-      }
-    },
-    "filelock": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Package": "filelock",
-        "Title": "Portable File Locking",
-        "Version": "1.0.3",
-        "Authors@R": "c(\n    person(\"Gábor\", \"Csárdi\", , \"csardi.gabor@gmail.com\", role = c(\"aut\", \"cre\")),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"))\n  )",
-        "Description": "Place an exclusive or shared lock on a file. It uses\n    'LockFile' on Windows and 'fcntl' locks on Unix-like systems.",
-        "License": "MIT + file LICENSE",
-        "URL": "https://r-lib.github.io/filelock/,\nhttps://github.com/r-lib/filelock",
-        "BugReports": "https://github.com/r-lib/filelock/issues",
-        "Depends": "R (>= 3.4)",
-        "Suggests": "callr (>= 2.0.0), covr, testthat (>= 3.0.0)",
-        "Config/Needs/website": "tidyverse/tidytemplate",
-        "Config/testthat/edition": "3",
-        "Encoding": "UTF-8",
-        "RoxygenNote": "7.2.3",
-        "NeedsCompilation": "yes",
-        "Packaged": "2023-12-11 01:12:05 UTC; gaborcsardi",
-        "Author": "Gábor Csárdi [aut, cre],\n  Posit Software, PBC [cph, fnd]",
-        "Maintainer": "Gábor Csárdi <csardi.gabor@gmail.com>",
-        "Repository": "CRAN",
-        "Date/Publication": "2023-12-11 04:40:02 UTC",
-        "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-01-24 20:46:41 UTC; unix",
-        "Archs": "filelock.so.dSYM"
       }
     },
     "fontawesome": {
@@ -1922,37 +1520,6 @@
         "Built": "R 4.4.1; ; 2025-01-24 20:47:01 UTC; unix"
       }
     },
-    "future": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Package": "future",
-        "Version": "1.70.0",
-        "Title": "Unified Parallel and Distributed Processing in R for Everyone",
-        "Depends": "R (>= 3.2.0)",
-        "Imports": "digest, globals (>= 0.18.0), listenv (>= 0.8.0), parallel,\nparallelly (>= 1.44.0), tools, utils",
-        "Suggests": "methods, RhpcBLASctl, R.rsp, markdown",
-        "VignetteBuilder": "R.rsp",
-        "Authors@R": "c(person(\"Henrik\", \"Bengtsson\",\n                    role = c(\"aut\", \"cre\", \"cph\"),\n                    email = \"henrikb@braju.com\",\n                    comment = c(ORCID = \"0000-0002-7579-5165\")))",
-        "Description": "The purpose of this package is to provide a lightweight and\n    unified Future API for sequential and parallel processing of R\n    expression via futures.  The simplest way to evaluate an expression\n    in parallel is to use `x %<-% { expression }` with `plan(multisession)`.\n    This package implements sequential, multicore, multisession, and\n    cluster futures.  With these, R expressions can be evaluated on the\n    local machine, in parallel a set of local machines, or distributed\n    on a mix of local and remote machines.\n    Extensions to this package implement additional backends for\n    processing futures via compute cluster schedulers, etc.\n    Because of its unified API, there is no need to modify any code in order\n    switch from sequential on the local machine to, say, distributed\n    processing on a remote compute cluster.\n    Another strength of this package is that global variables and functions\n    are automatically identified and exported as needed, making it\n    straightforward to tweak existing code to make use of futures.",
-        "License": "LGPL (>= 2.1)",
-        "LazyLoad": "TRUE",
-        "ByteCompile": "TRUE",
-        "URL": "https://future.futureverse.org,\nhttps://github.com/futureverse/future",
-        "BugReports": "https://github.com/futureverse/future/issues",
-        "Language": "en-US",
-        "Encoding": "UTF-8",
-        "RoxygenNote": "7.3.3",
-        "Collate": "'000.bquote.R' '000.import.R' '000.re-exports.R'\n'009.deprecation.R' '010.tweakable.R' '010.utils-parallelly.R'\n'backend_api-01-FutureBackend-class.R'\n'backend_api-03.MultiprocessFutureBackend-class.R'\n'backend_api-11.ClusterFutureBackend-class.R'\n'backend_api-11.MulticoreFutureBackend-class.R'\n'backend_api-11.SequentialFutureBackend-class.R'\n'backend_api-13.MultisessionFutureBackend-class.R'\n'backend_api-ConstantFuture-class.R'\n'backend_api-Future-class.R' 'backend_api-FutureRegistry.R'\n'backend_api-UniprocessFuture-class.R'\n'backend_api-evalFuture.R' 'core_api-cancel.R'\n'core_api-future.R' 'core_api-reset.R' 'core_api-resolved.R'\n'core_api-value.R' 'delayed_api-futureAssign.R'\n'delayed_api-futureOf.R' 'demo_api-mandelbrot.R'\n'infix_api-01-futureAssign_OP.R' 'infix_api-02-globals_OP.R'\n'infix_api-03-seed_OP.R' 'infix_api-04-stdout_OP.R'\n'infix_api-05-conditions_OP.R' 'infix_api-06-lazy_OP.R'\n'infix_api-07-label_OP.R' 'infix_api-08-plan_OP.R'\n'infix_api-09-tweak_OP.R'\n'protected_api-FutureCondition-class.R'\n'protected_api-FutureGlobals-class.R'\n'protected_api-FutureResult-class.R' 'protected_api-futures.R'\n'protected_api-globals.R' 'protected_api-journal.R'\n'protected_api-resolve.R' 'protected_api-result.R'\n'protected_api-signalConditions.R' 'testme.R' 'utils-basic.R'\n'utils-conditions.R' 'utils-connections.R' 'utils-debug.R'\n'utils-immediateCondition.R' 'utils-marshalling.R'\n'utils-objectSize.R' 'utils-options.R' 'utils-prune_pkg_code.R'\n'utils-registerClusterTypes.R' 'utils-rng_utils.R'\n'utils-signalEarly.R' 'utils-stealth_sample.R'\n'utils-sticky_globals.R' 'utils-tweakExpression.R'\n'utils-uuid.R' 'utils-whichIndex.R' 'utils_api-backtrace.R'\n'utils_api-capture_journals.R' 'utils_api-futureCall.R'\n'utils_api-futureSessionInfo.R' 'utils_api-makeClusterFuture.R'\n'utils_api-minifuture.R' 'utils_api-nbrOfWorkers.R'\n'utils_api-plan.R' 'utils_api-plan-with.R'\n'utils_api-sessionDetails.R' 'utils_api-tweak.R' 'zzz.R'",
-        "NeedsCompilation": "no",
-        "Packaged": "2026-03-13 21:01:52 UTC; hb",
-        "Author": "Henrik Bengtsson [aut, cre, cph] (ORCID:\n    <https://orcid.org/0000-0002-7579-5165>)",
-        "Maintainer": "Henrik Bengtsson <henrikb@braju.com>",
-        "Repository": "CRAN",
-        "Date/Publication": "2026-03-14 06:10:29 UTC",
-        "Built": "R 4.4.3; ; 2026-03-14 08:11:27 UTC; unix"
-      }
-    },
     "generics": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -2014,34 +1581,6 @@
         "Built": "R 4.4.3; ; 2026-02-03 12:19:33 UTC; unix"
       }
     },
-    "globals": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Package": "globals",
-        "Version": "0.19.1",
-        "Depends": "R (>= 3.1.2)",
-        "Imports": "codetools",
-        "Title": "Identify Global Objects in R Expressions",
-        "Authors@R": "c(\n    person(\"Henrik\", \"Bengtsson\", role=c(\"aut\", \"cre\", \"cph\"),\n           email=\"henrikb@braju.com\"),\n    person(\"Davis\",\"Vaughan\", role=\"ctb\",\n           email=\"davis@posit.co\"))",
-        "Description": "Identifies global (\"unknown\" or \"free\") objects in R expressions\n    by code inspection using various strategies (ordered, liberal,\n    conservative, or deep-first search). The objective of this package is to\n    make it as simple as possible to identify global objects for the purpose\n    of exporting them in parallel, distributed compute environments.",
-        "License": "LGPL (>= 2.1)",
-        "LazyLoad": "TRUE",
-        "ByteCompile": "TRUE",
-        "Language": "en-US",
-        "Encoding": "UTF-8",
-        "URL": "https://globals.futureverse.org,\nhttps://github.com/futureverse/globals",
-        "BugReports": "https://github.com/futureverse/globals/issues",
-        "RoxygenNote": "7.3.3",
-        "NeedsCompilation": "no",
-        "Packaged": "2026-03-12 23:06:06 UTC; hb",
-        "Author": "Henrik Bengtsson [aut, cre, cph],\n  Davis Vaughan [ctb]",
-        "Maintainer": "Henrik Bengtsson <henrikb@braju.com>",
-        "Repository": "CRAN",
-        "Date/Publication": "2026-03-13 07:30:09 UTC",
-        "Built": "R 4.4.3; ; 2026-03-13 12:22:15 UTC; unix"
-      }
-    },
     "glue": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -2101,34 +1640,6 @@
         "Repository": "CRAN",
         "Date/Publication": "2024-10-25 13:20:02 UTC",
         "Built": "R 4.4.1; ; 2024-10-25 14:16:01 UTC; unix"
-      }
-    },
-    "hms": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Package": "hms",
-        "Title": "Pretty Time of Day",
-        "Date": "2025-10-11",
-        "Version": "1.1.4",
-        "Authors@R": "c(\n    person(\"Kirill\", \"Müller\", , \"kirill@cynkra.com\", role = c(\"aut\", \"cre\"),\n           comment = c(ORCID = \"0000-0002-1416-3412\")),\n    person(\"R Consortium\", role = \"fnd\"),\n    person(\"Posit Software, PBC\", role = \"fnd\",\n           comment = c(ROR = \"03wc8by49\"))\n  )",
-        "Description": "Implements an S3 class for storing and formatting time-of-day\n    values, based on the 'difftime' class.",
-        "License": "MIT + file LICENSE",
-        "URL": "https://hms.tidyverse.org/, https://github.com/tidyverse/hms",
-        "BugReports": "https://github.com/tidyverse/hms/issues",
-        "Imports": "cli, lifecycle, methods, pkgconfig, rlang (>= 1.0.2), vctrs\n(>= 0.3.8)",
-        "Suggests": "crayon, lubridate, pillar (>= 1.1.0), testthat (>= 3.0.0)",
-        "Config/Needs/website": "tidyverse/tidytemplate",
-        "Config/testthat/edition": "3",
-        "Encoding": "UTF-8",
-        "RoxygenNote": "7.3.3.9000",
-        "NeedsCompilation": "no",
-        "Packaged": "2025-10-16 19:10:16 UTC; kirill",
-        "Author": "Kirill Müller [aut, cre] (ORCID:\n    <https://orcid.org/0000-0002-1416-3412>),\n  R Consortium [fnd],\n  Posit Software, PBC [fnd] (ROR: <https://ror.org/03wc8by49>)",
-        "Maintainer": "Kirill Müller <kirill@cynkra.com>",
-        "Repository": "CRAN",
-        "Date/Publication": "2025-10-17 05:10:11 UTC",
-        "Built": "R 4.4.1; ; 2025-10-17 05:46:43 UTC; unix"
       }
     },
     "htmltools": {
@@ -2447,34 +1958,6 @@
         "Built": "R 4.4.3; ; 2026-01-08 11:52:14 UTC; unix"
       }
     },
-    "listenv": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Package": "listenv",
-        "Version": "0.10.1",
-        "Depends": "R (>= 3.1.2)",
-        "Suggests": "R.utils, R.rsp, markdown",
-        "VignetteBuilder": "R.rsp",
-        "Title": "Environments Behaving (Almost) as Lists",
-        "Authors@R": "c(person(\"Henrik\", \"Bengtsson\", role=c(\"aut\", \"cre\", \"cph\"),\n                                          email = \"henrikb@braju.com\"))",
-        "Description": "List environments are environments that have list-like properties.  For instance, the elements of a list environment are ordered and can be accessed and iterated over using index subsetting, e.g. 'x <- listenv(a = 1, b = 2); for (i in seq_along(x)) x[[i]] <- x[[i]] ^ 2; y <- as.list(x)'.",
-        "License": "LGPL (>= 2.1)",
-        "LazyLoad": "TRUE",
-        "URL": "https://listenv.futureverse.org,\nhttps://github.com/futureverse/listenv",
-        "BugReports": "https://github.com/futureverse/listenv/issues",
-        "RoxygenNote": "7.3.3",
-        "Encoding": "UTF-8",
-        "Language": "en-US",
-        "NeedsCompilation": "no",
-        "Packaged": "2026-03-10 16:49:27 UTC; hb",
-        "Author": "Henrik Bengtsson [aut, cre, cph]",
-        "Maintainer": "Henrik Bengtsson <henrikb@braju.com>",
-        "Repository": "CRAN",
-        "Date/Publication": "2026-03-10 18:00:02 UTC",
-        "Built": "R 4.4.3; ; 2026-03-10 19:20:14 UTC; unix"
-      }
-    },
     "magrittr": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -2641,36 +2124,6 @@
         "Built": "R 4.4.1; ; 2025-09-03 20:31:26 UTC; unix"
       }
     },
-    "parallelly": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Package": "parallelly",
-        "Version": "1.46.1",
-        "Title": "Enhancing the 'parallel' Package",
-        "Imports": "parallel, tools, utils",
-        "Suggests": "commonmark, base64enc",
-        "VignetteBuilder": "parallelly",
-        "Authors@R": "c(\n        person(\"Henrik\", \"Bengtsson\",\n               role = c(\"aut\", \"cre\", \"cph\"),\n               email = \"henrikb@braju.com\",\n               comment = c(ORCID = \"0000-0002-7579-5165\")),\n        person(\"Mike\", \"Cheng\",\n               role = c(\"ctb\"),\n               email = \"mikefc@coolbutuseless.com\")\n    )",
-        "Description": "Utility functions that enhance the 'parallel' package and support the built-in parallel backends of the 'future' package.  For example, availableCores() gives the number of CPU cores available to your R process as given by the operating system, 'cgroups' and Linux containers, R options, and environment variables, including those set by job schedulers on high-performance compute clusters. If none is set, it will fall back to parallel::detectCores(). Another example is makeClusterPSOCK(), which is backward compatible with parallel::makePSOCKcluster() while doing a better job in setting up remote cluster workers without the need for configuring the firewall to do port-forwarding to your local computer.",
-        "License": "LGPL (>= 2.1)",
-        "LazyLoad": "TRUE",
-        "ByteCompile": "TRUE",
-        "URL": "https://parallelly.futureverse.org,\nhttps://github.com/futureverse/parallelly",
-        "BugReports": "https://github.com/futureverse/parallelly/issues",
-        "Language": "en-US",
-        "Encoding": "UTF-8",
-        "RoxygenNote": "7.3.3",
-        "NeedsCompilation": "yes",
-        "Packaged": "2026-01-07 07:32:26 UTC; hb",
-        "Author": "Henrik Bengtsson [aut, cre, cph] (ORCID:\n    <https://orcid.org/0000-0002-7579-5165>),\n  Mike Cheng [ctb]",
-        "Maintainer": "Henrik Bengtsson <henrikb@braju.com>",
-        "Repository": "CRAN",
-        "Date/Publication": "2026-01-08 06:10:23 UTC",
-        "Built": "R 4.4.3; aarch64-apple-darwin20; 2026-01-08 06:42:41 UTC; unix",
-        "Archs": "parallelly.so.dSYM"
-      }
-    },
     "pillar": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -2728,83 +2181,6 @@
         "Built": "R 4.4.1; ; 2025-02-01 04:46:46 UTC; unix"
       }
     },
-    "png": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Package": "png",
-        "Version": "0.1-9",
-        "Title": "Read and write PNG images",
-        "Author": "Simon Urbanek [aut, cre, cph] (https://urbanek.nz, ORCID:\n    <https://orcid.org/0000-0003-2297-1732>)",
-        "Authors@R": "person(\"Simon\", \"Urbanek\", role=c(\"aut\",\"cre\",\"cph\"), email=\"Simon.Urbanek@r-project.org\", comment=c(\"https://urbanek.nz\", ORCID=\"0000-0003-2297-1732\"))",
-        "Maintainer": "Simon Urbanek <Simon.Urbanek@r-project.org>",
-        "Depends": "R (>= 2.9.0)",
-        "Description": "This package provides an easy and simple way to read, write and display bitmap images stored in the PNG format. It can read and write both files and in-memory raw vectors.",
-        "License": "GPL-2 | GPL-3",
-        "SystemRequirements": "libpng",
-        "URL": "https://www.rforge.net/png/",
-        "BugReports": "https://github.com/s-u/png/issues/",
-        "NeedsCompilation": "yes",
-        "Packaged": "2026-03-15 03:28:25 UTC; rforge",
-        "Repository": "CRAN",
-        "Date/Publication": "2026-03-15 16:50:02 UTC",
-        "Built": "R 4.4.3; aarch64-apple-darwin20; 2026-03-15 20:41:34 UTC; unix",
-        "Archs": "png.so.dSYM"
-      }
-    },
-    "prettyunits": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Package": "prettyunits",
-        "Title": "Pretty, Human Readable Formatting of Quantities",
-        "Version": "1.2.0",
-        "Authors@R": "c(\n  person(\"Gabor\", \"Csardi\", email=\"csardi.gabor@gmail.com\", role=c(\"aut\", \"cre\")),\n  person(\"Bill\", \"Denney\", email=\"wdenney@humanpredictions.com\", role=c(\"ctb\"), comment=c(ORCID=\"0000-0002-5759-428X\")),\n  person(\"Christophe\", \"Regouby\", email=\"christophe.regouby@free.fr\", role=c(\"ctb\"))\n  )",
-        "Description": "Pretty, human readable formatting of quantities.\n    Time intervals: '1337000' -> '15d 11h 23m 20s'.\n    Vague time intervals: '2674000' -> 'about a month ago'.\n    Bytes: '1337' -> '1.34 kB'.\n    Rounding: '99' with 3 significant digits -> '99.0'\n    p-values: '0.00001' -> '<0.0001'.\n    Colors: '#FF0000' -> 'red'.\n    Quantities: '1239437' -> '1.24 M'.",
-        "License": "MIT + file LICENSE",
-        "URL": "https://github.com/r-lib/prettyunits",
-        "BugReports": "https://github.com/r-lib/prettyunits/issues",
-        "Depends": "R(>= 2.10)",
-        "Suggests": "codetools, covr, testthat",
-        "RoxygenNote": "7.2.3",
-        "Encoding": "UTF-8",
-        "NeedsCompilation": "no",
-        "Packaged": "2023-09-24 10:53:19 UTC; gaborcsardi",
-        "Author": "Gabor Csardi [aut, cre],\n  Bill Denney [ctb] (<https://orcid.org/0000-0002-5759-428X>),\n  Christophe Regouby [ctb]",
-        "Maintainer": "Gabor Csardi <csardi.gabor@gmail.com>",
-        "Repository": "CRAN",
-        "Date/Publication": "2023-09-24 21:10:02 UTC",
-        "Built": "R 4.4.1; ; 2025-01-25 04:27:17 UTC; unix"
-      }
-    },
-    "progress": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Package": "progress",
-        "Title": "Terminal Progress Bars",
-        "Version": "1.2.3",
-        "Authors@R": "c(\n    person(\"Gábor\", \"Csárdi\", , \"csardi.gabor@gmail.com\", role = c(\"aut\", \"cre\")),\n    person(\"Rich\", \"FitzJohn\", role = \"aut\"),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"))\n  )",
-        "Description": "Configurable Progress bars, they may include percentage,\n    elapsed time, and/or the estimated completion time. They work in\n    terminals, in 'Emacs' 'ESS', 'RStudio', 'Windows' 'Rgui' and the\n    'macOS' 'R.app'. The package also provides a 'C++' 'API', that works\n    with or without 'Rcpp'.",
-        "License": "MIT + file LICENSE",
-        "URL": "https://github.com/r-lib/progress#readme,\nhttp://r-lib.github.io/progress/",
-        "BugReports": "https://github.com/r-lib/progress/issues",
-        "Depends": "R (>= 3.6)",
-        "Imports": "crayon, hms, prettyunits, R6",
-        "Suggests": "Rcpp, testthat (>= 3.0.0), withr",
-        "Config/Needs/website": "tidyverse/tidytemplate",
-        "Config/testthat/edition": "3",
-        "Encoding": "UTF-8",
-        "RoxygenNote": "7.2.3",
-        "NeedsCompilation": "no",
-        "Packaged": "2023-12-05 09:33:10 UTC; gaborcsardi",
-        "Author": "Gábor Csárdi [aut, cre],\n  Rich FitzJohn [aut],\n  Posit Software, PBC [cph, fnd]",
-        "Maintainer": "Gábor Csárdi <csardi.gabor@gmail.com>",
-        "Repository": "CRAN",
-        "Date/Publication": "2023-12-06 10:30:02 UTC",
-        "Built": "R 4.4.0; ; 2024-04-06 09:13:33 UTC; unix"
-      }
-    },
     "promises": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -2837,40 +2213,6 @@
         "Built": "R 4.4.1; ; 2025-11-01 07:21:10 UTC; unix"
       }
     },
-    "purrr": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Package": "purrr",
-        "Title": "Functional Programming Tools",
-        "Version": "1.2.1",
-        "Authors@R": "c(\n    person(\"Hadley\", \"Wickham\", , \"hadley@posit.co\", role = c(\"aut\", \"cre\"),\n           comment = c(ORCID = \"0000-0003-4757-117X\")),\n    person(\"Lionel\", \"Henry\", , \"lionel@posit.co\", role = \"aut\"),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"),\n           comment = c(ROR = \"https://ror.org/03wc8by49\"))\n  )",
-        "Description": "A complete and consistent functional programming toolkit for\n    R.",
-        "License": "MIT + file LICENSE",
-        "URL": "https://purrr.tidyverse.org/, https://github.com/tidyverse/purrr",
-        "BugReports": "https://github.com/tidyverse/purrr/issues",
-        "Depends": "R (>= 4.1)",
-        "Imports": "cli (>= 3.6.1), lifecycle (>= 1.0.3), magrittr (>= 1.5.0),\nrlang (>= 1.1.1), vctrs (>= 0.6.3)",
-        "Suggests": "carrier (>= 0.3.0), covr, dplyr (>= 0.7.8), httr, knitr,\nlubridate, mirai (>= 2.5.1), rmarkdown, testthat (>= 3.0.0),\ntibble, tidyselect",
-        "LinkingTo": "cli",
-        "VignetteBuilder": "knitr",
-        "Biarch": "true",
-        "Config/build/compilation-database": "true",
-        "Config/Needs/website": "tidyverse/tidytemplate, tidyr",
-        "Config/testthat/edition": "3",
-        "Config/testthat/parallel": "TRUE",
-        "Encoding": "UTF-8",
-        "RoxygenNote": "7.3.3",
-        "NeedsCompilation": "yes",
-        "Packaged": "2026-01-08 20:56:46 UTC; hadleywickham",
-        "Author": "Hadley Wickham [aut, cre] (ORCID:\n    <https://orcid.org/0000-0003-4757-117X>),\n  Lionel Henry [aut],\n  Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
-        "Maintainer": "Hadley Wickham <hadley@posit.co>",
-        "Repository": "CRAN",
-        "Date/Publication": "2026-01-09 10:30:02 UTC",
-        "Built": "R 4.4.3; aarch64-apple-darwin20; 2026-01-09 11:49:35 UTC; unix",
-        "Archs": "purrr.so.dSYM"
-      }
-    },
     "rappdirs": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -2900,36 +2242,6 @@
         "Date/Publication": "2026-01-17 08:40:02 UTC",
         "Built": "R 4.4.3; aarch64-apple-darwin20; 2026-01-17 11:32:53 UTC; unix",
         "Archs": "rappdirs.so.dSYM"
-      }
-    },
-    "remotes": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Package": "remotes",
-        "Title": "R Package Installation from Remote Repositories, Including\n'GitHub'",
-        "Version": "2.5.0",
-        "Authors@R": "c(\n    person(\"Gábor\", \"Csárdi\", , \"csardi.gabor@gmail.com\", role = c(\"aut\", \"cre\")),\n    person(\"Jim\", \"Hester\", role = \"aut\"),\n    person(\"Hadley\", \"Wickham\", role = \"aut\"),\n    person(\"Winston\", \"Chang\", role = \"aut\"),\n    person(\"Martin\", \"Morgan\", role = \"aut\"),\n    person(\"Dan\", \"Tenenbaum\", role = \"aut\"),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\")),\n    person(\"Ascent Digital Services\", role = \"cph\")\n  )",
-        "Description": "Download and install R packages stored in 'GitHub', 'GitLab',\n    'Bitbucket', 'Bioconductor', or plain 'subversion' or 'git'\n    repositories.  This package provides the 'install_*' functions in\n    'devtools'. Indeed most of the code was copied over from 'devtools'.",
-        "License": "MIT + file LICENSE",
-        "URL": "https://remotes.r-lib.org, https://github.com/r-lib/remotes#readme",
-        "BugReports": "https://github.com/r-lib/remotes/issues",
-        "Depends": "R (>= 3.0.0)",
-        "Imports": "methods, stats, tools, utils",
-        "Suggests": "brew, callr, codetools, covr, curl, git2r (>= 0.23.0), knitr,\nmockery, pingr, pkgbuild (>= 1.0.1), rmarkdown, rprojroot,\ntestthat (>= 3.0.0), webfakes, withr",
-        "VignetteBuilder": "knitr",
-        "Config/Needs/website": "tidyverse/tidytemplate",
-        "Config/testthat/edition": "3",
-        "Encoding": "UTF-8",
-        "RoxygenNote": "7.2.3",
-        "SystemRequirements": "Subversion for install_svn, git for install_git",
-        "NeedsCompilation": "no",
-        "Packaged": "2024-03-17 12:41:55 UTC; gaborcsardi",
-        "Author": "Gábor Csárdi [aut, cre],\n  Jim Hester [aut],\n  Hadley Wickham [aut],\n  Winston Chang [aut],\n  Martin Morgan [aut],\n  Dan Tenenbaum [aut],\n  Posit Software, PBC [cph, fnd],\n  Ascent Digital Services [cph]",
-        "Maintainer": "Gábor Csárdi <csardi.gabor@gmail.com>",
-        "Repository": "CRAN",
-        "Date/Publication": "2024-03-17 13:20:02 UTC",
-        "Built": "R 4.4.1; ; 2025-01-24 20:23:10 UTC; unix"
       }
     },
     "restfulr": {
@@ -3210,67 +2522,6 @@
         "Archs": "sourcetools.so.dSYM"
       }
     },
-    "stringi": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Package": "stringi",
-        "Version": "1.8.7",
-        "Date": "2025-03-27",
-        "Title": "Fast and Portable Character String Processing Facilities",
-        "Description": "A collection of character string/text/natural language\n    processing tools for pattern searching (e.g., with 'Java'-like regular\n    expressions or the 'Unicode' collation algorithm), random string generation,\n    case mapping, string transliteration, concatenation, sorting, padding,\n    wrapping, Unicode normalisation, date-time formatting and parsing,\n    and many more. They are fast, consistent, convenient, and -\n    thanks to 'ICU' (International Components for Unicode) -\n    portable across all locales and platforms. Documentation about 'stringi' is\n    provided via its website at <https://stringi.gagolewski.com/> and\n    the paper by Gagolewski (2022, <doi:10.18637/jss.v103.i02>).",
-        "URL": "https://stringi.gagolewski.com/,\nhttps://github.com/gagolews/stringi, https://icu.unicode.org/",
-        "BugReports": "https://github.com/gagolews/stringi/issues",
-        "SystemRequirements": "ICU4C (>= 61, optional)",
-        "Type": "Package",
-        "Depends": "R (>= 3.4)",
-        "Imports": "tools, utils, stats",
-        "Biarch": "TRUE",
-        "License": "file LICENSE",
-        "Authors@R": "c(person(given = \"Marek\",\n                      family = \"Gagolewski\",\n                      role = c(\"aut\", \"cre\", \"cph\"),\n                      email = \"marek@gagolewski.com\",\n                      comment = c(ORCID = \"0000-0003-0637-6028\")),\n               person(given = \"Bartek\",\n                      family = \"Tartanus\",\n                      role = \"ctb\"),\n               person(\"Unicode, Inc. and others\", role=\"ctb\",\n                      comment = \"ICU4C source code, Unicode Character Database\")\n    )",
-        "RoxygenNote": "7.3.2",
-        "Encoding": "UTF-8",
-        "NeedsCompilation": "yes",
-        "Packaged": "2025-03-27 10:27:19 UTC; gagolews",
-        "Author": "Marek Gagolewski [aut, cre, cph]\n    (<https://orcid.org/0000-0003-0637-6028>),\n  Bartek Tartanus [ctb],\n  Unicode, Inc. and others [ctb] (ICU4C source code, Unicode Character\n    Database)",
-        "Maintainer": "Marek Gagolewski <marek@gagolewski.com>",
-        "License_is_FOSS": "yes",
-        "Repository": "CRAN",
-        "Date/Publication": "2025-03-27 13:10:02 UTC",
-        "Built": "R 4.4.1; aarch64-apple-darwin20; 2025-03-27 14:34:31 UTC; unix"
-      }
-    },
-    "stringr": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Package": "stringr",
-        "Title": "Simple, Consistent Wrappers for Common String Operations",
-        "Version": "1.6.0",
-        "Authors@R": "c(\n    person(\"Hadley\", \"Wickham\", , \"hadley@posit.co\", role = c(\"aut\", \"cre\", \"cph\")),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"))\n  )",
-        "Description": "A consistent, simple and easy to use set of wrappers around\n    the fantastic 'stringi' package. All function and argument names (and\n    positions) are consistent, all functions deal with \"NA\"'s and zero\n    length vectors in the same way, and the output from one function is\n    easy to feed into the input of another.",
-        "License": "MIT + file LICENSE",
-        "URL": "https://stringr.tidyverse.org,\nhttps://github.com/tidyverse/stringr",
-        "BugReports": "https://github.com/tidyverse/stringr/issues",
-        "Depends": "R (>= 4.1.0)",
-        "Imports": "cli, glue (>= 1.6.1), lifecycle (>= 1.0.3), magrittr, rlang\n(>= 1.0.0), stringi (>= 1.5.3), vctrs (>= 0.4.0)",
-        "Suggests": "covr, dplyr, gt, htmltools, htmlwidgets, knitr, rmarkdown,\ntestthat (>= 3.0.0), tibble",
-        "VignetteBuilder": "knitr",
-        "Config/Needs/website": "tidyverse/tidytemplate",
-        "Config/potools/style": "explicit",
-        "Config/testthat/edition": "3",
-        "Encoding": "UTF-8",
-        "LazyData": "true",
-        "RoxygenNote": "7.3.3",
-        "NeedsCompilation": "no",
-        "Packaged": "2025-11-03 22:09:58 UTC; hadleywickham",
-        "Author": "Hadley Wickham [aut, cre, cph],\n  Posit Software, PBC [cph, fnd]",
-        "Maintainer": "Hadley Wickham <hadley@posit.co>",
-        "Repository": "CRAN",
-        "Date/Publication": "2025-11-04 14:00:02 UTC",
-        "Built": "R 4.4.1; ; 2025-11-04 16:47:25 UTC; unix"
-      }
-    },
     "sys": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -3332,39 +2583,6 @@
         "Date/Publication": "2026-01-11 10:10:02 UTC",
         "Built": "R 4.4.3; aarch64-apple-darwin20; 2026-01-11 11:26:59 UTC; unix",
         "Archs": "tibble.so.dSYM"
-      }
-    },
-    "tidyr": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Package": "tidyr",
-        "Title": "Tidy Messy Data",
-        "Version": "1.3.2",
-        "Authors@R": "c(\n    person(\"Hadley\", \"Wickham\", , \"hadley@posit.co\", role = c(\"aut\", \"cre\")),\n    person(\"Davis\", \"Vaughan\", , \"davis@posit.co\", role = \"aut\"),\n    person(\"Maximilian\", \"Girlich\", role = \"aut\"),\n    person(\"Kevin\", \"Ushey\", , \"kevin@posit.co\", role = \"ctb\"),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"))\n  )",
-        "Description": "Tools to help to create tidy data, where each column is a\n    variable, each row is an observation, and each cell contains a single\n    value. 'tidyr' contains tools for changing the shape (pivoting) and\n    hierarchy (nesting and 'unnesting') of a dataset, turning deeply\n    nested lists into rectangular data frames ('rectangling'), and\n    extracting values out of string columns. It also includes tools for\n    working with missing values (both implicit and explicit).",
-        "License": "MIT + file LICENSE",
-        "URL": "https://tidyr.tidyverse.org, https://github.com/tidyverse/tidyr",
-        "BugReports": "https://github.com/tidyverse/tidyr/issues",
-        "Depends": "R (>= 4.1.0)",
-        "Imports": "cli (>= 3.4.1), dplyr (>= 1.1.0), glue, lifecycle (>= 1.0.3),\nmagrittr, purrr (>= 1.0.1), rlang (>= 1.1.1), stringr (>=\n1.5.0), tibble (>= 2.1.1), tidyselect (>= 1.2.1), utils, vctrs\n(>= 0.5.2)",
-        "Suggests": "covr, data.table, knitr, readr, repurrrsive (>= 1.1.0),\nrmarkdown, testthat (>= 3.0.0)",
-        "LinkingTo": "cpp11 (>= 0.4.0)",
-        "VignetteBuilder": "knitr",
-        "Config/build/compilation-database": "true",
-        "Config/Needs/website": "tidyverse/tidytemplate",
-        "Config/testthat/edition": "3",
-        "Encoding": "UTF-8",
-        "LazyData": "true",
-        "RoxygenNote": "7.3.3",
-        "NeedsCompilation": "yes",
-        "Packaged": "2025-12-17 23:35:11 UTC; hadleywickham",
-        "Author": "Hadley Wickham [aut, cre],\n  Davis Vaughan [aut],\n  Maximilian Girlich [aut],\n  Kevin Ushey [ctb],\n  Posit Software, PBC [cph, fnd]",
-        "Maintainer": "Hadley Wickham <hadley@posit.co>",
-        "Repository": "CRAN",
-        "Date/Publication": "2025-12-19 09:20:02 UTC",
-        "Built": "R 4.4.3; aarch64-apple-darwin20; 2025-12-21 22:37:06 UTC; unix",
-        "Archs": "tidyr.so.dSYM"
       }
     },
     "tidyselect": {
@@ -3645,7 +2863,7 @@
       "checksum": "5c2dc786687c70213971be0a9f9b6892"
     },
     "global.R": {
-      "checksum": "cedd5a8a2927933d8328e0e1de2274a4"
+      "checksum": "0499c7081f15aa0a64ce2a4f1344048e"
     },
     "www/styles.css": {
       "checksum": "9e2c0f0ae6363a08e9df7444045015d8"
