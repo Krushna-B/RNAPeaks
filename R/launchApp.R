@@ -51,26 +51,19 @@ if (!requireNamespace("shiny", quietly = TRUE)) {
          call. = FALSE)
   }
 
-  # Find the app directory
-  app_dir <- system.file("shiny", package = "RNAPeaks")
-
-  if (app_dir == "") {
-    stop("Could not find Shiny app directory. ",
-         "Try reinstalling RNAPeaks.",
-         call. = FALSE)
-  }
-
   # Set max file upload size to 500 MB
   options(shiny.maxRequestSize = 500 * 1024^2)
 
-  # Launch the app
+  # Launch the app from GitHub
   message("Starting RNAPeaks Shiny app...")
   message("Close the browser window or press Ctrl+C to stop.")
 
-  shiny::runApp(
-    appDir = app_dir,
+  shiny::runGitHub(
+    repo      = "RNAPeaks",
+    username  = "Krushna-B",
+    subdir    = "deployment",
     launch.browser = launch.browser,
-    port = port,
-    host = host
+    port      = port,
+    host      = host
   )
 }
