@@ -352,7 +352,7 @@ createSplicingMap <- function(bed_file,
       # Combine results and calculate mean/sd
       freq_matrix <- do.call(cbind, iteration_results)
       mean_freq <- rowMeans(freq_matrix, na.rm = TRUE)
-      sd_freq <- apply(freq_matrix, 1, sd, na.rm = TRUE)
+      sd_freq <- apply(freq_matrix, 1, stats::sd, na.rm = TRUE)
 
       results_list$Control <- data.frame(
         global_position = 1:(4 * bin_width),

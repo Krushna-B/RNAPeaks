@@ -69,6 +69,7 @@ clip_overlapping_parts <- function(gtf_rows_df, range_gr, Strand = NULL) {
   # Preserve original metadata
   S4Vectors::mcols(clip) <- S4Vectors::mcols(gr[S4Vectors::queryHits(overlaps)])
 
+
   # Return back data frame
   as.data.frame(clip)
 }

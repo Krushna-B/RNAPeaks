@@ -71,14 +71,14 @@ Get_Plot_by_Gene<-function(bed,
 #--------Helper Functions----------
 #Calculate Density of Peaks
 Density<-function(Chr,Start,End,df){
-  peaks_gr<-makeGRangesFromDataFrame(df,keep.extra.columns = T,
+  peaks_gr<-GenomicRanges::makeGRangesFromDataFrame(df,keep.extra.columns = T,
                                      start.field = "Start",
                                      end.field = "End",
                                      seqnames.field = "seqnames")
-  bins<-GRanges(seqnames=Chr,strand="*",
-                ranges = IRanges(start = seq(Start,End,by=10),width = 10))
-  Overlaps<-countOverlaps(bins,peaks_gr)
-  values(bins)<-DataFrame(Density=Overlaps)
+  bins<-GenomicRanges::GRanges(seqnames=Chr,strand="*",
+                ranges = IRanges::IRanges(start = seq(Start,End,by=10),width = 10))
+  Overlaps<-GenomicRanges::countOverlaps(bins,peaks_gr)
+  S4Vectors::values(bins)<-S4Vectors::DataFrame(Density=Overlaps)
   bins<-as.data.frame(bins)
   return(bins)
 }

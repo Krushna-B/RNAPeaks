@@ -149,7 +149,7 @@ Draw_Gene_Plot <- function(Gene_s,
 
 
   # ---- title text ----
-  gene_names <- unique(na.omit(gene$gene_name))
+  gene_names <- unique(stats::na.omit(gene$gene_name))
   if (length(gene_names) == 0) {
     # fall back to gene_id(s)
     gene_names <- unique(gene$gene_id)
@@ -157,7 +157,7 @@ Draw_Gene_Plot <- function(Gene_s,
   title_txt <- paste(gene_names, collapse = ", ")
 
   # transcript (only if present)
-  trans_ids <- unique(na.omit(gene$transcript_id))
+  trans_ids <- unique(stats::na.omit(gene$transcript_id))
   if (length(trans_ids) > 0) {
     title_txt <- paste0(title_txt, " (", trans_ids[1], ")")
   }
@@ -174,33 +174,33 @@ Draw_Gene_Plot <- function(Gene_s,
 
 
 #--------PLOT----------
-  g <- ggplot() +
+  g <- ggplot2::ggplot() +
     # Clean base theme and allow drawing outside panel
-    theme_classic() +
+    ggplot2::theme_classic() +
 
-    theme(
-        plot.margin = margin(plot_top_margin, final_right_margin, plot_bottom_margin, final_left_margin)  # top, right, bottom, LEFT
+    ggplot2::theme(
+        plot.margin = ggplot2::margin(plot_top_margin, final_right_margin, plot_bottom_margin, final_left_margin)  # top, right, bottom, LEFT
     ) +
 
     # Intron baselines with small directional arrows along each intron row
-    geom_segment(data=Intron_s,
-                 aes(x=dir_start, xend=dir_end, y=mid_y, yend=mid_y),
+    ggplot2::geom_segment(data=Intron_s,
+                 ggplot2::aes(x=dir_start, xend=dir_end, y=mid_y, yend=mid_y),
                  color=intron_color, linewidth = intron_linewidth,
                  lineend = "butt",
                  # arrow=arrow(type="open", length=unit(intron_arrow_len_in,"inches"))
                  ) +
-    geom_rect(data=UTRs,
-              aes(xmin=start-0.5, xmax=end+0.5, ymin=y_start, ymax=y_end),
+    ggplot2::geom_rect(data=UTRs,
+              ggplot2::aes(xmin=start-0.5, xmax=end+0.5, ymin=y_start, ymax=y_end),
               fill=utr_fill, color=NA)+
 
-    geom_segment(data=Arrow_df,
-                 aes(x=x, xend=xend, y=y, yend=yend),
-                 arrow=arrow(type="open", length=arrow_head),
+    ggplot2::geom_segment(data=Arrow_df,
+                 ggplot2::aes(x=x, xend=xend, y=y, yend=yend),
+                 arrow=grid::arrow(type="open", length=arrow_head),
                  color=intron_color, linewidth=intron_linewidth)+
 
     # Exons (CDS) and UTRs as horizontal blocks on the gene row
-    geom_rect(data=Exons,
-              aes(xmin=start-0.5, xmax=end+0.5, ymin=y_start, ymax=y_end),
+    ggplot2::geom_rect(data=Exons,
+              ggplot2::aes(xmin=start-0.5, xmax=end+0.5, ymin=y_start, ymax=y_end),
               fill=exon_fill, color=NA) +
 
 
@@ -226,67 +226,67 @@ Draw_Gene_Plot <- function(Gene_s,
         )
       }
     } +
-    coord_cartesian( clip = "off") +
+    ggplot2::coord_cartesian( clip = "off") +
     # Title + general theme cleanup
-    theme(strip.background = element_blank()) +
+    ggplot2::theme(strip.background = ggplot2::element_blank()) +
 
-    ggtitle(
+    ggplot2::ggtitle(
       plot_title,
       subtitle = plot_sub
     ) +
 
     # Alternating background bands behind each protein row
-    geom_rect(
+    ggplot2::geom_rect(
       data = Bg_tab,
-      aes(xmin = x_start, xmax = x_end, ymin = y_start, ymax = y_end),
+      ggplot2::aes(xmin = x_start, xmax = x_end, ymin = y_start, ymax = y_end),
       fill = Bg_tab$fill, color = NA
     ) +
 
     # Thin separators at the top of each band
-    geom_segment(
+    ggplot2::geom_segment(
       data = Bg_tab,
-      aes(x = x_start, xend = x_end, y = y_end, yend = y_end),
+      ggplot2::aes(x = x_start, xend = x_end, y = y_end, yend = y_end),
       color = band_sep_color, linewidth = band_sep_linewidth
     )+
 
 
-    theme(
+    ggplot2::theme(
       # Global style for axes and panel (hide y-axis; transparent panel/plot)
 
       legend.position="bottom",
       legend.direction = "horizontal",
-      legend.text      = element_text(size = 5),
+      legend.text      = ggplot2::element_text(size = 5),
 
-      axis.title.x        = element_text(size = axis_title_size,color = title_color,   face = "bold"),  # bottom
-      plot.subtitle = element_text(hjust = 0.5, face = "bold",    # center + bold subtitle
+      axis.title.x        = ggplot2::element_text(size = axis_title_size,color = title_color,   face = "bold"),  # bottom
+      plot.subtitle = ggplot2::element_text(hjust = 0.5, face = "bold",    # center + bold subtitle
                                    size = subtitle_size,
                                    color = subtitle_color,
-                                   margin = margin(t = 2, b = 8)), # tuck closer under title
+                                   margin = ggplot2::margin(t = 2, b = 8)), # tuck closer under title
 
-      axis.text.x         = element_text(size = axis_text_size),
-      axis.ticks.x        = element_line(),
-      axis.title.x.top    = element_text(size = axis_title_size, face = "bold"),  # top (relative)
-      axis.text.x.top     = element_text(size = axis_text_size),
-      axis.ticks.x.top    = element_line(),
-      axis.title.y=element_blank(),
-      axis.text.y=element_blank(),
-      axis.ticks.y=element_blank(),
+      axis.text.x         = ggplot2::element_text(size = axis_text_size),
+      axis.ticks.x        = ggplot2::element_line(),
+      axis.title.x.top    = ggplot2::element_text(size = axis_title_size, face = "bold"),  # top (relative)
+      axis.text.x.top     = ggplot2::element_text(size = axis_text_size),
+      axis.ticks.x.top    = ggplot2::element_line(),
+      axis.title.y=ggplot2::element_blank(),
+      axis.text.y=ggplot2::element_blank(),
+      axis.ticks.y=ggplot2::element_blank(),
 
-      panel.grid.major = element_blank(),
-      panel.grid.minor = element_blank(),
-      panel.border = element_blank(),
-      axis.line = element_blank(),
+      panel.grid.major = ggplot2::element_blank(),
+      panel.grid.minor = ggplot2::element_blank(),
+      panel.border = ggplot2::element_blank(),
+      axis.line = ggplot2::element_blank(),
 
-      panel.background = element_rect(fill = "transparent",colour = NA), # or theme_blank()
-      plot.background = element_rect(fill = "transparent",colour = NA),
-      plot.title = element_text(hjust=0.5,size=title_size,,color = title_color,   face = "bold.italic")
+      panel.background = ggplot2::element_rect(fill = "transparent",colour = NA), # or theme_blank()
+      plot.background = ggplot2::element_rect(fill = "transparent",colour = NA),
+      plot.title = ggplot2::element_text(hjust=0.5,size=title_size,,color = title_color,   face = "bold.italic")
       )+
 
     # Peak rectangles for each protein row.
     # Uses per-row color found in bed$col; outline hidden ("transparent").
-    geom_rect(inherit.aes = FALSE,
+    ggplot2::geom_rect(inherit.aes = FALSE,
               data=bed,
-              mapping=aes(xmin=start,xmax=end,ymin=y_start,ymax=y_end),
+              mapping=ggplot2::aes(xmin=start,xmax=end,ymin=y_start,ymax=y_end),
               fill=bed$col,
               alpha= peak_alpha,
               color = peak_border_color,
@@ -294,11 +294,11 @@ Draw_Gene_Plot <- function(Gene_s,
 
 
     # Protein labels
-    geom_text(
+    ggplot2::geom_text(
       inherit.aes = FALSE,
       data = transform(bed[!duplicated(bed$group_name), ],
                        label_y = (y_start + y_end) / 2),
-      mapping = aes(label = group_name, x = xpos, y = label_y),
+      mapping = ggplot2::aes(label = group_name, x = xpos, y = label_y),
       hjust = label_hjust,
       size = label_size,
       color = label_color,
@@ -307,8 +307,8 @@ Draw_Gene_Plot <- function(Gene_s,
 
 
     # 5′ / 3′ strand tags
-    geom_text(data = labs$left,aes(label=Label,x=X,y=Y,hjust=1),size=strand_label_size,color = strand_label_color)+
-    geom_text(data = labs$right,aes(label=Label,x=X,y=Y,hjust=0),size=strand_label_size,color = strand_label_color)
+    ggplot2::geom_text(data = labs$left,ggplot2::aes(label=Label,x=X,y=Y,hjust=1),size=strand_label_size,color = strand_label_color)+
+    ggplot2::geom_text(data = labs$right,ggplot2::aes(label=Label,x=X,y=Y,hjust=0),size=strand_label_size,color = strand_label_color)
 
   #Gene Labels Only Plot if Region Plot flagged is enabled
   if (is_region_plot) {
@@ -330,9 +330,9 @@ Draw_Gene_Plot <- function(Gene_s,
     gl$label_x <- x_min - axis_pad_bp * gene_label_x_offset
 
     # Add gene labels to plot
-    g <- g + geom_text(
+    g <- g + ggplot2::geom_text(
       data = gl,
-      aes(x = label_x, y = label_y, label = label),
+      ggplot2::aes(x = label_x, y = label_y, label = label),
       hjust = 1,
       size  = gene_label_size,
       color = gene_label_color
@@ -352,7 +352,7 @@ Draw_Gene_Plot <- function(Gene_s,
   if (isTRUE(show_junctions)) {
     junction_x <- unique(c(Exons$start, Exons$end, UTRs$start, UTRs$end))
     if (length(junction_x) > 0) {
-      g <- g + geom_vline(
+      g <- g + ggplot2::geom_vline(
         xintercept = junction_x,
         linetype   = junction_linetype,
         color      = junction_color,
@@ -379,8 +379,8 @@ Finding_Left_Margin <- function(bed,
   longest_label <- bed$group_name[ which.max(nchar(bed$group_name)) ]
 
   # measure width of the longest label (in points)
-  w_pt <- convertWidth(
-    grobWidth(textGrob(longest_label, gp = gpar(fontsize = label_size_pt))),
+  w_pt <- grid::convertWidth(
+    grid::grobWidth(grid::textGrob(longest_label, gp = grid::gpar(fontsize = label_size_pt))),
     "pt", valueOnly = TRUE
   )
 
