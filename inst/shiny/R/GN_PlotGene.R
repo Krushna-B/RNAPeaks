@@ -27,6 +27,9 @@
 #' @param subtitle_size Font size for plot subtitle.
 #' @param label_size Font size for protein labels.
 #' @param xlab_size Font size for x-axis labels.
+#' @param five_to_three Logical. If TRUE, orients the plot so that 5' is on the
+#'   left and 3' is on the right, regardless of strand. For negative strand genes,
+#'   this reverses the x-axis. Default is FALSE (genomic coordinates left-to-right).
 #' @param RNA_Peaks_File_Path File path to save the output PDF plot.
 #' @param Bed_File_Path File path to save the filtered BED data as CSV.
 #' @param ... Additional styling arguments passed to internal plotting functions.
@@ -103,6 +106,15 @@
 #'   \item{highlighted_region_opacity}{Opacity for highlighted region. Default: 0.30}
 #' }
 #'
+#' \strong{Junction Lines:}
+#' \describe{
+#'   \item{show_junctions}{Logical. If TRUE, draws vertical dashed lines at exon/intron boundaries. Default: FALSE}
+#'   \item{junction_color}{Color for junction lines. Default: "gray40"}
+#'   \item{junction_linetype}{Line type for junction lines. Default: "dashed"}
+#'   \item{junction_linewidth}{Line width for junction lines. Default: 0.4}
+#'   \item{junction_alpha}{Opacity for junction lines. Default: 0.7}
+#' }
+#'
 #' @return A named list containing:
 #' \describe{
 #'   \item{plot}{A ggplot2 object of the peak visualization}
@@ -169,6 +181,7 @@ PlotGene <- function(bed = NULL,
                      exon_col = "black",
                      total_arrows = 6,
                      max_per_intron = 2,
+                     five_to_three = FALSE,
                      RNA_Peaks_File_Path = "~/Desktop/RNAPeaks.pdf",
                      Bed_File_Path = "~/Desktop/BEDFILE_PEAKS.csv",
                      ...) {
@@ -214,6 +227,7 @@ PlotGene <- function(bed = NULL,
     exon_col = exon_col,
     total_arrows = total_arrows,
     max_per_intron = max_per_intron,
+    five_to_three = five_to_three,
     ...
   )
 

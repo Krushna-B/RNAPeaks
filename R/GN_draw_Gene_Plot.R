@@ -58,7 +58,16 @@ Draw_Gene_Plot <- function(Gene_s,
                           highlighted_region_start = NULL,
                           highlighted_region_stop = NULL,
                           highlighted_region_color = "pink",
-                          highlighted_region_opacity = 0.30
+                          highlighted_region_opacity = 0.30,
+
+                          five_to_three = FALSE,
+                          gene_strand = "+",
+
+                          show_junctions = FALSE,
+                          junction_color = "gray40",
+                          junction_linetype = "dashed",
+                          junction_linewidth = 0.4,
+                          junction_alpha = 0.7
                           ){
 
 
@@ -81,7 +90,8 @@ Draw_Gene_Plot <- function(Gene_s,
     x_max <- x_lims[2]
   }
 
-
+  # Determine if we need to flip x-axis (5' to 3' orientation for negative strand)
+  should_flip <- isTRUE(five_to_three) && gene_strand == "-"
 
   #Protein limiting
   all_proteins <- unique(bed$group_name)
@@ -101,6 +111,18 @@ Draw_Gene_Plot <- function(Gene_s,
   if (is_region_plot) {
     bed$xpos <- x_min - protein_label_x_offset
   }
+
+  # When flipping, move labels to the right side (which appears on left after flip)
+  # Position labels just past x_max, similar offset as normal case uses past x_min
+  if (should_flip) {
+    bed$xpos <- x_max + protein_label_x_offset
+    label_hjust <- 1  # Right-align so text extends left (into margin)
+  } else {
+    label_hjust <- 1
+  }
+  # Keep margins the same - left margin always holds label space
+  final_left_margin <- left_margin_pt
+  final_right_margin <- plot_right_margin
   # Arrow head size
   arrow_head <- grid::unit(intron_arrow_len_in, "inches")
 
@@ -157,7 +179,7 @@ Draw_Gene_Plot <- function(Gene_s,
     theme_classic() +
 
     theme(
-        plot.margin = margin(plot_top_margin, plot_right_margin, plot_bottom_margin, left_margin_pt)  # top, right, bottom, LEFT
+        plot.margin = margin(plot_top_margin, final_right_margin, plot_bottom_margin, final_left_margin)  # top, right, bottom, LEFT
     ) +
 
     # Intron baselines with small directional arrows along each intron row
@@ -184,13 +206,26 @@ Draw_Gene_Plot <- function(Gene_s,
 
     #Bottom row with spaced out bp markers
     # xlim(x_min,x_max)+
-    scale_x_continuous(
-      name   = "Genomic position (bp)",
-      limits = c(x_min - axis_pad_bp, x_max + axis_pad_bp),
-      breaks = seq(x_min,x_max,length.out = axis_breaks_n),
-      labels = scales::label_comma(accuracy = 1),
-      expand = c(0, 0),
-    )+
+    # Use scale_x_reverse for 5' to 3' orientation on negative strand
+    {
+      if (should_flip) {
+        ggplot2::scale_x_reverse(
+          name   = "Genomic position (bp)",
+          limits = c(x_max + axis_pad_bp, x_min - axis_pad_bp),
+          breaks = seq(x_min, x_max, length.out = axis_breaks_n),
+          labels = scales::label_comma(accuracy = 1),
+          expand = c(0, 0)
+        )
+      } else {
+        ggplot2::scale_x_continuous(
+          name   = "Genomic position (bp)",
+          limits = c(x_min - axis_pad_bp, x_max + axis_pad_bp),
+          breaks = seq(x_min, x_max, length.out = axis_breaks_n),
+          labels = scales::label_comma(accuracy = 1),
+          expand = c(0, 0)
+        )
+      }
+    } +
     coord_cartesian( clip = "off") +
     # Title + general theme cleanup
     theme(strip.background = element_blank()) +
@@ -264,7 +299,7 @@ Draw_Gene_Plot <- function(Gene_s,
       data = transform(bed[!duplicated(bed$group_name), ],
                        label_y = (y_start + y_end) / 2),
       mapping = aes(label = group_name, x = xpos, y = label_y),
-      hjust = 1,
+      hjust = label_hjust,
       size = label_size,
       color = label_color,
     ) +
@@ -313,6 +348,19 @@ Draw_Gene_Plot <- function(Gene_s,
     x_max   = x_max,
     axis_pad_bp = axis_pad_bp
   )
+
+  if (isTRUE(show_junctions)) {
+    junction_x <- unique(c(Exons$start, Exons$end, UTRs$start, UTRs$end))
+    if (length(junction_x) > 0) {
+      g <- g + geom_vline(
+        xintercept = junction_x,
+        linetype   = junction_linetype,
+        color      = junction_color,
+        linewidth  = junction_linewidth,
+        alpha      = junction_alpha
+      )
+    }
+  }
 
 
   return(g)

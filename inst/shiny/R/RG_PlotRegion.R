@@ -27,6 +27,8 @@
 #' @param exon_width Vertical height of exon rectangles.
 #' @param utr_width Vertical height of UTR rectangles.
 #' @param exon_col Color for exon/CDS regions.
+#' @param five_to_three Logical. If TRUE and Strand is "-", flips the x-axis so
+#'   5' is on the left. Default FALSE.
 #' @param RNA_Peaks_File_Path File path to save the output PDF plot.
 #' @param Bed_File_Path File path to save the filtered BED data as CSV.
 #' @param ... Additional styling arguments passed to internal plotting functions.
@@ -110,6 +112,15 @@
 #'   \item{highlighted_region_opacity}{Opacity for highlighted region. Default: 0.30}
 #' }
 #'
+#' \strong{Junction Lines:}
+#' \describe{
+#'   \item{show_junctions}{Logical. If TRUE, draws vertical dashed lines at exon/intron boundaries. Default: FALSE}
+#'   \item{junction_color}{Color for junction lines. Default: "gray40"}
+#'   \item{junction_linetype}{Line type for junction lines. Default: "dashed"}
+#'   \item{junction_linewidth}{Line width for junction lines. Default: 0.4}
+#'   \item{junction_alpha}{Opacity for junction lines. Default: 0.7}
+#' }
+#'
 #' @return A named list containing:
 #' \describe{
 #'   \item{plot}{A ggplot2 object of the peak visualization}
@@ -182,6 +193,7 @@ PlotRegion <- function(Chr = NULL,
                        exon_col = "black",
                        total_arrows = 12,
                        max_per_intron = 5,
+                       five_to_three = FALSE,
                        RNA_Peaks_File_Path = "~/Desktop/RNAPeaks.pdf",
                        Bed_File_Path = "~/Desktop/BEDFILE_PEAKS.csv",
                        ...) {
@@ -240,8 +252,10 @@ PlotRegion <- function(Chr = NULL,
     utr_width = utr_width,
     exon_col = exon_col,
     utr_col = utr_col,
+    peak_col = peak_col,
     total_arrows = total_arrows,
     max_per_intron = max_per_intron,
+    five_to_three = five_to_three,
     ...
   )
 

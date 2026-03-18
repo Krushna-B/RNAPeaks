@@ -54,6 +54,10 @@ get_Intron_Positions <- function(gene_df) {
   # Keep only proper gaps
   keep <- end_prev > start
 
+  if (!any(keep)) {
+    return(empty_introns())
+  }
+
   # Build intron intervals as closed ranges: [end_n, start_n+1]
   data.frame(
     seqnames = gene_df$seqnames[1],

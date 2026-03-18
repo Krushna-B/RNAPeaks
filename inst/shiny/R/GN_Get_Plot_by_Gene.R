@@ -13,6 +13,7 @@ Get_Plot_by_Gene<-function(bed,
                            exon_col="navy",
                            total_arrows = 6,
                            max_per_intron = 2,
+                           five_to_three = FALSE,
                            ...){
 
   #Return prepared bed with labeled coordinates positions for proteins
@@ -33,7 +34,6 @@ Get_Plot_by_Gene<-function(bed,
                              utr_width   = utr_width,
                              exon_col    = exon_col,
                              utr_col     = utr_col)
-
 
   #Stores labels positions for gene
   labs <- Make_Strand_Labels(gs$Gene_s, offset = 100)
@@ -58,7 +58,9 @@ Get_Plot_by_Gene<-function(bed,
       bed = bed,
       gene = gene,
       peak_col = bed$peak_col,
-      peaks_width = bed$peaks_width
+      peaks_width = bed$peaks_width,
+      five_to_three = five_to_three,
+      gene_strand = gene$strand[1]
     ),
     list(...)  # all user-supplied extras styling
     )

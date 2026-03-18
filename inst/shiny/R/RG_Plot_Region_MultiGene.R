@@ -21,6 +21,7 @@ Get_Multi_Plot_by_Region <- function(Chr,
                                      Vertical_Offset_Step = 0.7,
                                      total_arrows = 12,
                                      max_per_intron = 5,
+                                     five_to_three = FALSE,
                                      ...) {
 
   # Fallback gene frame used by Prepare_Bed if none provided
@@ -130,6 +131,9 @@ Get_Multi_Plot_by_Region <- function(Chr,
   })
 
   Arrows_all <- dplyr::bind_rows(arrows_list)
+  if (nrow(Arrows_all) == 0) {
+    Arrows_all <- data.frame(x = numeric(0), xend = numeric(0), y = numeric(0), yend = numeric(0))
+  }
 
   # Makes labels for each gene
   label_df <- if (nrow(Gene_s_all)) {
@@ -179,6 +183,8 @@ Get_Multi_Plot_by_Region <- function(Chr,
     peak_col = bed$peak_col,
     peaks_width = bed$peaks_width,
     is_region_plot = TRUE,
+    five_to_three = five_to_three,
+    gene_strand = Strand,
     ...
   )
   return(p)

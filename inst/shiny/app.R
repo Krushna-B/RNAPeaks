@@ -160,9 +160,17 @@ plot_gene_page <- function() {
           sidebar_section("Styling",
             numericInput("pg_title_size", "Title Size:", value = 25, min = 8, max = 40, step = 1),
             numericInput("pg_label_size", "Label Size:", value = 5, min = 2, max = 12, step = 0.5),
+            numericInput("pg_axis_breaks_n", "# Position Markers:", value = 5, min = 2, max = 20, step = 1),
             fluidRow(
               column(6, numericInput("pg_total_arrows", "Total Arrows:", value = 6, min = 1, max = 20, step = 1)),
               column(6, numericInput("pg_max_per_intron", "Max/Intron:", value = 2, min = 1, max = 10, step = 1))
+            ),
+            checkboxInput("pg_five_to_three", "Orient 5' to 3' (flip negative strand)", value = FALSE),
+            checkboxInput("pg_show_junctions", "Show Exon/Intron Junction Lines", value = FALSE),
+            conditionalPanel("input.pg_show_junctions",
+              selectInput("pg_junction_color", "Junction Line Color:",
+                choices = c("Gray" = "gray40", "Black" = "black", "Red" = "red", "Blue" = "blue", "Green" = "darkgreen", "Orange" = "orange"),
+                selected = "gray40")
             )
           ),
 
@@ -224,21 +232,31 @@ plot_region_page <- function() {
               column(6, selectInput("pr_strand", "Strand:", choices = c("+" = "+", "-" = "-")))
             ),
             numericInput("pr_start", "Start:", value = 6534512, min = 1),
-            numericInput("pr_end", "End:", value = 6538374, min = 1)
+            numericInput("pr_end", "End:", value = 6538374, min = 1),
+            textInput("pr_gene_id", "Gene ID (optional):", value = "", placeholder = "e.g., FTH1"),
+            textInput("pr_tx_id", "Transcript ID (optional):", value = "", placeholder = "e.g., ENST00000620041")
           ),
 
           sidebar_section("Peak Options",
             selectInput("pr_order_by", "Order By:", choices = c("Count" = "Count", "Target Name" = "Target"), selected = "Count"),
             selectInput("pr_peak_col", "Peak Color:", choices = c("Purple" = "purple", "Blue" = "blue", "Red" = "red", "Green" = "darkgreen"), selected = "purple"),
-            numericInput("pr_max_proteins", "Max Proteins to Show:", value = 40, min = 1, max = 100, step = 1)
+            numericInput("pr_max_proteins", "Max Proteins to Show:", value = 40, min = 1, max = 100, step = 1),
+            checkboxInput("pr_five_to_three", "Orient 5' to 3' (flip negative strand)", value = FALSE),
+            checkboxInput("pr_show_junctions", "Show Exon/Intron Junction Lines", value = FALSE)
           ),
 
           sidebar_section("Styling",
             numericInput("pr_title_size", "Title Size:", value = 25, min = 8, max = 40, step = 1),
             numericInput("pr_label_size", "Label Size:", value = 5, min = 2, max = 12, step = 0.5),
+            numericInput("pr_axis_breaks_n", "# Position Markers:", value = 5, min = 2, max = 20, step = 1),
             fluidRow(
               column(6, numericInput("pr_total_arrows", "Total Arrows:", value = 12, min = 1, max = 30, step = 1)),
               column(6, numericInput("pr_max_per_intron", "Max/Intron:", value = 5, min = 1, max = 15, step = 1))
+            ),
+            conditionalPanel("input.pr_show_junctions",
+              selectInput("pr_junction_color", "Junction Line Color:",
+                choices = c("Gray" = "gray40", "Black" = "black", "Red" = "red", "Blue" = "blue", "Green" = "darkgreen", "Orange" = "orange"),
+                selected = "gray40")
             )
           ),
 
@@ -507,6 +525,10 @@ server <- function(input, output, session) {
         max_proteins = input$pg_max_proteins,
         total_arrows = input$pg_total_arrows,
         max_per_intron = input$pg_max_per_intron,
+        five_to_three = input$pg_five_to_three,
+        show_junctions = isTRUE(input$pg_show_junctions),
+        junction_color = if (is.null(input$pg_junction_color)) "gray40" else input$pg_junction_color,
+        axis_breaks_n  = if (is.null(input$pg_axis_breaks_n) || is.na(input$pg_axis_breaks_n)) 5L else as.integer(input$pg_axis_breaks_n),
         highlighted_region_start = highlight_start,
         highlighted_region_stop = highlight_stop,
         highlighted_region_color = input$pg_highlight_color,
@@ -580,6 +602,9 @@ server <- function(input, output, session) {
       highlight_start <- if (is.na(input$pr_highlight_start)) NULL else input$pr_highlight_start
       highlight_stop <- if (is.na(input$pr_highlight_stop)) NULL else input$pr_highlight_stop
 
+      pr_gene_id <- if (is.null(input$pr_gene_id) || input$pr_gene_id == "") NULL else input$pr_gene_id
+      pr_tx_id   <- if (is.null(input$pr_tx_id)   || input$pr_tx_id   == "") NA   else input$pr_tx_id
+
       result <- PlotRegion(
         bed = pr_bed_data(),
         Chr = input$pr_chr,
@@ -587,12 +612,18 @@ server <- function(input, output, session) {
         End = input$pr_end,
         Strand = input$pr_strand,
         gtf = pr_gtf_data(),
+        geneID = pr_gene_id,
+        TxID = pr_tx_id,
         species = "Human",
         order_by = input$pr_order_by,
         peak_col = input$pr_peak_col,
         title_size = input$pr_title_size,
         label_size = input$pr_label_size,
         max_proteins = input$pr_max_proteins,
+        five_to_three = input$pr_five_to_three,
+        show_junctions = isTRUE(input$pr_show_junctions),
+        junction_color = if (is.null(input$pr_junction_color)) "gray40" else input$pr_junction_color,
+        axis_breaks_n  = if (is.null(input$pr_axis_breaks_n) || is.na(input$pr_axis_breaks_n)) 5L else as.integer(input$pr_axis_breaks_n),
         total_arrows = input$pr_total_arrows,
         max_per_intron = input$pr_max_per_intron,
         highlighted_region_start = highlight_start,
