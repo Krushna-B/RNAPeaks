@@ -498,14 +498,10 @@ server <- function(input, output, session) {
     gtf_human_cached = NULL  # Lazy-loaded GTF cache
   )
 
-  # Lazy load GTF only when needed
+  # Return the GTF pre-loaded at startup by global.R
   get_gtf_human <- function() {
     if (is.null(rv$gtf_human_cached)) {
-      showNotification("Loading GTF annotation (first time only)...", type = "message", duration = NULL, id = "gtf_loading")
-      load(gtf_human_path_global, envir = environment())
       rv$gtf_human_cached <- gtf_human
-      removeNotification("gtf_loading")
-      showNotification("GTF loaded successfully!", type = "message", duration = 2)
     }
     rv$gtf_human_cached
   }
