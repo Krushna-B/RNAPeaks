@@ -8,8 +8,8 @@ APP_VERSION <- "1.2.0"
 load("data/sample_bed.rda")
 load("data/sample_se.mats.rda")
 
-# GTF is loaded lazily to reduce startup memory
-gtf_human_path_global <- "data/gtf_human.rda"
+# Pre-load GTF at startup so it's ready before any user request
+load("data/gtf_human.rda")
 
 library(shiny)
 library(bslib)
@@ -495,10 +495,10 @@ server <- function(input, output, session) {
     pr_result = NULL, pr_generated = FALSE, pr_error = NULL,
     sm_result = NULL, sm_generated = FALSE, sm_error = NULL,
     sqm_result = NULL, sqm_generated = FALSE, sqm_error = NULL,
-    gtf_human_cached = NULL  # Lazy-loaded GTF cache
+    gtf_human_cached = NULL
   )
 
-  # Return the GTF pre-loaded at startup by global.R
+  # GTF is pre-loaded at startup; cache it per session for fast access
   get_gtf_human <- function() {
     if (is.null(rv$gtf_human_cached)) {
       rv$gtf_human_cached <- gtf_human
@@ -514,7 +514,7 @@ server <- function(input, output, session) {
 
   pg_gtf_data <- reactive({
     if (input$pg_gtf_source == "human") get_gtf_human()
-    else { req(input$pg_gtf_file); rtracklayer::import(input$pg_gtf_file$datapath) }
+    else { req(input$pg_gtf_file); data.frame(rtracklayer::import(input$pg_gtf_file$datapath)) }
   })
 
   observeEvent(input$pg_generate, {
@@ -609,7 +609,7 @@ server <- function(input, output, session) {
 
   pr_gtf_data <- reactive({
     if (input$pr_gtf_source == "human") get_gtf_human()
-    else { req(input$pr_gtf_file); rtracklayer::import(input$pr_gtf_file$datapath) }
+    else { req(input$pr_gtf_file); data.frame(rtracklayer::import(input$pr_gtf_file$datapath)) }
   })
 
   observeEvent(input$pr_generate, {
