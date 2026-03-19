@@ -51,10 +51,6 @@ source(file.path(r_dir, "SM_HelperFunctions.R"))
 source(file.path(r_dir, "SM_CreateSequenceMap.R"))
 source(file.path(r_dir, "Splicing_Map.R"))
 
-# Pre-load GTF annotation at startup so it's ready before any user requests it
-message("Pre-loading GTF annotation...")
-load("data/gtf_human.rda")  # loads gtf_human into global environment
-message("GTF pre-load complete.")
 
 
 
