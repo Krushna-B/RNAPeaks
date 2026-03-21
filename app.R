@@ -47,7 +47,9 @@ navbar_ui <- function(current_page) {
       tags$a(class = paste("nav-link-item", if(current_page == "splicing_map") "active" else ""),
              onclick = "Shiny.setInputValue('nav_to', 'splicing_map', {priority: 'event'})", "Splicing Map"),
       tags$a(class = paste("nav-link-item", if(current_page == "sequence_map") "active" else ""),
-             onclick = "Shiny.setInputValue('nav_to', 'sequence_map', {priority: 'event'})", "Sequence Map")
+             onclick = "Shiny.setInputValue('nav_to', 'sequence_map', {priority: 'event'})", "Sequence Map"),
+      tags$a(class = paste("nav-link-item", if(current_page == "docs") "active" else ""),
+             onclick = "Shiny.setInputValue('nav_to', 'docs', {priority: 'event'})", "Documentation")
     ),
     div()
   )
@@ -113,7 +115,8 @@ home_page <- function() {
         function_card("plot_gene", "bar-chart-fill", "Plot Gene", "Visualize RBP peaks on a single gene structure"),
         function_card("plot_region", "map-fill", "Plot Region", "Visualize peaks across a genomic region"),
         function_card("splicing_map", "diagram-3-fill", "Splicing Map", "Analyze protein binding around splice junctions"),
-        function_card("sequence_map", "file-earmark-text-fill", "Sequence Map", "Map sequence motif frequency")
+        function_card("sequence_map", "file-earmark-text-fill", "Sequence Map", "Map sequence motif frequency"),
+        function_card("docs", "book-fill", "Documentation", "Browse function reference, vignettes, and examples")
       )
     )
   )
@@ -151,7 +154,7 @@ plot_gene_page <- function() {
           ),
 
           sidebar_section("Peak Options",
-            selectInput("pg_order_by", "Order By:", choices = c("Count" = "Count", "Target Name" = "Target"), selected = "Count"),
+            selectInput("pg_order_by", "Order By:", choices = c("Alphabetically" = "Target", "Count" = "Count"), selected = "Target"),
             selectInput("pg_peak_col", "Peak Color:", choices = c("Purple" = "purple", "Blue" = "blue", "Red" = "red", "Green" = "darkgreen"), selected = "purple"),
             numericInput("pg_merge", "Merge Nearby Peaks (bp):", value = 0, min = 0, step = 10),
             numericInput("pg_max_proteins", "Max Proteins to Show:", value = 40, min = 1, max = 100, step = 1)
@@ -238,7 +241,7 @@ plot_region_page <- function() {
           ),
 
           sidebar_section("Peak Options",
-            selectInput("pr_order_by", "Order By:", choices = c("Count" = "Count", "Target Name" = "Target"), selected = "Count"),
+            selectInput("pr_order_by", "Order By:", choices = c("Alphabetically" = "Target", "Count" = "Count"), selected = "Target"),
             selectInput("pr_peak_col", "Peak Color:", choices = c("Purple" = "purple", "Blue" = "blue", "Red" = "red", "Green" = "darkgreen"), selected = "purple"),
             numericInput("pr_max_proteins", "Max Proteins to Show:", value = 40, min = 1, max = 100, step = 1),
             checkboxInput("pr_five_to_three", "Orient 5' to 3' (flip negative strand)", value = FALSE),
@@ -463,6 +466,20 @@ sequence_map_page <- function() {
 }
 
 
+# DOCUMENTATION PAGE
+docs_page <- function() {
+  tagList(
+    navbar_ui("docs"),
+    div(class = "page-content",
+      tags$iframe(
+        src = "https://krushna-b.github.io/RNAPeaks/",
+        style = "width:100%; height:calc(100vh - 60px); border:none;"
+      )
+    )
+  )
+}
+
+
 # MAIN UI
 ui <- page_fluid(
   theme = light_theme,
@@ -485,6 +502,7 @@ server <- function(input, output, session) {
       "plot_region" = plot_region_page(),
       "splicing_map" = splicing_map_page(),
       "sequence_map" = sequence_map_page(),
+      "docs" = docs_page(),
       home_page()
     )
   })
