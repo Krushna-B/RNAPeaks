@@ -129,11 +129,11 @@ Ensembl via AnnotationHub (AH110867)
 ## Examples
 
 ``` r
-# Load the bundled GTF
-data(gtf_human)
-
-# Use with PlotGene (no download required)
 if (FALSE) { # \dontrun{
+  # Load the bundled GTF
+  data(gtf_human)
+
+  # Use with PlotGene (no download required)
   data(sample_bed)
   PlotGene(bed = sample_bed, geneID = "GAPDH", gtf = gtf_human)
 } # }
