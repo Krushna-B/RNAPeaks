@@ -1,0 +1,271 @@
+---
+title: "Splicing Maps and Sequence Motif Analysis"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
+vignette: >
+  %\VignetteIndexEntry{Splicing Maps and Sequence Motif Analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse  = TRUE,
+  comment   = "#>",
+  fig.width = 10,
+  fig.height = 5,
+  out.width = "100%"
+)
+```
+
+## Overview
+
+`createSplicingMap()` and `createSequenceMap()` quantify signal — protein
+binding or sequence motif frequency — at every position across a four-region
+window that spans the exon-intron junctions of skipped-exon (SE) alternative
+splicing events.
+
+Both functions accept SE.MATS output from [rMATS](https://rnaseq-mats.sourceforge.net/)
+and classify events into three groups for comparison:
+
+- **Retained** — exon inclusion significantly increases in condition 1
+- **Excluded** — exon skipping significantly increases in condition 1
+- **Control** — events with stable inclusion levels across conditions
+
+```{r load}
+library(RNAPeaks)
+```
+
+---
+
+## The four-region window
+
+Each splicing event is decomposed into four equal-length windows of
+`(WidthIntoExon + WidthIntoIntron)` positions:
+
+```
+ Upstream exon        Intron 1       Skipped exon      Intron 2     Downstream exon
+|──────|──────────────|──────|────────────────|──────|──────────────|──────|
+  UE    ←Region 1→    UI3    ←──Region 2──→   EX5    ←─Region 3─→   DI3    ←Region 4→
+       (UE-UI5)              (UI3-EX3)               (EX5-DI5)             (DI3-DE)
+```
+
+The x-axis of the output plot shows positions within this linearized window,
+with vertical dashed lines at region boundaries and a schematic of the
+skipped exon drawn beneath the x-axis.
+
+---
+
+## Splicing map
+
+### Basic usage
+
+```{r splicing-basic, eval = FALSE}
+createSplicingMap(
+    bed_file = sample_bed,
+    SEMATS   = sample_se.mats
+)
+```
+
+### Event classification thresholds
+
+Control which events fall into each group:
+
+```{r splicing-thresholds, eval = FALSE}
+createSplicingMap(
+    bed_file                        = sample_bed,
+    SEMATS                          = sample_se.mats,
+    p_valueRetainedAndExclusion     = 0.05,   # significance threshold for R/E
+    p_valueControls                 = 0.95,   # min p-value for controls
+    retained_IncLevelDifference     = 0.1,    # min ΔPSI for Retained
+    exclusion_IncLevelDifference    = -0.1,   # max ΔPSI for Excluded
+    Min_Count                       = 50,     # min junction read count
+    use_fdr                         = TRUE    # use FDR instead of raw p-value
+)
+```
+
+### Window size
+
+Adjust how far into exons and introns the analysis extends:
+
+```{r splicing-window, eval = FALSE}
+createSplicingMap(
+    bed_file        = sample_bed,
+    SEMATS          = sample_se.mats,
+    WidthIntoExon   = 75,    # 75 bp into each flanking exon
+    WidthIntoIntron = 400    # 400 bp into each flanking intron
+)
+```
+
+### Smoothing
+
+A moving average is applied to reduce positional noise. Adjust the window
+size or disable smoothing entirely:
+
+```{r smoothing, eval = FALSE}
+# Wider smoothing window
+createSplicingMap(bed_file = sample_bed, SEMATS = sample_se.mats, moving_average = 100)
+
+# No smoothing
+createSplicingMap(bed_file = sample_bed, SEMATS = sample_se.mats, moving_average = NULL)
+```
+
+### Parallel processing
+
+For large datasets, use multiple cores to speed up the binding frequency
+calculation:
+
+```{r parallel, eval = FALSE}
+createSplicingMap(
+    bed_file = sample_bed,
+    SEMATS   = sample_se.mats,
+    cores    = 4
+)
+```
+
+### Bootstrap control and significance testing
+
+The control distribution is built by bootstrapping: at each of
+`control_iterations` replicates, a random sample of `(n_retained + n_excluded)
+× control_multiplier` control events is drawn and their binding frequency
+computed. The mean ± SD across replicates forms the control ribbon.
+
+Significance is then assessed at each position using a z-score:
+
+```
+z = (observed_frequency − control_mean) / control_SD
+```
+
+Contiguous runs of ≥ `min_consecutive` significant positions are reported
+as enriched regions and drawn as colored bars above the plot.
+
+```{r significance, eval = FALSE}
+createSplicingMap(
+    bed_file           = sample_bed,
+    SEMATS             = sample_se.mats,
+    control_multiplier = 2.0,   # sample_size = (R + E) * 2
+    control_iterations = 30,    # more iterations = tighter control band
+    z_threshold        = 1.96,  # p < 0.05 (used when use_fdr = FALSE)
+    min_consecutive    = 10,    # minimum run length to call a region
+    one_sided          = TRUE,  # test enrichment only (not depletion)
+    show_significance  = TRUE
+)
+```
+
+### Validating bootstrap normality
+
+The z-score test assumes that bootstrap replicates are approximately normally
+distributed. Verify this with `return_diagnostics = TRUE`:
+
+```{r diagnostics, eval = FALSE}
+diag <- createSplicingMap(
+    bed_file           = sample_bed,
+    SEMATS             = sample_se.mats,
+    return_diagnostics = TRUE
+)
+
+# Fraction of positions where bootstrap distribution passes Shapiro-Wilk
+mean(
+  apply(diag$bootstrap_matrix, 1, function(x) shapiro.test(x)$p.value) > 0.05
+)
+```
+
+### Returning data
+
+```{r return-data, eval = FALSE}
+freq_df <- createSplicingMap(
+    bed_file    = sample_bed,
+    SEMATS      = sample_se.mats,
+    return_data = TRUE
+)
+head(freq_df)
+```
+
+---
+
+## Sequence motif analysis
+
+`createSequenceMap()` accepts the same SE.MATS input and parameters as
+`createSplicingMap()`, but instead of protein binding sites it measures the
+per-position frequency of a target nucleotide motif in the genomic sequence.
+
+### Basic usage
+
+```{r seq-basic, eval = FALSE}
+library(BSgenome.Hsapiens.UCSC.hg38)
+
+createSequenceMap(
+    SEMATS   = sample_se.mats,
+    sequence = "YCAY"    # NOVA binding motif; Y = C or T
+)
+```
+
+### IUPAC ambiguity codes
+
+Any standard IUPAC ambiguity code is supported:
+
+| Code | Matches |
+|------|---------|
+| `R` | A, G |
+| `Y` | C, T |
+| `S` | G, C |
+| `W` | A, T |
+| `K` | G, T |
+| `M` | A, C |
+| `B` | C, G, T |
+| `D` | A, G, T |
+| `H` | A, C, T |
+| `V` | A, C, G |
+| `N` | A, C, G, T |
+
+```{r iupac, eval = FALSE}
+# YGCY motif (MBNL binding site)
+createSequenceMap(SEMATS = sample_se.mats, sequence = "YGCY")
+
+# Poly-C run
+createSequenceMap(SEMATS = sample_se.mats, sequence = "CCCC")
+```
+
+### Supplying a custom genome
+
+By default `createSequenceMap()` uses `BSgenome.Hsapiens.UCSC.hg38`. Supply
+any BSgenome object to use a different assembly:
+
+```{r custom-genome, eval = FALSE}
+library(BSgenome.Mmusculus.UCSC.mm10)
+
+createSequenceMap(
+    SEMATS   = sample_se.mats,
+    sequence = "YCAY",
+    genome   = BSgenome.Mmusculus.UCSC.mm10
+)
+```
+
+---
+
+## Appearance options
+
+Both functions share a common set of visual parameters:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `retained_col` | `"blue"` | Retained group line color |
+| `excluded_col` | `"red"` | Excluded group line color |
+| `control_col` | `"black"` | Control group line color |
+| `line_width` | `0.8` | Line width |
+| `ribbon_alpha` | `0.3` | Opacity of control SD ribbon |
+| `boundary_col` | `"gray70"` | Region boundary line color |
+| `exon_col` | `"navy"` | Skipped exon fill in the schematic |
+| `legend_position` | `"bottom"` | Legend position |
+| `ylab` | `"Frequency"` | Y-axis label |
+| `title` | `""` | Plot title |
+
+---
+
+## Session info
+
+```{r session-info}
+sessionInfo()
+```

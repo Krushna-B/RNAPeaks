@@ -1,26 +1,55 @@
-# RNAPeaks
+# RNAPeaks <img src="man/figures/logo.png" align="right" height="120" alt="" />
 
-**Visualize RNA-Binding Protein Peaks on Gene Structures**
+**Publication-quality visualization of RNA-binding protein peaks on gene structures**
 
-[![Status: Beta](https://img.shields.io/badge/Status-Beta-yellow.svg)]()
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![R-CMD-check](https://github.com/Krushna-B/RNAPeaks/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Krushna-B/RNAPeaks/actions/workflows/R-CMD-check.yaml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![lifecycle](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html)
 
-RNAPeaks is an R package for creating quality visualizations of RNA-binding protein (RBP) peaks overlaid on gene structure diagrams, sequence maps, and splicing maps. It takes BED files containing protein binding sites and overlays them on gene annotations from Ensembl GTF files, enabling researchers to visualize where RBPs bind relative to exons, introns, and UTRs.
+RNAPeaks is an R package for visualizing RNA-binding protein (RBP) peaks
+overlaid on annotated gene structures. It accepts BED files of protein
+binding sites and Ensembl GTF annotations to produce publication-ready
+figures showing where RBPs bind relative to exons, introns, and UTRs.
+Splicing map and sequence motif analyses quantify position-specific binding
+frequency around splice junctions with bootstrap-based significance testing.
+
+---
+
+## Documentation
+
+Full function reference and articles are available at the package website:
+
+**<https://krushna-b.github.io/RNAPeaks/>**
+
+---
 
 ## Features
 
-- **Single-gene visualization**: Plot RBP peaks on individual genes with `PlotGene()`
-- **Region-based visualization**: View multiple genes within a genomic window with `PlotRegion()`
-- **Splicing maps**: Analyze RBP binding frequency around splice junctions with `createSplicingMap()`
-- **Sequence motif analysis**: Identify motif enrichment patterns around splice sites with `createSequenceMap()`
-- **Statistical significance testing**: Bootstrap-based z-score testing to identify significant enrichment regions
-- **Automatic GTF integration**: Fetches Ensembl annotations via AnnotationHub (Human)
-- **Parallel processing**: Multi-core support for faster analysis of large datasets
-- **Customizable styling**: Extensive options for colors, sizes, labels, and layout
+| Feature | Function |
+|---|---|
+| Single-gene RBP peak visualization | `PlotGene()` |
+| Multi-gene genomic region visualization | `PlotRegion()` |
+| RBP binding frequency around splice junctions | `createSplicingMap()` |
+| Sequence motif frequency around splice junctions | `createSequenceMap()` |
+| Interactive web interface (no R required) | `launchApp()` |
+| GTF annotation loading (Human / Mouse) | `LoadGTF()` |
+| BED file validation and normalization | `checkBed()` |
+
+Additional capabilities:
+
+- Bootstrap-based z-score significance testing for enriched binding regions
+- IUPAC ambiguity code support in sequence motif search
+- Multi-core parallel processing (`cores` parameter) for large datasets
+- Extensive ggplot2-based styling options
+- Curated sample datasets for immediate exploration
+
+---
 
 ## Installation
 
-### Development Version from GitHub
+### Prerequisites
+
+Install Bioconductor dependencies first:
 
 ```r
 if (!require("BiocManager", quietly = TRUE))
@@ -30,232 +59,196 @@ BiocManager::install(c(
     "GenomicRanges", "IRanges", "S4Vectors", "BiocGenerics",
     "GenomeInfoDb", "AnnotationHub", "Biostrings", "BSgenome"
 ))
-
-# Install CRAN dependencies
-install.packages(c("ggplot2", "dplyr", "scales", "magrittr"))
 ```
 
 ### Install RNAPeaks
 
 ```r
-# Install from GitHub
 # install.packages("devtools")
 devtools::install_github("Krushna-B/RNAPeaks")
 ```
 
+For sequence motif analysis, also install the reference genome:
+
+```r
+BiocManager::install("BSgenome.Hsapiens.UCSC.hg38")
+```
+
+---
+
 ## Quick Start
 
-### Load the Package
+### Gene-level visualization
 
 ```r
 library(RNAPeaks)
-```
 
-### Gene-Level Visualization
-
-```r
-# Load GTF annotations (do once per session)
+# Load GTF annotation once per session (or load from a saved .rds file)
 gtf <- LoadGTF(species = "Human")
-saveRDS(gtf, "human_gtf.rds")  # Cache for future sessions
+saveRDS(gtf, "human_gtf.rds")   # cache for future sessions
 
-# Plot RBP peaks on a gene using included sample data
+# Plot RBP peaks on a single gene using the included sample data
 result <- PlotGene(
-    bed = sample_bed,
+    bed    = sample_bed,
     geneID = "GAPDH",
-    gtf = gtf
+    gtf    = gtf
 )
-result$plot
+
+result$plot   # ggplot2 object
+result$csv    # filtered BED data used in the plot
 ```
 
-### Region-Level Visualization
+### Region-level visualization
 
 ```r
 result <- PlotRegion(
-    bed = sample_bed,
-    gtf = gtf,
-    Chr = "12",
-    Start = 56000000,
-    End = 56050000,
+    bed    = sample_bed,
+    gtf    = gtf,
+    Chr    = "12",
+    Start  = 56000000,
+    End    = 56050000,
     Strand = "+"
 )
 result$plot
 ```
 
-### Splicing Map Analysis
----
+### Splicing map
 
-## Input Data Format
-
-### BED File Requirements
-
-Your BED file should contain peak/binding site data with the following columns:
-
-| Column | Description |
-|--------|-------------|
-| 1 | Chromosome (e.g., "chr1" or "1") |
-| 2 | Start position (0-based) |
-| 3 | End position |
-| 4 | Name/Target (protein identifier) |
-| 5 | Score (optional) |
-| 6 | Strand ("+" or "-") |
-
-The `checkBed()` function automatically validates your BED file format.
-
-Analyze where RBPs bind relative to exon/intron boundaries in splicing events:
+Quantify RBP binding frequency around exon-intron boundaries across
+skipped-exon splicing events:
 
 ```r
-# Using included sample data
 createSplicingMap(
-    bed_file = sample_bed,
-    SEMATS = sample_se.mats
-)
-
-# With parallel processing and custom parameters
-createSplicingMap(
-    bed_file = sample_bed,
-    SEMATS = sample_se.mats,
-    cores = 4,
-    control_iterations = 20,      # Bootstrap iterations for control sampling
-    control_multiplier = 2.0,     # Sample size = (retained + excluded) * multiplier
-    show_significance = TRUE      # Show significant enrichment regions
+    bed_file  = sample_bed,
+    SEMATS    = sample_se.mats
 )
 ```
 
-### Sequence Motif Analysis
+With significance testing and parallel processing:
 
-Identify sequence motif enrichment patterns around splice sites:
+```r
+createSplicingMap(
+    bed_file           = sample_bed,
+    SEMATS             = sample_se.mats,
+    cores              = 4,
+    control_iterations = 20,
+    show_significance  = TRUE
+)
+```
+
+### Sequence motif analysis
+
+Identify enrichment of a sequence motif (IUPAC codes supported) around
+splice junctions:
 
 ```r
 library(BSgenome.Hsapiens.UCSC.hg38)
 
-# Search for YCAY motif (Y = C or T)
 createSequenceMap(
-    SEMATS = sample_se.mats,
-    sequence = "YCAY"
-)
-
-# With significance testing
-createSequenceMap(
-    SEMATS = sample_se.mats,
-    sequence = "YGCY",
-    control_iterations = 20,
-    z_threshold = 1.96,          
-    min_consecutive = 10,         # Minimum positions for significant region
-    show_significance = TRUE
-)
-
-# Return data for custom analysis
-freq_data <- createSequenceMap(
-    SEMATS = sample_se.mats,
-    sequence = "CCCC",
-    return_data = TRUE
+    SEMATS   = sample_se.mats,
+    sequence = "YCAY"           # Y = C or T
 )
 ```
 
-### Validating Bootstrap Normality
+---
 
-The bootstrap sampling assumes normality. You can verify this:
+## Input data format
 
-```r
-# Get diagnostics including raw bootstrap samples
-diag <- createSequenceMap(
-    SEMATS = sample_se.mats,
-    sequence = "YGCY",
-    return_diagnostics = TRUE
-)
+### BED file
 
-# Test normality at all positions
-mean(apply(diag$bootstrap_matrix, 1, function(x) shapiro.test(x)$p.value) > 0.05)
-```
-
-## API Reference
-
-### Main Functions
-
-| Function | Description |
-|----------|-------------|
-| `PlotGene()` | Plot RBP peaks on a single gene structure |
-| `PlotRegion()` | Plot RBP peaks across a genomic region with multiple genes |
-| `createSplicingMap()` | Analyze protein binding frequency around splice junctions |
-| `createSequenceMap()` | Analyze sequence motif frequency around splice junctions |
-
-### Helper Functions
-
-| Function | Description |
-|----------|-------------|
-| `LoadGTF()` | Load GTF annotation from AnnotationHub (Human) |
-| `checkBed()` | Validate and normalize BED file format |
-
-### Key Parameters for Splicing/Sequence Maps
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `control_multiplier` | 2.0 | Sample size = (retained + excluded) * multiplier |
-| `control_iterations` | 20 | Number of bootstrap iterations for control group |
-| `z_threshold` | 1.96 | Z-score threshold for significance (1.96 = p < 0.05) |
-| `min_consecutive` | 10 | Minimum consecutive positions for significant region |
-| `show_significance` | TRUE | Display significance bars on plot |
-| `cores` | 1 | Number of cores for parallel processing |
-| `return_data` | FALSE | Return data frame instead of plot |
-| `return_diagnostics` | FALSE | Return bootstrap samples for normality testing |
-
-## Input Data Format
-
-### BED File Requirements
-
-Your BED file should contain peak/binding site data. Columns are mapped by position:
+Columns are mapped **by position** to the canonical BED fields. Use
+`checkBed()` to validate and normalize your file before plotting.
 
 | Column | Name | Description | Required |
 |--------|------|-------------|----------|
-| 1 | chr | Chromosome (e.g., "chr1" or "1") | Yes |
-| 2 | start | Start position (0-based) | Yes |
-| 3 | end | End position | Yes |
-| 4 | tag | Name/Target (protein identifier) | No (default: "peak") |
-| 5 | score | Score | No (default: 0) |
-| 6 | strand | Strand ("+" or "-") | No (default: "+") |
-
-The `checkBed()` function validates and standardizes your BED file, filling in defaults for missing columns.
-
-### SE.MATS Format (for Splicing Analysis)
-
-For `createSplicingMap()` and `createSequenceMap()`, provide SE.MATS output from rMATS with columns including:
-
-- `chr`, `strand` - Genomic location
-- `exonStart_0base`, `exonEnd` - Skipped exon coordinates
-- `upstreamES`, `upstreamEE` - Upstream exon coordinates
-- `downstreamES`, `downstreamEE` - Downstream exon coordinates
-- `PValue`, `FDR`, `IncLevelDifference` - Statistical results
-- `IJC_SAMPLE_1`, `SJC_SAMPLE_1`, `IJC_SAMPLE_2`, `SJC_SAMPLE_2` - Junction counts
-- `IncLevel1`, `IncLevel2` - Inclusion levels
-
-## Included Sample Data
-
-- `sample_bed`: K562 cell line RBP binding peaks
-- `sample_se.mats`: Skipped exon alternative splicing events (87,736 events)
+| 1 | `chr` | Chromosome (e.g., `"chr1"` or `"1"`) | Yes |
+| 2 | `start` | Start coordinate (0-based) | Yes |
+| 3 | `end` | End coordinate | Yes |
+| 4 | `tag` | Protein / peak identifier | No (default: `"peak"`) |
+| 5 | `score` | Peak score | No (default: `0`) |
+| 6 | `strand` | Strand (`"+"` or `"-"`) | No (default: `"+"`) |
 
 ```r
-# View sample data
+my_bed <- read.table("my_peaks.bed", header = FALSE, sep = "\t")
+my_bed <- checkBed(my_bed)   # validates, normalizes, strips "chr" prefix
+```
+
+### SE.MATS file
+
+For `createSplicingMap()` and `createSequenceMap()`, provide the
+`SE.MATS.JC.txt` output from
+[rMATS](https://rnaseq-mats.sourceforge.net/). Required columns:
+
+`chr`, `strand`, `exonStart_0base`, `exonEnd`, `upstreamES`,
+`upstreamEE`, `downstreamES`, `downstreamEE`, `PValue`, `FDR`,
+`IncLevelDifference`, `IJC_SAMPLE_1`, `SJC_SAMPLE_1`,
+`IJC_SAMPLE_2`, `SJC_SAMPLE_2`, `IncLevel1`, `IncLevel2`
+
+---
+
+## Included sample data
+
+| Dataset | Description |
+|---------|-------------|
+| `sample_bed` | K562 cell line RBP binding peaks (eCLIP) |
+| `sample_se.mats` | 87,736 skipped-exon splicing events from rMATS |
+| `gtf_human` | Pre-loaded Ensembl GRCh38 GTF (no download required) |
+
+```r
 head(sample_bed)
 head(sample_se.mats)
 ```
 
-## Documentation
+---
 
-Full function documentation:
+## Key parameters
+
+### Splicing / Sequence maps
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `WidthIntoExon` | `50` | bp to extend into flanking exons |
+| `WidthIntoIntron` | `300` | bp to extend into flanking introns |
+| `moving_average` | `50` | smoothing window size (positions) |
+| `control_multiplier` | `2.0` | control sample size = (retained + excluded) × multiplier |
+| `control_iterations` | `20` | bootstrap iterations for control distribution |
+| `z_threshold` | `1.96` | z-score threshold (p < 0.05) when `use_fdr = FALSE` |
+| `min_consecutive` | `10` | minimum run of significant positions to report a region |
+| `show_significance` | `TRUE` | overlay significance bars on the plot |
+| `cores` | `1` | cores for parallel processing |
+| `return_data` | `FALSE` | return the frequency data frame instead of a plot |
+
+---
+
+## Web interface
+
+A browser-based interface is available for users who prefer not to write R code:
 
 ```r
-?PlotGene
-?PlotRegion
-?createSplicingMap
-?createSequenceMap
-?checkBed
-?LoadGTF
+launchApp()
 ```
+
+The app supports all four analysis modes, file upload, and export to PDF or CSV.
+
+---
+
+## Citation
+
+If you use RNAPeaks in your research, please cite:
+
+> Bhanushali K, Giri G, et al. (2025). *RNAPeaks: publication-quality
+> visualization of RNA-binding protein peaks on gene structures.*
+> GitHub: <https://github.com/Krushna-B/RNAPeaks>
+
+---
 
 ## Contributing
 
-Report issues and contribute at [GitHub](https://github.com/Krushna-B/RNAPeaks/issues).
+Bug reports and feature requests are welcome on the
+[issue tracker](https://github.com/Krushna-B/RNAPeaks/issues).
+
+---
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+MIT License — see [LICENSE](LICENSE) for details.

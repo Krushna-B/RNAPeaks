@@ -1,4 +1,6 @@
 
+#' Validate and Normalize a BED-Format Data Frame
+#'
 #' Validates a data frame as BED format and normalizes column names and
 #' chromosome identifiers. The function expects columns in standard BED order:
 #' chr, start, end, tag/name, score, strand.

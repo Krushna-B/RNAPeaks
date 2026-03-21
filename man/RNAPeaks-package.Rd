@@ -117,6 +117,7 @@ createSequenceMap(
 \seealso{
 Useful links:
 \itemize{
+  \item \url{https://krushna-b.github.io/RNAPeaks/}
   \item \url{https://github.com/Krushna-B/RNAPeaks}
   \item Report bugs at \url{https://github.com/Krushna-B/RNAPeaks/issues}
 }
@@ -124,5 +125,10 @@ Useful links:
 }
 \author{
 \strong{Maintainer}: Krushna Bhanushali \email{Krushna.Bhanushali@unc.edu}
+
+Authors:
+\itemize{
+  \item Gilbert Giri \email{Ggiri@unc.edu}
+}
 
 }

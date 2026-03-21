@@ -9,16 +9,18 @@ Authors@R: c(
     person("Gilbert", "Giri",
            email = "Ggiri@unc.edu",
            role = c("aut")))
-Description: RNAPeaks creates publicaition quality visualizations of RNA-binding
-    protein (RBP) peaks overlaid on gene structures. Key features include                                                                                                                                 
-      single-gene visualization with PlotGene(), multi-gene genomic region                                                                                                                                    
-      plots with PlotRegion(), splicing maps analyzing RBP binding frequency                                                                                                                                  
-      around splice junctions, and sequence motif frequency analysis with                                                                                                                                     
-      IUPAC ambiguity code support.The package provides an interactive Shiny web interface                                                                                                                                    
-      for users without R programming experience. Includes sample datasets                                                                                                                                    
-      for immediate exploration.    
+Description: Creates publication-quality visualizations of RNA-binding protein
+    (RBP) peaks overlaid on gene structures derived from Ensembl GTF annotations.
+    Key features include single-gene visualization with PlotGene(), multi-gene
+    genomic region plots with PlotRegion(), splicing maps that quantify RBP
+    binding frequency around exon-intron boundaries with createSplicingMap(),
+    and position-specific sequence motif frequency analysis with full IUPAC
+    ambiguity code support via createSequenceMap(). Statistical significance is
+    assessed using bootstrap-based z-score testing. An interactive Shiny web
+    interface is provided for users without R programming experience. Includes
+    curated sample datasets for immediate exploration.
 License: MIT + file LICENSE
-URL: https://github.com/Krushna-B/RNAPeaks
+URL: https://krushna-b.github.io/RNAPeaks/, https://github.com/Krushna-B/RNAPeaks
 BugReports: https://github.com/Krushna-B/RNAPeaks/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -57,10 +59,11 @@ Suggests:
     ensembldb,
     BSgenome.Hsapiens.UCSC.hg38,
     shiny (>= 1.7.0),
-    rtracklayer,                                                                                                                                                                                            
-      bslib,                                                                                                                                                                                                  
-      bsicons                                                                                                                                                                                                 
+    rtracklayer,
+    bslib,
+    bsicons
 Config/testthat/edition: 3
+Config/Needs/website: pkgdown
 Depends:
     R (>= 4.3)
 LazyData: true
