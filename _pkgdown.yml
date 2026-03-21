@@ -1,0 +1,90 @@
+url: https://krushna-b.github.io/RNAPeaks/
+
+template:
+  bootstrap: 5
+  bootswatch: flatly
+  bslib:
+    primary: "#2C5F8A"
+    headings-font-size: "1.1rem"
+    base_font:
+      google: "Inter"
+    heading_font:
+      google: "Inter"
+    code_font:
+      google: "JetBrains Mono"
+  includes:
+    in_header: |
+      <meta name="description" content="RNAPeaks: publication-quality visualization
+        of RNA-binding protein peaks on gene structures.">
+
+home:
+  title: "RNAPeaks"
+  description: >
+    Publication-quality visualization of RNA-binding protein peaks on
+    gene structures. Single-gene and region-level peak plots, splicing maps,
+    and sequence motif analysis around splice junctions.
+  links:
+  - text: GitHub repository
+    href: https://github.com/Krushna-B/RNAPeaks
+  - text: Report a bug
+    href: https://github.com/Krushna-B/RNAPeaks/issues
+
+navbar:
+  structure:
+    left:  [intro, reference, articles, news]
+    right: [search, github]
+  components:
+    intro:
+      text: Get started
+      href: articles/RNAPeaks.html
+    articles:
+      text: Articles
+      menu:
+      - text: Getting Started
+        href: articles/RNAPeaks.html
+      - text: Gene-Level Visualization
+        href: articles/gene-visualization.html
+      - text: Splicing Maps
+        href: articles/splicing-maps.html
+    github:
+      icon: fab fa-github
+      href: https://github.com/Krushna-B/RNAPeaks
+      aria-label: GitHub
+
+reference:
+- title: Visualization
+  desc: >
+    Core functions for producing peak visualizations on gene and genomic
+    region structures.
+  contents:
+  - PlotGene
+  - PlotRegion
+
+- title: Splicing and Motif Analysis
+  desc: >
+    Functions for quantifying RNA-binding protein occupancy and sequence
+    motif frequency around exon-intron boundaries.
+  contents:
+  - createSplicingMap
+  - createSequenceMap
+
+- title: Utilities
+  desc: >
+    Helper functions for loading annotations and preparing input data.
+  contents:
+  - LoadGTF
+  - checkBed
+  - launchApp
+
+- title: Sample Data
+  desc: >
+    Curated datasets bundled with the package for testing and demonstration.
+  contents:
+  - sample_bed
+  - sample_se.mats
+  - gtf_human
+
+news:
+  releases:
+  - text: "Version 1.2.0"
+    href: https://github.com/Krushna-B/RNAPeaks/releases/tag/v1.2.0

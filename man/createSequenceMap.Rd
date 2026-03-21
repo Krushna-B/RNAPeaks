@@ -25,11 +25,27 @@ createSequenceMap(
   z_threshold = 1.96,
   min_consecutive = 10,
   one_sided = TRUE,
+  use_fdr = TRUE,
+  fdr_threshold = 0.05,
   show_significance = TRUE,
   return_data = FALSE,
   return_diagnostics = FALSE,
   verbose = TRUE,
-  progress_callback = NULL
+  progress_callback = NULL,
+  title = "",
+  retained_col = "blue",
+  excluded_col = "red",
+  control_col = "black",
+  line_width = 0.8,
+  line_alpha = 0.7,
+  ribbon_alpha = 0.3,
+  title_size = 20,
+  title_color = "black",
+  axis_text_size = 11,
+  boundary_col = "gray70",
+  exon_col = "navy",
+  legend_position = "bottom",
+  ylab = "Frequency"
 )
 }
 \arguments{
@@ -82,11 +98,20 @@ standard deviation shown as a shaded band. Default is 20.}
 (sequential). Set higher for faster processing on multi-core systems.}
 
 \item{z_threshold}{Z-score threshold for significance testing. Default is 1.96
-(corresponds to p < 0.05 two-tailed).}
+(corresponds to p < 0.05 two-tailed). Only used when use_fdr = FALSE.}
 
 \item{min_consecutive}{Minimum number of consecutive significant positions
 required to form a significant region. Default is 10. Helps reduce false
 positives from noise.}
+
+\item{one_sided}{Logical. If TRUE (default), only test for enrichment
+(frequency > control). If FALSE, test for both enrichment and depletion.}
+
+\item{use_fdr}{Logical. If TRUE, use FDR-corrected p-values (Benjamini-Hochberg)
+for significance testing. If FALSE (default), use z_threshold directly.}
+
+\item{fdr_threshold}{FDR threshold for significance when use_fdr = TRUE.
+Default is 0.05.}
 
 \item{show_significance}{Logical. If TRUE (default), displays colored bars above
 the plot indicating regions where Retained/Excluded differ significantly
@@ -105,10 +130,38 @@ Default is FALSE.}
 \item{progress_callback}{Optional function to report progress. Called with two
 arguments: current iteration number and total iterations. Used by Shiny app
 for progress display. Default is NULL (no callback).}
+
+\item{title}{Character string for the plot title. Default is "" (no title).}
+
+\item{retained_col}{Color for the Retained group line. Default is "blue".}
+
+\item{excluded_col}{Color for the Excluded group line. Default is "red".}
+
+\item{control_col}{Color for the Control group line. Default is "black".}
+
+\item{line_width}{Numeric line width for the frequency lines. Default is 0.8.}
+
+\item{line_alpha}{Numeric alpha (opacity) for the frequency lines. Default is 0.7.}
+
+\item{ribbon_alpha}{Numeric alpha for the SD ribbon around Control. Default is 0.3.}
+
+\item{title_size}{Numeric font size for the plot title. Default is 20.}
+
+\item{title_color}{Color for the plot title text. Default is "black".}
+
+\item{axis_text_size}{Numeric font size for y-axis tick labels. Default is 11.}
+
+\item{boundary_col}{Color for the dashed vertical boundary lines. Default is "gray70".}
+
+\item{exon_col}{Fill color for the skipped (middle) exon in the schematic. Default is "navy".}
+
+\item{legend_position}{Position of the legend. Default is "bottom".}
+
+\item{ylab}{Label for the y-axis. Default is "Frequency".}
 }
 \value{
 A ggplot object showing sequence frequency across the 4 regions
-for Retained (blue), Excluded (red), and Control (black) groups.
+for Retained, Excluded, and Control groups.
 Significant regions (z-test vs Control) are shown as colored bars above
 the plot. Returns a data frame if return_data = TRUE.
 }
