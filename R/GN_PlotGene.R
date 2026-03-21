@@ -23,10 +23,10 @@
 #' @param exon_width Vertical height of exon rectangles.
 #' @param utr_width Vertical height of UTR rectangles.
 #' @param exon_col Color for exon/CDS regions.
-#' @param title_size Font size for plot title.
-#' @param subtitle_size Font size for plot subtitle.
-#' @param label_size Font size for protein labels.
-#' @param xlab_size Font size for x-axis labels.
+#' @param total_arrows Total number of directional arrows drawn across all
+#'   introns to indicate transcription direction. Default is 6.
+#' @param max_per_intron Maximum number of directional arrows drawn per intron.
+#'   Default is 2.
 #' @param five_to_three Logical. If TRUE, orients the plot so that 5' is on the
 #'   left and 3' is on the right, regardless of strand. For negative strand genes,
 #'   this reverses the x-axis. Default is FALSE (genomic coordinates left-to-right).

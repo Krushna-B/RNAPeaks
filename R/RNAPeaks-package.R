@@ -135,7 +135,7 @@ utils::globalVariables(c(
   "global_position", "bin", "frequency", "event_id", "bin_index", "position",
   "PValue", "FDR", "IncLevelDifference", "BEDFILE",
   # Splicing/Sequence map variables
-  "moving_avg_sd", "control_sd", "grp_freq", "control_mean", "z_score",
+  "moving_avg_sd", "control_sd", "grp_freq", "control_mean", "z_score", "p_adjusted",
   "Inc_1", "ribbon_fill", "start_pos", "end_pos", "max_y",
   "schematic_start", "schematic_end", "bar_y", "overlap_count", "match_count",
   "position_in_bin",

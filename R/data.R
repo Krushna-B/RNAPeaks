@@ -32,17 +32,35 @@
 #' This bundled dataset eliminates the need to download from AnnotationHub,
 #' enabling offline use and faster loading.
 #'
-#' @format A data frame containing GTF annotation with columns including:
+#' @format A data frame containing GTF annotation with the following columns:
 #' \describe{
 #'   \item{seqnames}{Chromosome}
 #'   \item{start}{Feature start position}
 #'   \item{end}{Feature end position}
+#'   \item{width}{Feature width in bp}
 #'   \item{strand}{Strand (+ or -)}
+#'   \item{source}{Annotation source}
 #'   \item{type}{Feature type (gene, transcript, exon, CDS, UTR, etc.)}
+#'   \item{score}{Annotation score}
+#'   \item{phase}{CDS phase (0, 1, or 2)}
 #'   \item{gene_id}{Ensembl gene ID}
+#'   \item{gene_version}{Ensembl gene version}
 #'   \item{gene_name}{Gene symbol}
-#'   \item{transcript_id}{Ensembl transcript ID}
+#'   \item{gene_source}{Gene annotation source}
 #'   \item{gene_biotype}{Gene biotype (protein_coding, lncRNA, etc.)}
+#'   \item{transcript_id}{Ensembl transcript ID}
+#'   \item{transcript_version}{Ensembl transcript version}
+#'   \item{transcript_name}{Transcript name}
+#'   \item{transcript_source}{Transcript annotation source}
+#'   \item{transcript_biotype}{Transcript biotype}
+#'   \item{transcript_support_level}{Transcript support level (TSL)}
+#'   \item{exon_number}{Exon number within the transcript}
+#'   \item{exon_id}{Ensembl exon ID}
+#'   \item{exon_version}{Ensembl exon version}
+#'   \item{protein_id}{Ensembl protein ID}
+#'   \item{protein_version}{Ensembl protein version}
+#'   \item{ccds_id}{CCDS identifier}
+#'   \item{tag}{Feature tag (e.g., basic, Ensembl_canonical)}
 #' }
 #'
 #' @source Ensembl via AnnotationHub (AH110867)

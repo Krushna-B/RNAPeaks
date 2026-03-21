@@ -66,6 +66,12 @@ of peaks), "Target" (alphabetically), or "Region" (by genomic clustering).}
 
 \item{exon_col}{Color for exon/CDS regions.}
 
+\item{total_arrows}{Total number of directional arrows drawn across all
+introns to indicate transcription direction. Default is 6.}
+
+\item{max_per_intron}{Maximum number of directional arrows drawn per intron.
+Default is 2.}
+
 \item{five_to_three}{Logical. If TRUE, orients the plot so that 5' is on the
 left and 3' is on the right, regardless of strand. For negative strand genes,
 this reverses the x-axis. Default is FALSE (genomic coordinates left-to-right).}
@@ -76,14 +82,6 @@ this reverses the x-axis. Default is FALSE (genomic coordinates left-to-right).}
 
 \item{...}{Additional styling arguments passed to internal plotting functions.
 See Styling Parameters section below.}
-
-\item{title_size}{Font size for plot title.}
-
-\item{subtitle_size}{Font size for plot subtitle.}
-
-\item{label_size}{Font size for protein labels.}
-
-\item{xlab_size}{Font size for x-axis labels.}
 }
 \value{
 A named list containing:

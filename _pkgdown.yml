@@ -84,6 +84,11 @@ reference:
   - sample_se.mats
   - gtf_human
 
+- title: Package
+  desc: Package-level documentation.
+  contents:
+  - RNAPeaks-package
+
 news:
   releases:
   - text: "Version 1.2.0"

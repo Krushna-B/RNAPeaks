@@ -76,6 +76,12 @@ are loaded from AnnotationHub based on species.}
 
 \item{exon_col}{Color for exon/CDS regions.}
 
+\item{total_arrows}{Total number of directional arrows drawn across all
+introns to indicate transcription direction. Default is 12.}
+
+\item{max_per_intron}{Maximum number of directional arrows drawn per intron.
+Default is 5.}
+
 \item{five_to_three}{Logical. If TRUE and Strand is "-", flips the x-axis so
 5' is on the left. Default FALSE.}
 
