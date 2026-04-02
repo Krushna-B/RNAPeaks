@@ -31,7 +31,6 @@ Full function reference and articles are available at the package website:
 | Multi-gene genomic region visualization | `PlotRegion()` |
 | RBP binding frequency around splice junctions | `createSplicingMap()` |
 | Sequence motif frequency around splice junctions | `createSequenceMap()` |
-| Interactive web interface (no R required) | `launchApp()` |
 | GTF annotation loading (Human / Mouse) | `LoadGTF()` |
 | BED file validation and normalization | `checkBed()` |
 
@@ -217,18 +216,6 @@ head(sample_se.mats)
 | `show_significance` | `TRUE` | overlay significance bars on the plot |
 | `cores` | `1` | cores for parallel processing |
 | `return_data` | `FALSE` | return the frequency data frame instead of a plot |
-
----
-
-## Web interface
-
-A browser-based interface is available for users who prefer not to write R code:
-
-```r
-launchApp()
-```
-
-The app supports all four analysis modes, file upload, and export to PDF or CSV.
 
 ---
 

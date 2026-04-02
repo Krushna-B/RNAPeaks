@@ -59,10 +59,7 @@ Suggests:
     knitr,
     rmarkdown,
     ensembldb,
-    BSgenome.Mmusculus.UCSC.mm10,
-    shiny (>= 1.7.0),
-    bslib,
-    bsicons
+    BSgenome.Mmusculus.UCSC.mm10
 Config/testthat/edition: 3
 Config/Needs/website: pkgdown
 Depends:
