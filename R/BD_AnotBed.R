@@ -37,6 +37,12 @@
 #' }
 AnotBed <- function(peak = NULL, enDb = NULL, species = "Human") {
 
+  if (!requireNamespace("ensembldb", quietly = TRUE)) {
+    stop("Package 'ensembldb' is required for peak annotation. ",
+         "Install it with: BiocManager::install('ensembldb')",
+         call. = FALSE)
+  }
+
   if (is.null(peak)) {
     stop("Provide peak bed file.")
   }

@@ -44,7 +44,6 @@ Imports:
     Biostrings,
     BSgenome,
     BSgenome.Hsapiens.UCSC.hg38,
-    BSgenome.Mmusculus.UCSC.mm10,
     rtracklayer,
     BiocIO,
     scales,
@@ -52,7 +51,6 @@ Imports:
     progress,
     future,
     grid,
-    magrittr,
     parallel,
     stats,
     utils
@@ -60,8 +58,8 @@ Suggests:
     testthat (>= 3.0.0),
     knitr,
     rmarkdown,
-    BiocStyle,
     ensembldb,
+    BSgenome.Mmusculus.UCSC.mm10,
     shiny (>= 1.7.0),
     bslib,
     bsicons
