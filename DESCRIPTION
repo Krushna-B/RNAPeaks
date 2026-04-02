@@ -40,8 +40,13 @@ Imports:
     BiocGenerics,
     GenomeInfoDb,
     AnnotationHub,
+    BiocFileCache,
     Biostrings,
     BSgenome,
+    BSgenome.Hsapiens.UCSC.hg38,
+    BSgenome.Mmusculus.UCSC.mm10,
+    rtracklayer,
+    BiocIO,
     scales,
     slider,
     progress,
@@ -57,9 +62,7 @@ Suggests:
     rmarkdown,
     BiocStyle,
     ensembldb,
-    BSgenome.Hsapiens.UCSC.hg38,
     shiny (>= 1.7.0),
-    rtracklayer,
     bslib,
     bsicons
 Config/testthat/edition: 3
