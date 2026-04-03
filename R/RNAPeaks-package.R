@@ -117,7 +117,6 @@
 #'   scale_fill_identity scale_linetype_identity scale_y_continuous labs
 #'   theme_minimal margin element_line arrow geom_ribbon scale_color_manual
 #' @importFrom grid unit textGrob gpar convertWidth grobWidth
-#' @importFrom magrittr %>%
 #' @importFrom scales label_comma scientific
 #' @importFrom stats aggregate na.omit setNames
 #' @importFrom utils write.csv read.table

@@ -231,19 +231,6 @@ Common IUPAC codes:
 
 ---
 
-## Interactive web interface
-
-Users who prefer a point-and-click interface can launch the bundled Shiny app:
-
-```{r launch-app, eval = FALSE}
-launchApp()
-```
-
-The app provides access to all four analysis modes with file upload,
-parameter controls, and PDF / CSV export.
-
----
-
 ## Session info
 
 ```{r session-info}
