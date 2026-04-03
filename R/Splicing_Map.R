@@ -162,6 +162,9 @@ createSplicingMap <- function(bed_file,
     bed_data <- bed_file
   }
 
+  # Normalize column names (handles data frames read with header=FALSE giving V1,V2,...)
+  bed_data <- checkBed(bed_data)
+
   # Normalize chromosome names (handle lowercase x, y, m and chr prefix mismatches)
   bed_data$chr <- toupper(bed_data$chr)
   SEMATS$chr <- sub("^chr", "", SEMATS$chr)
