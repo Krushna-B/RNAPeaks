@@ -227,27 +227,13 @@ Common IUPAC codes:
 
 ------------------------------------------------------------------------
 
-## Interactive web interface
-
-Users who prefer a point-and-click interface can launch the bundled
-Shiny app:
-
-``` r
-launchApp()
-```
-
-The app provides access to all four analysis modes with file upload,
-parameter controls, and PDF / CSV export.
-
-------------------------------------------------------------------------
-
 ## Session info
 
 ``` r
 sessionInfo()
 #> R version 4.5.3 (2026-03-11)
 #> Platform: x86_64-pc-linux-gnu
-#> Running under: Ubuntu 24.04.3 LTS
+#> Running under: Ubuntu 24.04.4 LTS
 #> 
 #> Matrix products: default
 #> BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
@@ -271,7 +257,7 @@ sessionInfo()
 #> loaded via a namespace (and not attached):
 #>  [1] KEGGREST_1.50.0      gtable_0.3.6         xfun_0.57           
 #>  [4] bslib_0.10.0         ggplot2_4.0.2        httr2_1.2.2         
-#>  [7] Biobase_2.70.0       vctrs_0.7.1          tools_4.5.3         
+#>  [7] Biobase_2.70.0       vctrs_0.7.2          tools_4.5.3         
 #> [10] generics_0.1.4       stats4_4.5.3         curl_7.0.0          
 #> [13] tibble_3.3.1         AnnotationDbi_1.72.0 RSQLite_2.4.6       
 #> [16] blob_1.3.0           pkgconfig_2.0.3      RColorBrewer_1.1-3  
@@ -282,16 +268,15 @@ sessionInfo()
 #> [31] sass_0.4.10          yaml_2.3.12          pillar_1.11.1       
 #> [34] pkgdown_2.2.0        crayon_1.5.3         jquerylib_0.1.4     
 #> [37] cachem_1.1.0         AnnotationHub_4.0.0  tidyselect_1.2.1    
-#> [40] digest_0.6.39        dplyr_1.2.0          BiocVersion_3.22.0  
+#> [40] digest_0.6.39        dplyr_1.2.1          BiocVersion_3.22.0  
 #> [43] fastmap_1.2.0        grid_4.5.3           cli_3.6.5           
 #> [46] magrittr_2.0.4       filelock_1.0.3       UCSC.utils_1.6.1    
 #> [49] scales_1.4.0         rappdirs_0.3.4       bit64_4.6.0-1       
-#> [52] rmarkdown_2.30       XVector_0.50.0       httr_1.4.8          
-#> [55] bit_4.6.0            otel_0.2.0           ragg_1.5.1          
-#> [58] png_0.1-9            memoise_2.0.1        evaluate_1.0.5      
-#> [61] knitr_1.51           GenomicRanges_1.62.1 IRanges_2.44.0      
-#> [64] BiocFileCache_3.0.0  rlang_1.1.7          glue_1.8.0          
-#> [67] DBI_1.3.0            BiocManager_1.30.27  BiocGenerics_0.56.0 
-#> [70] jsonlite_2.0.0       R6_2.6.1             systemfonts_1.3.2   
-#> [73] fs_1.6.7
+#> [52] rmarkdown_2.31       XVector_0.50.0       httr_1.4.8          
+#> [55] bit_4.6.0            ragg_1.5.2           png_0.1-9           
+#> [58] memoise_2.0.1        evaluate_1.0.5       knitr_1.51          
+#> [61] GenomicRanges_1.62.1 IRanges_2.44.0       BiocFileCache_3.0.0 
+#> [64] rlang_1.1.7          glue_1.8.0           DBI_1.3.0           
+#> [67] BiocManager_1.30.27  BiocGenerics_0.56.0  jsonlite_2.0.0      
+#> [70] R6_2.6.1             systemfonts_1.3.2    fs_2.0.1
 ```

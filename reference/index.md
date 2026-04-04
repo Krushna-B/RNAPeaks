@@ -41,9 +41,6 @@ Helper functions for loading annotations and preparing input data.
 - [`checkBed()`](https://krushna-b.github.io/RNAPeaks/reference/checkBed.md)
   : Validate and Normalize a BED-Format Data Frame
 
-- [`launchApp()`](https://krushna-b.github.io/RNAPeaks/reference/launchApp.md)
-  : Launch RNAPeaks Shiny Application
-
 ## Sample Data
 
 Curated datasets bundled with the package for testing and demonstration.

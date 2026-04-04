@@ -35,7 +35,6 @@ website:
 | Multi-gene genomic region visualization          | [`PlotRegion()`](https://krushna-b.github.io/RNAPeaks/reference/PlotRegion.md)               |
 | RBP binding frequency around splice junctions    | [`createSplicingMap()`](https://krushna-b.github.io/RNAPeaks/reference/createSplicingMap.md) |
 | Sequence motif frequency around splice junctions | [`createSequenceMap()`](https://krushna-b.github.io/RNAPeaks/reference/createSequenceMap.md) |
-| Interactive web interface (no R required)        | [`launchApp()`](https://krushna-b.github.io/RNAPeaks/reference/launchApp.md)                 |
 | GTF annotation loading (Human / Mouse)           | [`LoadGTF()`](https://krushna-b.github.io/RNAPeaks/reference/LoadGTF.md)                     |
 | BED file validation and normalization            | [`checkBed()`](https://krushna-b.github.io/RNAPeaks/reference/checkBed.md)                   |
 
@@ -226,20 +225,6 @@ head(sample_se.mats)
 | `show_significance`  | `TRUE`  | overlay significance bars on the plot                    |
 | `cores`              | `1`     | cores for parallel processing                            |
 | `return_data`        | `FALSE` | return the frequency data frame instead of a plot        |
-
-------------------------------------------------------------------------
-
-## Web interface
-
-A browser-based interface is available for users who prefer not to write
-R code:
-
-``` r
-launchApp()
-```
-
-The app supports all four analysis modes, file upload, and export to PDF
-or CSV.
 
 ------------------------------------------------------------------------
 
