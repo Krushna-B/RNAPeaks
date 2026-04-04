@@ -45,7 +45,7 @@ checkBed <- function(df) {
 
   # Require at least 3 columns (chr, start, end)
 
-if (ncol(df) < 3) {
+  if (ncol(df) < 3) {
     stop("BED file must have at least 3 columns (chr, start, end)")
   }
 
@@ -95,7 +95,7 @@ if (ncol(df) < 3) {
   }
 
   # Normalize chromosome names: remove "chr" prefix, uppercase
-df$chr <- toupper(df$chr)
+  df$chr <- toupper(df$chr)
   df$chr <- sub("^chr", "", df$chr, ignore.case = TRUE)
 
   message("BED file validated successfully")

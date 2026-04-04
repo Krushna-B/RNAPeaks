@@ -1,0 +1,18 @@
+name: Notify Webapp to Rebuild Backend
+
+on:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger webapp backend rebuild
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.WEBAPP_DISPATCH_TOKEN }}
+          repository: Krushna-B/RNAPeaks-Webapp
+          event-type: rnapeaks-package-updated
