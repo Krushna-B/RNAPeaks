@@ -37,12 +37,24 @@
 #'   # Load from saved file in future sessions
 #'   gtf <- readRDS("human_gtf.rds")
 #' }
-LoadGTF <- function(species = "Human") {
-  if (!species %in% c("Human", "Mouse"))
+LoadGTF <- function(species = "Human", file = NULL) {
+  if (!is.null(file)) {
+    gtf <- data.frame(rtracklayer::import(file))
+    return(gtf)
+  }
 
+  if (!species %in% c("Human", "Mouse"))
     stop("Species must be 'Human' or 'Mouse'")
 
-  ah <- AnnotationHub::AnnotationHub(ask = FALSE)
+  # Use localHub=TRUE when the cache already exists (e.g. Docker) to avoid
+  # outbound FTP/HTTPS checks against NCBI and AnnotationHub servers, which
+  # are blocked in many cloud environments and add ~2 min of timeout overhead.
+  cache_exists <- tryCatch({
+    cache_dir <- AnnotationHub::getAnnotationHubOption("CACHE")
+    file.exists(cache_dir) && length(list.files(cache_dir)) > 0
+  }, error = function(e) FALSE)
+
+  ah <- AnnotationHub::AnnotationHub(ask = FALSE, localHub = cache_exists)
 
   if (species == "Human") {
     # Ensembl Human GTF
