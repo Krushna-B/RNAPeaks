@@ -122,8 +122,7 @@ Default is FALSE.}
 \item{verbose}{Logical. If TRUE, prints progress messages. Default is TRUE.}
 
 \item{progress_callback}{Optional function to report progress. Called with two
-arguments: current iteration number and total iterations. Used by Shiny app
-for progress display. Default is NULL (no callback).}
+arguments: current iteration number and total iterations. Default is NULL.}
 
 \item{title}{Character string for the plot title. Default is "" (no title).}
 

@@ -9,6 +9,7 @@ splicing events to identify position-specific enrichment patterns.}
 createSequenceMap(
   SEMATS,
   sequence,
+  motif_mode = c("combined", "individual"),
   genome = NULL,
   moving_average = 40,
   WidthIntoExon = 50,
@@ -54,8 +55,15 @@ chr, strand, upstreamES, upstreamEE, exonStart_0base, exonEnd,
 downstreamES, downstreamEE, GeneID, PValue, FDR, IncLevelDifference,
 IJC_SAMPLE_1, SJC_SAMPLE_1, IJC_SAMPLE_2, SJC_SAMPLE_2, IncLevel1, IncLevel2}
 
-\item{sequence}{Character string of the target sequence motif to search for
-(e.g., "CCCC", "YGCY"). Supports IUPAC ambiguity codes.}
+\item{sequence}{Character string or character vector of sequence motifs to search
+for (e.g., \code{"YCAY"} or \code{c("YCAY", "CCCC")}). Supports IUPAC ambiguity
+codes. When multiple motifs are provided, behaviour depends on \code{motif_mode}.}
+
+\item{motif_mode}{How to handle multiple motifs. \code{"combined"} (default) treats
+all motifs as a single hit set — a position counts if any motif matches there —
+and returns one plot. \code{"individual"} runs the full analysis independently for
+each motif and returns a named list of plots (one per motif). Ignored when
+\code{sequence} is a single motif.}
 
 \item{genome}{A BSgenome object. Default uses BSgenome.Hsapiens.UCSC.hg38.}
 
@@ -128,8 +136,7 @@ Default is FALSE.}
 \item{verbose}{Logical. If TRUE, prints progress messages. Default is TRUE.}
 
 \item{progress_callback}{Optional function to report progress. Called with two
-arguments: current iteration number and total iterations. Used by Shiny app
-for progress display. Default is NULL (no callback).}
+arguments: current iteration number and total iterations. Default is NULL.}
 
 \item{title}{Character string for the plot title. Default is "" (no title).}
 
@@ -161,9 +168,11 @@ for progress display. Default is NULL (no callback).}
 }
 \value{
 A ggplot object showing sequence frequency across the 4 regions
-for Retained, Excluded, and Control groups.
-Significant regions (z-test vs Control) are shown as colored bars above
-the plot. Returns a data frame if return_data = TRUE.
+for Retained, Excluded, and Control groups. Significant regions (z-test vs
+Control) are shown as colored bars above the plot. Returns a data frame if
+\code{return_data = TRUE}. When \code{motif_mode = "individual"} and multiple
+motifs are supplied, returns a named list of ggplot objects (or data frames),
+one entry per motif.
 }
 \description{
 Analyzes the frequency of a target sequence motif across splicing junction
@@ -194,16 +203,20 @@ The frequency is calculated as: (events with motif at position) / (total events)
 \dontrun{
 library(BSgenome.Hsapiens.UCSC.hg38)
 
-# Basic usage
-createSequenceMap(SEMATS = sample_se.mats, sequence = "CCCC")
-
-# Search for YCAY motif (Y = C or T)
+# Single motif — basic usage (unchanged)
 createSequenceMap(SEMATS = sample_se.mats, sequence = "YCAY")
 
-# Return data instead of plot
-freq_data <- createSequenceMap(SEMATS = sample_se.mats,
-                                sequence = "GGGG",
-                                return_data = TRUE)
+# Multiple motifs — combined: one plot, hit if any motif matches
+createSequenceMap(SEMATS = sample_se.mats,
+                  sequence = c("YCAY", "CCCC"),
+                  motif_mode = "combined")
+
+# Multiple motifs — individual: named list of plots, one per motif
+plots <- createSequenceMap(SEMATS = sample_se.mats,
+                            sequence = c("YCAY", "CCCC", "GGGG"),
+                            motif_mode = "individual")
+plots[["YCAY"]]
+plots[["CCCC"]]
 }
 
 }
