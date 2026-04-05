@@ -16,8 +16,7 @@ Description: Creates publication-quality visualizations of RNA-binding protein
     binding frequency around exon-intron boundaries with createSplicingMap(),
     and position-specific sequence motif frequency analysis with full IUPAC
     ambiguity code support via createSequenceMap(). Statistical significance is
-    assessed using bootstrap-based z-score testing. An interactive Shiny web
-    interface is provided for users without R programming experience. Includes
+    assessed using bootstrap-based z-score testing. Includes
     curated sample datasets for immediate exploration.
 License: MIT + file LICENSE
 URL: https://krushna-b.github.io/RNAPeaks/, https://github.com/Krushna-B/RNAPeaks

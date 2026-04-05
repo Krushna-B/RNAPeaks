@@ -7,7 +7,7 @@ This function can be called once to load the annotation, which can then
 be passed to other functions like \code{PlotGene()} or \code{PlotRegion()} to avoid
 repeated downloads.}
 \usage{
-LoadGTF(species = "Human")
+LoadGTF(species = "Human", file = NULL)
 }
 \arguments{
 \item{species}{Species to load annotation for: "Human" or "Mouse".}

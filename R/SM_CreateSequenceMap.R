@@ -64,8 +64,7 @@
 #'   Default is FALSE.
 #' @param verbose Logical. If TRUE, prints progress messages. Default is TRUE.
 #' @param progress_callback Optional function to report progress. Called with two
-#'   arguments: current iteration number and total iterations. Used by Shiny app
-#'   for progress display. Default is NULL (no callback).
+#'   arguments: current iteration number and total iterations. Default is NULL.
 #' @param title Character string for the plot title. Default is "" (no title).
 #' @param retained_col Color for the Retained group line. Default is "blue".
 #' @param excluded_col Color for the Excluded group line. Default is "red".
