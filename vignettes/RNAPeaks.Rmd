@@ -231,6 +231,16 @@ Common IUPAC codes:
 
 ---
 
+## Citation
+
+If you use RNAPeaks in your research, please cite:
+
+> Bhanushali K, Giri G, et al. (2025). *RNAPeaks: publication-quality
+> visualization of RNA-binding protein peaks on gene structures.*
+> GitHub: <https://github.com/Krushna-B/RNAPeaks>
+
+---
+
 ## Session info
 
 ```{r session-info}
