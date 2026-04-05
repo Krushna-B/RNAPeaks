@@ -62,6 +62,7 @@ splicing events to identify position-specific enrichment patterns.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">createSequenceMap</span><span class="op">(</span></span>
 <span>  <span class="va">SEMATS</span>,</span>
 <span>  <span class="va">sequence</span>,</span>
+<span>  motif_mode <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"combined"</span>, <span class="st">"individual"</span><span class="op">)</span>,</span>
 <span>  genome <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  moving_average <span class="op">=</span> <span class="fl">40</span>,</span>
 <span>  WidthIntoExon <span class="op">=</span> <span class="fl">50</span>,</span>
@@ -114,8 +115,17 @@ IJC_SAMPLE_1, SJC_SAMPLE_1, IJC_SAMPLE_2, SJC_SAMPLE_2, IncLevel1, IncLevel2</p>
 
 
 <dt id="arg-sequence">sequence<a class="anchor" aria-label="anchor" href="#arg-sequence"></a></dt>
-<dd><p>Character string of the target sequence motif to search for
-(e.g., "CCCC", "YGCY"). Supports IUPAC ambiguity codes.</p></dd>
+<dd><p>Character string or character vector of sequence motifs to search
+for (e.g., <code>"YCAY"</code> or <code>c("YCAY", "CCCC")</code>). Supports IUPAC ambiguity
+codes. When multiple motifs are provided, behaviour depends on <code>motif_mode</code>.</p></dd>
+
+
+<dt id="arg-motif-mode">motif_mode<a class="anchor" aria-label="anchor" href="#arg-motif-mode"></a></dt>
+<dd><p>How to handle multiple motifs. <code>"combined"</code> (default) treats
+all motifs as a single hit set — a position counts if any motif matches there —
+and returns one plot. <code>"individual"</code> runs the full analysis independently for
+each motif and returns a named list of plots (one per motif). Ignored when
+<code>sequence</code> is a single motif.</p></dd>
 
 
 <dt id="arg-genome">genome<a class="anchor" aria-label="anchor" href="#arg-genome"></a></dt>
@@ -234,8 +244,7 @@ Default is FALSE.</p></dd>
 
 <dt id="arg-progress-callback">progress_callback<a class="anchor" aria-label="anchor" href="#arg-progress-callback"></a></dt>
 <dd><p>Optional function to report progress. Called with two
-arguments: current iteration number and total iterations. Used by Shiny app
-for progress display. Default is NULL (no callback).</p></dd>
+arguments: current iteration number and total iterations. Default is NULL.</p></dd>
 
 
 <dt id="arg-title">title<a class="anchor" aria-label="anchor" href="#arg-title"></a></dt>
@@ -297,9 +306,11 @@ for progress display. Default is NULL (no callback).</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A ggplot object showing sequence frequency across the 4 regions
-for Retained, Excluded, and Control groups.
-Significant regions (z-test vs Control) are shown as colored bars above
-the plot. Returns a data frame if return_data = TRUE.</p>
+for Retained, Excluded, and Control groups. Significant regions (z-test vs
+Control) are shown as colored bars above the plot. Returns a data frame if
+<code>return_data = TRUE</code>. When <code>motif_mode = "individual"</code> and multiple
+motifs are supplied, returns a named list of ggplot objects (or data frames),
+one entry per motif.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -320,16 +331,20 @@ The frequency is calculated as: (events with motif at position) / (total events)
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">BSgenome.Hsapiens.UCSC.hg38</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Basic usage</span></span></span>
-<span class="r-in"><span><span class="fu">createSequenceMap</span><span class="op">(</span>SEMATS <span class="op">=</span> <span class="va">sample_se.mats</span>, sequence <span class="op">=</span> <span class="st">"CCCC"</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Search for YCAY motif (Y = C or T)</span></span></span>
+<span class="r-in"><span><span class="co"># Single motif — basic usage (unchanged)</span></span></span>
 <span class="r-in"><span><span class="fu">createSequenceMap</span><span class="op">(</span>SEMATS <span class="op">=</span> <span class="va">sample_se.mats</span>, sequence <span class="op">=</span> <span class="st">"YCAY"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Return data instead of plot</span></span></span>
-<span class="r-in"><span><span class="va">freq_data</span> <span class="op">&lt;-</span> <span class="fu">createSequenceMap</span><span class="op">(</span>SEMATS <span class="op">=</span> <span class="va">sample_se.mats</span>,</span></span>
-<span class="r-in"><span>                                sequence <span class="op">=</span> <span class="st">"GGGG"</span>,</span></span>
-<span class="r-in"><span>                                return_data <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Multiple motifs — combined: one plot, hit if any motif matches</span></span></span>
+<span class="r-in"><span><span class="fu">createSequenceMap</span><span class="op">(</span>SEMATS <span class="op">=</span> <span class="va">sample_se.mats</span>,</span></span>
+<span class="r-in"><span>                  sequence <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"YCAY"</span>, <span class="st">"CCCC"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                  motif_mode <span class="op">=</span> <span class="st">"combined"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Multiple motifs — individual: named list of plots, one per motif</span></span></span>
+<span class="r-in"><span><span class="va">plots</span> <span class="op">&lt;-</span> <span class="fu">createSequenceMap</span><span class="op">(</span>SEMATS <span class="op">=</span> <span class="va">sample_se.mats</span>,</span></span>
+<span class="r-in"><span>                            sequence <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"YCAY"</span>, <span class="st">"CCCC"</span>, <span class="st">"GGGG"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                            motif_mode <span class="op">=</span> <span class="st">"individual"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">plots</span><span class="op">[[</span><span class="st">"YCAY"</span><span class="op">]</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="va">plots</span><span class="op">[[</span><span class="st">"CCCC"</span><span class="op">]</span><span class="op">]</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

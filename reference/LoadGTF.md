@@ -11,7 +11,7 @@ to avoid repeated downloads.
 ## Usage
 
 ``` r
-LoadGTF(species = "Human")
+LoadGTF(species = "Human", file = NULL)
 ```
 
 ## Arguments

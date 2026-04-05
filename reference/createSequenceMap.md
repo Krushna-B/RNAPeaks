@@ -11,6 +11,7 @@ patterns.
 createSequenceMap(
   SEMATS,
   sequence,
+  motif_mode = c("combined", "individual"),
   genome = NULL,
   moving_average = 40,
   WidthIntoExon = 50,
@@ -62,8 +63,18 @@ createSequenceMap(
 
 - sequence:
 
-  Character string of the target sequence motif to search for (e.g.,
-  "CCCC", "YGCY"). Supports IUPAC ambiguity codes.
+  Character string or character vector of sequence motifs to search for
+  (e.g., `"YCAY"` or `c("YCAY", "CCCC")`). Supports IUPAC ambiguity
+  codes. When multiple motifs are provided, behaviour depends on
+  `motif_mode`.
+
+- motif_mode:
+
+  How to handle multiple motifs. `"combined"` (default) treats all
+  motifs as a single hit set — a position counts if any motif matches
+  there — and returns one plot. `"individual"` runs the full analysis
+  independently for each motif and returns a named list of plots (one
+  per motif). Ignored when `sequence` is a single motif.
 
 - genome:
 
@@ -178,8 +189,7 @@ createSequenceMap(
 - progress_callback:
 
   Optional function to report progress. Called with two arguments:
-  current iteration number and total iterations. Used by Shiny app for
-  progress display. Default is NULL (no callback).
+  current iteration number and total iterations. Default is NULL.
 
 - title:
 
@@ -243,7 +253,9 @@ createSequenceMap(
 A ggplot object showing sequence frequency across the 4 regions for
 Retained, Excluded, and Control groups. Significant regions (z-test vs
 Control) are shown as colored bars above the plot. Returns a data frame
-if return_data = TRUE.
+if `return_data = TRUE`. When `motif_mode = "individual"` and multiple
+motifs are supplied, returns a named list of ggplot objects (or data
+frames), one entry per motif.
 
 ## Details
 
@@ -278,15 +290,19 @@ there. The frequency is calculated as: (events with motif at position) /
 if (FALSE) { # \dontrun{
 library(BSgenome.Hsapiens.UCSC.hg38)
 
-# Basic usage
-createSequenceMap(SEMATS = sample_se.mats, sequence = "CCCC")
-
-# Search for YCAY motif (Y = C or T)
+# Single motif — basic usage (unchanged)
 createSequenceMap(SEMATS = sample_se.mats, sequence = "YCAY")
 
-# Return data instead of plot
-freq_data <- createSequenceMap(SEMATS = sample_se.mats,
-                                sequence = "GGGG",
-                                return_data = TRUE)
+# Multiple motifs — combined: one plot, hit if any motif matches
+createSequenceMap(SEMATS = sample_se.mats,
+                  sequence = c("YCAY", "CCCC"),
+                  motif_mode = "combined")
+
+# Multiple motifs — individual: named list of plots, one per motif
+plots <- createSequenceMap(SEMATS = sample_se.mats,
+                            sequence = c("YCAY", "CCCC", "GGGG"),
+                            motif_mode = "individual")
+plots[["YCAY"]]
+plots[["CCCC"]]
 } # }
 ```

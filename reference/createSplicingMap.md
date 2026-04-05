@@ -172,8 +172,7 @@ createSplicingMap(
 - progress_callback:
 
   Optional function to report progress. Called with two arguments:
-  current iteration number and total iterations. Used by Shiny app for
-  progress display. Default is NULL (no callback).
+  current iteration number and total iterations. Default is NULL.
 
 - title:
 
