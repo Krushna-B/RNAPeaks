@@ -33,6 +33,23 @@
 #'   Default is 5.
 #' @param five_to_three Logical. If TRUE and Strand is "-", flips the x-axis so
 #'   5' is on the left. Default FALSE.
+#' @param bam_files Optional. A named character vector of BAM file paths to
+#'   display as coverage tracks above the gene structure. Names are used as
+#'   track labels on the left-hand side of each panel. If unnamed, the filename
+#'   (without extension) is used as the label. BAM files must be sorted and
+#'   indexed (a `.bai` file must exist alongside each BAM).
+#'   Example: \code{c("Sample A" = "/path/to/a.bam", "Sample B" = "/path/to/b.bam")}
+#' @param bam_fill_col Fill colour for BAM coverage tracks. A single colour
+#'   applied to all tracks, or a character vector the same length as
+#'   \code{bam_files} for per-track colours. Default \code{"navy"}.
+#' @param bam_fill_alpha Opacity of BAM track fill. Default \code{0.75}.
+#' @param bam_label_size Font size of the BAM track name label on the left. Default \code{9}.
+#' @param bam_axis_text_size Font size of the 0 and max coverage values. Default \code{8}.
+#' @param bam_ylim Optional global y-axis limits \code{c(min, max)} applied to
+#'   all BAM tracks. If \code{NULL}, all tracks share a common scale derived
+#'   from the maximum coverage across all BAMs.
+#' @param bam_track_height Relative height of each BAM panel compared to the
+#'   gene plot panel (which is always 4 units). Default \code{1}.
 #' @param RNA_Peaks_File_Path File path to save the output PDF plot.
 #' @param Bed_File_Path File path to save the filtered BED data as CSV.
 #' @param ... Additional styling arguments passed to internal plotting functions.
@@ -198,6 +215,13 @@ PlotRegion <- function(Chr = NULL,
                        total_arrows = 12,
                        max_per_intron = 5,
                        five_to_three = FALSE,
+                       bam_files = NULL,
+                       bam_fill_col = "navy",
+                       bam_fill_alpha = 0.75,
+                       bam_label_size = 9,
+                       bam_axis_text_size = 8,
+                       bam_ylim = NULL,
+                       bam_track_height = 1,
                        RNA_Peaks_File_Path = "~/Desktop/RNAPeaks.pdf",
                        Bed_File_Path = "~/Desktop/BEDFILE_PEAKS.csv",
                        ...) {
@@ -262,6 +286,95 @@ PlotRegion <- function(Chr = NULL,
     five_to_three = five_to_three,
     ...
   )
+
+  # ---- BAM coverage tracks ----
+  if (!is.null(bam_files)) {
+
+    # Ensure names exist; fall back to filename without extension
+    if (is.null(names(bam_files))) {
+      names(bam_files) <- vapply(bam_files, BAM_Label_From_Path, character(1))
+    } else {
+      missing_names <- names(bam_files) == "" | is.na(names(bam_files))
+      names(bam_files)[missing_names] <- vapply(
+        bam_files[missing_names], BAM_Label_From_Path, character(1)
+      )
+    }
+
+    n_bam     <- length(bam_files)
+    fill_cols <- rep_len(bam_fill_col, n_bam)
+
+    # axis_pad_bp may be overridden via ...; use same default as Draw_Gene_Plot
+    dots        <- list(...)
+    axis_pad_bp <- if ("axis_pad_bp" %in% names(dots)) dots$axis_pad_bp else 500
+
+    # Pre-compute coverage for all BAMs so global limits can be derived
+    cov_list <- vector("list", n_bam)
+    for (i in seq_len(n_bam)) {
+      cov_list[[i]] <- Compute_BAM_Coverage(
+        bam_path = bam_files[[i]],
+        chr      = as.character(Chr),
+        start    = Start,
+        end      = End
+      )
+    }
+
+    # Global y limits: user-supplied or derived from all tracks together
+    if (!is.null(bam_ylim)) {
+      resolved_ylim <- bam_ylim
+    } else {
+      global_max <- max(vapply(cov_list, function(d) max(d$coverage, na.rm = TRUE), numeric(1)))
+      resolved_ylim <- c(0, if (global_max == 0) 1 else global_max)
+    }
+
+    bam_track_plots <- vector("list", n_bam)
+    for (i in seq_len(n_bam)) {
+      bam_track_plots[[i]] <- Draw_BAM_Track(
+        cov_df         = cov_list[[i]],
+        label          = names(bam_files)[i],
+        x_min          = Start,
+        x_max          = End,
+        axis_pad_bp    = axis_pad_bp,
+        fill_col       = fill_cols[i],
+        fill_alpha     = bam_fill_alpha,
+        label_size     = bam_label_size,
+        axis_text_size = bam_axis_text_size,
+        ylim           = resolved_ylim,
+        five_to_three  = five_to_three,
+        gene_strand    = Strand
+      )
+    }
+
+    # Lift title from gene plot and move to top of combined figure
+    plot_title <- Plot$labels$title
+    plot_sub   <- Plot$labels$subtitle
+
+    existing_m <- Plot$theme$plot.margin
+    Plot <- Plot + ggplot2::theme(
+      plot.title    = ggplot2::element_blank(),
+      plot.subtitle = ggplot2::element_blank(),
+      plot.margin   = ggplot2::margin(
+        t = 0,
+        r = grid::convertUnit(existing_m[2], "pt", valueOnly = TRUE),
+        b = grid::convertUnit(existing_m[3], "pt", valueOnly = TRUE),
+        l = grid::convertUnit(existing_m[4], "pt", valueOnly = TRUE)
+      )
+    )
+
+    all_panels <- c(bam_track_plots, list(Plot))
+    heights    <- c(rep(bam_track_height, n_bam), 4)
+    Plot       <- patchwork::wrap_plots(all_panels, ncol = 1, heights = heights) +
+      patchwork::plot_annotation(
+        title    = plot_title,
+        subtitle = plot_sub,
+        theme    = ggplot2::theme(
+          plot.title    = ggplot2::element_text(hjust = 0.5, face = "bold.italic",
+                                                size = 25, color = "black"),
+          plot.subtitle = ggplot2::element_text(hjust = 0.5, face = "bold",
+                                                size = 12, color = "black",
+                                                margin = ggplot2::margin(t = 2, b = 8))
+        )
+      )
+  }
 
   # Save files if paths are provided
   if (!is.null(RNA_Peaks_File_Path)) {

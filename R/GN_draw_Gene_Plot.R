@@ -401,23 +401,24 @@ Draw_BAM_Track <- function(cov_df,
   if (is.null(line_col)) line_col <- fill_col
   should_flip <- isTRUE(five_to_three) && gene_strand == "-"
 
-  # Compute y limits: use global limits if provided, otherwise auto from data
+  # y_display_max = the labelled top value; axis limit gets 10% headroom above it
   if (!is.null(ylim)) {
-    y_min <- ylim[1]
-    y_max <- ylim[2]
+    y_min         <- ylim[1]
+    y_display_max <- ylim[2]
   } else {
-    y_min <- 0
-    y_max <- max(cov_df$coverage, na.rm = TRUE) * 1.1
-    if (y_max == 0) y_max <- 1  # guard against all-zero coverage
+    y_min         <- 0
+    y_display_max <- max(cov_df$coverage, na.rm = TRUE)
+    if (y_display_max == 0) y_display_max <- 1
   }
+  y_axis_max <- y_display_max * 1.1   # headroom so top label stays inside panel
 
   g <- ggplot2::ggplot(cov_df, ggplot2::aes(x = pos, y = coverage)) +
     ggplot2::geom_area(fill = fill_col, colour = line_col,
                        alpha = fill_alpha, linewidth = 0.3) +
     ggplot2::scale_y_continuous(
-      limits = c(y_min, y_max),
-      breaks = c(y_min, floor(y_max)),
-      labels = c(as.character(y_min), scales::comma(floor(y_max))),
+      limits = c(y_min, y_axis_max),
+      breaks = c(y_min, y_display_max),
+      labels = c(as.character(y_min), scales::comma(y_display_max)),
       expand = c(0, 0)
     ) +
     ggplot2::theme_classic() +

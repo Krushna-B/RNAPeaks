@@ -289,8 +289,7 @@ PlotGene <- function(bed = NULL,
       resolved_ylim <- bam_ylim
     } else {
       global_max <- max(vapply(cov_list, function(d) max(d$coverage, na.rm = TRUE), numeric(1)))
-      resolved_ylim <- c(0, global_max * 1.1)
-      if (resolved_ylim[2] == 0) resolved_ylim[2] <- 1
+      resolved_ylim <- c(0, if (global_max == 0) 1 else global_max)
     }
 
     for (i in seq_len(n_bam)) {
