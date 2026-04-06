@@ -366,6 +366,95 @@ Draw_Gene_Plot <- function(Gene_s,
   return(g)
 }
 
+# Draw a single BAM coverage track as a ggplot panel.
+#
+# Returns a minimal ggplot (geom_area) that is meant to be stacked above the
+# gene plot via patchwork.  The BAM label is shown as the y-axis title so it
+# sits on the left-hand side of the panel, matching the gene plot layout.
+#
+# @param cov_df    data.frame with columns `pos` and `coverage`.
+# @param label     Character label displayed on the left (y-axis title).
+# @param x_min     Numeric. Left bound of the gene (matches gene plot).
+# @param x_max     Numeric. Right bound of the gene (matches gene plot).
+# @param axis_pad_bp Numeric. Same padding used in the gene plot.
+# @param fill_col  Fill colour for the area. Default "steelblue".
+# @param fill_alpha Opacity of the fill. Default 0.75.
+# @param line_col  Colour of the top line. Default same as fill_col.
+# @param five_to_three Logical. Reverse x-axis for negative-strand genes.
+# @param gene_strand Character. "+" or "-".
+#
+# @return A ggplot2 object.
+Draw_BAM_Track <- function(cov_df,
+                           label,
+                           x_min,
+                           x_max,
+                           axis_pad_bp    = 500,
+                           fill_col       = "navy",
+                           fill_alpha     = 0.75,
+                           line_col       = NULL,
+                           label_size     = 9,
+                           axis_text_size = 8,
+                           ylim           = NULL,
+                           five_to_three  = FALSE,
+                           gene_strand    = "+") {
+
+  if (is.null(line_col)) line_col <- fill_col
+  should_flip <- isTRUE(five_to_three) && gene_strand == "-"
+
+  # y_display_max = the labelled top value; axis limit gets 10% headroom above it
+  if (!is.null(ylim)) {
+    y_min         <- ylim[1]
+    y_display_max <- ylim[2]
+  } else {
+    y_min         <- 0
+    y_display_max <- max(cov_df$coverage, na.rm = TRUE)
+    if (y_display_max == 0) y_display_max <- 1
+  }
+  y_axis_max <- y_display_max * 1.1   # headroom so top label stays inside panel
+
+  g <- ggplot2::ggplot(cov_df, ggplot2::aes(x = pos, y = coverage)) +
+    ggplot2::geom_area(fill = fill_col, colour = line_col,
+                       alpha = fill_alpha, linewidth = 0.3) +
+    ggplot2::scale_y_continuous(
+      limits = c(y_min, y_axis_max),
+      breaks = c(y_min, y_display_max),
+      labels = c(as.character(y_min), scales::comma(y_display_max)),
+      expand = c(0, 0)
+    ) +
+    ggplot2::theme_classic() +
+    ggplot2::theme(
+      axis.title.x      = ggplot2::element_blank(),
+      axis.text.x       = ggplot2::element_blank(),
+      axis.ticks.x      = ggplot2::element_blank(),
+      axis.line.x       = ggplot2::element_blank(),
+      axis.title.y      = ggplot2::element_text(size = label_size, angle = 0,
+                                                 vjust = 0.5, hjust = 1,
+                                                 face = "bold"),
+      axis.text.y       = ggplot2::element_text(size = axis_text_size),
+      axis.ticks.y      = ggplot2::element_blank(),
+      axis.line.y       = ggplot2::element_blank(),
+      panel.grid        = ggplot2::element_blank(),
+      panel.border      = ggplot2::element_blank(),
+      plot.margin       = ggplot2::margin(0, 5, 0, 5)
+    ) +
+    ggplot2::labs(y = label)
+
+  if (should_flip) {
+    g <- g + ggplot2::scale_x_reverse(
+      limits = c(x_max + axis_pad_bp, x_min - axis_pad_bp),
+      expand = c(0, 0)
+    )
+  } else {
+    g <- g + ggplot2::scale_x_continuous(
+      limits = c(x_min - axis_pad_bp, x_max + axis_pad_bp),
+      expand = c(0, 0)
+    )
+  }
+
+  g
+}
+
+
 #---------Helper Functions---------
 Finding_Left_Margin <- function(bed,
                                 label_size_mm = 5,              # font size (mm) used to measure labels
