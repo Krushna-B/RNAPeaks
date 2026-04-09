@@ -94,15 +94,15 @@
 #' rimats <- read.table("RI.MATS.JC.txt", header = TRUE)
 #'
 #' # Basic usage
-#' createRetainedIntronMap(bed_file = bed, RIMATS = rimats)
+#' createRetainedIntronSplicingMap(bed_file = bed, RIMATS = rimats)
 #'
 #' # Return data instead of plot
-#' freq_data <- createRetainedIntronMap(bed_file = bed, RIMATS = rimats,
+#' freq_data <- createRetainedIntronSplicingMap(bed_file = bed, RIMATS = rimats,
 #'                                       return_data = TRUE)
 #' }
 #'
 #' @export
-createRetainedIntronMap <- function(bed_file,
+createRetainedIntronSplicingMap <- function(bed_file,
                                      RIMATS,
                                      moving_average = 50,
                                      WidthIntoExon = 50,
@@ -160,6 +160,9 @@ createRetainedIntronMap <- function(bed_file,
     bed_data <- bed_file
   }
 
+  #Check Bed
+  bed_data <- checkBed(bed_data)
+
   # Normalize chromosome names
   bed_data$chr <- toupper(bed_data$chr)
   RIMATS$chr <- sub("^chr", "", RIMATS$chr)
@@ -197,7 +200,7 @@ createRetainedIntronMap <- function(bed_file,
   cores <- min(cores, max_cores)
   cores <- max(cores, 1)
 
-  # Filter events using the shared SE.MATS filter (same statistical columns)
+  # Filter events using the shared SE.MATS filter
   filtered_events <- filter_SEMATS_events(
     RIMATS,
     p_valueRetainedAndExclusion = p_valueRetainedAndExclusion,
@@ -211,7 +214,7 @@ createRetainedIntronMap <- function(bed_file,
   n_bins <- 2
 
   # Helper function to process a group
-  process_group <- function(data, group_name, all_data_n = NULL) {
+  process_group <- function(data, group_name) {
     if (nrow(data) == 0) {
       if (verbose) message("No events found for group: ", group_name)
       return(data.frame(
@@ -235,7 +238,7 @@ createRetainedIntronMap <- function(bed_file,
                                               cores = cores,
                                               n_bins = n_bins)
 
-    total_events <- if (!is.null(all_data_n)) all_data_n else nrow(data)
+    total_events <- nrow(data)
     freq_data$frequency <- freq_data$overlap_count / total_events
 
     freq_data <- calculate_moving_average(freq_data, moving_average, bins = bin_width)

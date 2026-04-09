@@ -1,4 +1,6 @@
 
+#'  Create Sequence Map
+
 #' Analyzes the frequency of a target sequence motif across splicing junction
 #' regions. Compares motif frequency between Retained, Excluded, and Control
 #' splicing events to identify position-specific enrichment patterns.
@@ -32,25 +34,24 @@
 #' @param Min_Count Minimum read count threshold. Default is 50.
 #' @param groups Character vector specifying which event groups to process.
 #'   Options are "Retained", "Excluded", and/or "Control". Default is
-#'   c("Retained", "Excluded", "Control") to process all groups. Use
-#'   c("Retained", "Excluded") to skip the Control group (which can be large).
+#'   c("Retained", "Excluded", "Control") to process all groups.
 #' @param control_multiplier Numeric multiplier for control sample size. The
 #'   number of control events sampled per iteration is
-#'   (n_retained + n_excluded) * control_multiplier. Default is 1.0.
+#'   (n_retained + n_excluded) * control_multiplier. Default is 2.0.
 #' @param control_iterations Integer number for sampling iterations for control
 #'   sampling. The final control frequency is the mean across iterations, with
 #'   standard deviation shown as a shaded band. Default is 20.
 #' @param cores Integer number of cores for parallel processing. Default is 1
-#'   (sequential). Set higher for faster processing on multi-core systems.
+#'   (sequential).
 #' @param z_threshold Z-score threshold for significance testing. Default is 1.96
-#'   (corresponds to p < 0.05 two-tailed). Only used when use_fdr = FALSE.
+#' Only used when use_fdr = FALSE.
 #' @param min_consecutive Minimum number of consecutive significant positions
 #'   required to form a significant region. Default is 10. Helps reduce false
 #'   positives from noise.
 #' @param one_sided Logical. If TRUE (default), only test for enrichment
 #'   (frequency > control). If FALSE, test for both enrichment and depletion.
-#' @param use_fdr Logical. If TRUE, use FDR-corrected p-values (Benjamini-Hochberg)
-#'   for significance testing. If FALSE (default), use z_threshold directly.
+#' @param use_fdr Logical. If TRUE (default), use FDR-corrected p-values (Benjamini-Hochberg)
+#'   for significance testing. If FALSE, use z_threshold directly.
 #' @param fdr_threshold FDR threshold for significance when use_fdr = TRUE.
 #'   Default is 0.05.
 #' @param show_significance Logical. If TRUE (default), displays colored bars above
@@ -258,14 +259,18 @@ createSequenceMap <- function(SEMATS,
   if (is.na(max_cores) || max_cores < 1) max_cores <- 1
   cores <- min(cores, max_cores)
   cores <- max(cores, 1)
+  # Save and restore global state on exit (error or normal completion)
+  on.exit(options(future.globals.maxSize = getOption("future.globals.maxSize")), add = TRUE)
   options(future.globals.maxSize = 8 * 1024^3)
+
   # If using parallel, warm up workers early while we do other setup
   warmup_future <- NULL
   if (cores > 1) {
+    on.exit(future::plan(future::sequential), add = TRUE)
     if (verbose) message(sprintf("Starting %d parallel workers...", cores))
     future::plan(future::multisession, workers = cores)
 
-    # workers will spawn and load packages
+    # Workers will spawn and load packages in background
     warmup_future <- future::future({
       TRUE
     }, seed = TRUE)
@@ -474,11 +479,6 @@ createSequenceMap <- function(SEMATS,
 
   # Combine selected groups
   combined_data <- dplyr::bind_rows(results_list)
-
-  # Clean up parallel workers
-  if (cores > 1) {
-    future::plan(future::sequential)
-  }
 
   # Return data if requested
   if (return_data) {

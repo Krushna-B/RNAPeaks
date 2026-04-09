@@ -20,11 +20,11 @@ PlotRegion(
   order_in = NULL,
   merge = 0,
   peaks_width = 0.3,
-  utr_col = "dark gray",
+  utr_col = "darkgray",
   peak_col = "Blue",
   exon_width = 0.5,
   utr_width = 0.3,
-  exon_col = "black",
+  exon_col = "navy",
   total_arrows = 12,
   max_per_intron = 5,
   five_to_three = FALSE,
@@ -99,7 +99,7 @@ track labels on the left-hand side of each panel. If unnamed, the filename
 indexed (a \code{.bai} file must exist alongside each BAM).
 Example: \code{c("Sample A" = "/path/to/a.bam", "Sample B" = "/path/to/b.bam")}}
 
-\item{bam_fill_col}{Fill colour for BAM coverage tracks. A single colour
+\item{bam_fill_col}{Fill color for BAM coverage tracks. A single color
 applied to all tracks, or a character vector the same length as
 \code{bam_files} for per-track colours. Default \code{"navy"}.}
 

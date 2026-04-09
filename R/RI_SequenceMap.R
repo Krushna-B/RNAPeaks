@@ -187,16 +187,19 @@ createRetainedIntronSequenceMap <- function(RIMATS,
   if (is.na(max_cores) || max_cores < 1) max_cores <- 1
   cores <- min(cores, max_cores)
   cores <- max(cores, 1)
+  # Save and restore global state on exit (error or normal completion)
+  on.exit(options(future.globals.maxSize = getOption("future.globals.maxSize")), add = TRUE)
   options(future.globals.maxSize = 8 * 1024^3)
 
   warmup_future <- NULL
   if (cores > 1) {
+    on.exit(future::plan(future::sequential), add = TRUE)
     if (verbose) message(sprintf("Starting %d parallel workers...", cores))
     future::plan(future::multisession, workers = cores)
     warmup_future <- future::future({ TRUE }, seed = TRUE)
   }
 
-  # Filter events using the shared SE.MATS filter (same statistical columns)
+  # Filter events using the shared SE.MATS filter
   filtered_events <- filter_SEMATS_events(
     RIMATS,
     p_valueRetainedAndExclusion = p_valueRetainedAndExclusion,
@@ -373,11 +376,6 @@ createRetainedIntronSequenceMap <- function(RIMATS,
   }
 
   combined_data <- dplyr::bind_rows(results_list)
-
-  # Clean up parallel workers
-  if (cores > 1) {
-    future::plan(future::sequential)
-  }
 
   if (return_data) return(combined_data)
 
