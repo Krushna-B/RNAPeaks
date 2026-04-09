@@ -2,25 +2,24 @@
 % Please edit documentation in R/GN_LoadGTF.R
 \name{LoadGTF}
 \alias{LoadGTF}
-\title{Loads GTF gene annotation data from AnnotationHub for Human or Mouse.
-This function can be called once to load the annotation, which can then
-be passed to other functions like \code{PlotGene()} or \code{PlotRegion()} to avoid
-repeated downloads.}
+\title{Can be called once and the result passed to \code{PlotGene()} or
+\code{PlotRegion()} to avoid repeated downloads.}
 \usage{
 LoadGTF(species = "Human", file = NULL)
 }
 \arguments{
 \item{species}{Species to load annotation for: "Human" or "Mouse".}
+
+\item{file}{Optional file path to a local GTF file. If provided, imports
+directly without connecting to AnnotationHub.}
 }
 \value{
 A data frame containing GTF annotation with columns including
 seqnames, start, end, strand, type, gene_id, gene_name, transcript_id, etc.
 }
 \description{
-Loads GTF gene annotation data from AnnotationHub for Human or Mouse.
-This function can be called once to load the annotation, which can then
-be passed to other functions like \code{PlotGene()} or \code{PlotRegion()} to avoid
-repeated downloads.
+Can be called once and the result passed to \code{PlotGene()} or
+\code{PlotRegion()} to avoid repeated downloads.
 }
 \details{
 Loading annotations from AnnotationHub can take time on first use.

@@ -12,7 +12,7 @@ PlotGene(
   TxID = NA,
   Target_col = NULL,
   omit = c(),
-  order_by = "Count",
+  order_by = "Target",
   order_in = NULL,
   merge = 0,
   peaks_width = 0.3,
@@ -20,7 +20,7 @@ PlotGene(
   peak_col = "purple",
   exon_width = 0.5,
   utr_width = 0.3,
-  exon_col = "black",
+  exon_col = "navy",
   total_arrows = 6,
   max_per_intron = 2,
   five_to_three = FALSE,
@@ -90,11 +90,15 @@ track labels on the left-hand side of each panel. If unnamed, the filename
 indexed (a \code{.bai} file must exist alongside each BAM).
 Example: \code{c("Sample A" = "/path/to/a.bam", "Sample B" = "/path/to/b.bam")}}
 
-\item{bam_fill_col}{Fill colour for BAM coverage tracks. A single colour
+\item{bam_fill_col}{Fill color for BAM coverage tracks. A single color
 applied to all tracks, or a character vector the same length as
-\code{bam_files} for per-track colours. Default \code{"steelblue"}.}
+\code{bam_files} for per-track colrs. Default \code{"steelblue"}.}
 
 \item{bam_fill_alpha}{Opacity of BAM track fill. Default \code{0.75}.}
+
+\item{bam_label_size}{Text Size for the BAM coverage tracks. size labels. Default is 9.}
+
+\item{bam_axis_text_size}{Size for the numbers on the y-axis for BAM coverage tracks. Deafult is 8.}
 
 \item{bam_track_height}{Relative height of each BAM coverage panel compared
 to the gene plot panel. Default \code{1} (gene plot is \code{4} units tall).}

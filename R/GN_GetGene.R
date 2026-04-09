@@ -13,7 +13,6 @@
 #'   gene/transcript, including exons, UTRs, and CDS features.
 #'
 #' @details
-#' @details
 #' If both \code{geneID} and \code{TxID} are provided, the function verifies
 #' that the transcript belongs to the specified gene. If only \code{geneID}
 #' is provided, the longest transcript is selected.
