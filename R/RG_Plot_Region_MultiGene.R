@@ -8,9 +8,8 @@ Get_Multi_Plot_by_Region <- function(Chr,
                                      gene,
                                      region_with_multiple_genes,
                                      rank_,
-                                     density = FALSE,
                                      Species = "Human",
-                                     utr_col = "dark gray",
+                                     utr_col = "darkgray",
                                      peak_col = "blue",
                                      peaks_width = 0.3,
                                      exon_width = 0.5,
@@ -32,12 +31,6 @@ Get_Multi_Plot_by_Region <- function(Chr,
   # Return prepared bed with labeled coordinates positions for proteins
   bed <- Prepare_Bed(bed, rank_ = rank_, gene = gene,
                      peaks_width = peaks_width, peak_col = peak_col)
-
-  # If density is TRUE
-  if (isTRUE(density)) {
-    Dens <- Density(Chr = gene$seqnames[1], Start = min(gene$start), End = max(gene$end), df = bed)
-  }
-
   # Error check to make sure gtf rows are not empty
   if (!nrow(region_with_multiple_genes)) {
     stop("No GTF rows overlap the requested region.")
@@ -192,28 +185,6 @@ Get_Multi_Plot_by_Region <- function(Chr,
 
 
 # ---------Helper Functions---------
-
-# Calculate Density of Peaks
-Density <- function(Chr, Start, End, df) {
-  peaks_gr <- GenomicRanges::makeGRangesFromDataFrame(
-    df,
-    keep.extra.columns = TRUE,
-    start.field = "Start",
-    end.field = "End",
-    seqnames.field = "seqnames"
-  )
-  bins <- GenomicRanges::GRanges(
-    seqnames = Chr,
-    strand = "*",
-    ranges = IRanges::IRanges(start = seq(Start, End, by = 10), width = 10)
-  )
-  Overlaps <- GenomicRanges::countOverlaps(bins, peaks_gr)
-  S4Vectors::values(bins) <- S4Vectors::DataFrame(Density = Overlaps)
-  bins <- as.data.frame(bins)
-  return(bins)
-}
-
-
 # Prepare Background
 Background_Table <- function(df, Start, End) {
   Background <- df[c("y_start", "y_end")]
@@ -234,5 +205,5 @@ apply_vertical_offset <- function(df, id_col = "gene_id", offset_step = 0.8, lev
   offset_vec <- (as.numeric(df[[id_col]]) - 1) * offset_step
   df$y_start <- df$y_start + offset_vec
   df$y_end <- df$y_end + offset_vec
-  df
+  return(df)
 }

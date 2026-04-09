@@ -11,7 +11,6 @@
 #'
 #' @return A data frame containing GTF annotation rows for the specified
 #'   gene/transcript, including exons, UTRs, and CDS features.
-#'
 #' @details
 #' If both \code{geneID} and \code{TxID} are provided, the function verifies
 #' that the transcript belongs to the specified gene. If only \code{geneID}
@@ -22,7 +21,6 @@
 #' \dontrun{
 #'   # Get TP53 annotation (longest transcript)
 #'   gene_data <- GetGene(geneID = "TP53", species = "Human")
-#'
 #'   # Get specific transcript
 #'   gene_data <- GetGene(
 #'     geneID = "TP53",
@@ -45,7 +43,7 @@ GetGene <- function(geneID, species, TxID, gtf) {
     # Gets transcript if only transcript id is provided
     gtf <- gtf[which(gtf$transcript_id == TxID), ]
     if (is.null(gtf) | nrow(gtf) == 0) {
-      top("Transcript ID not found in GTF: ", TxID)
+      stop("Transcript ID not found in GTF: ", TxID)
     }
   } else if (is.na(TxID) & !is.null(geneID)) {
     if (grepl("ENSG", geneID)) {
