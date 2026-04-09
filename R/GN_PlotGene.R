@@ -36,12 +36,14 @@
 #'   (without extension) is used as the label. BAM files must be sorted and
 #'   indexed (a `.bai` file must exist alongside each BAM).
 #'   Example: \code{c("Sample A" = "/path/to/a.bam", "Sample B" = "/path/to/b.bam")}
-#' @param bam_fill_col Fill colour for BAM coverage tracks. A single colour
+#' @param bam_fill_col Fill color for BAM coverage tracks. A single color
 #'   applied to all tracks, or a character vector the same length as
-#'   \code{bam_files} for per-track colours. Default \code{"steelblue"}.
+#'   \code{bam_files} for per-track colrs. Default \code{"steelblue"}.
 #' @param bam_fill_alpha Opacity of BAM track fill. Default \code{0.75}.
 #' @param bam_track_height Relative height of each BAM coverage panel compared
 #'   to the gene plot panel. Default \code{1} (gene plot is \code{4} units tall).
+#' @param bam_label_size Text Size for the BAM coverage tracks. size labels. Default is 9.
+#' @param bam_axis_text_size Size for the numbers on the y-axis for BAM coverage tracks. Deafult is 8.
 #' @param RNA_Peaks_File_Path File path to save the output PDF plot.
 #' @param Bed_File_Path File path to save the filtered BED data as CSV.
 #' @param ... Additional styling arguments passed to internal plotting functions.
@@ -182,7 +184,7 @@ PlotGene <- function(bed = NULL,
                      TxID = NA,
                      Target_col = NULL,
                      omit = c(),
-                     order_by = "Count",
+                     order_by = "Target",
                      order_in = NULL,
                      merge = 0,
                      peaks_width = 0.3,
@@ -206,16 +208,13 @@ PlotGene <- function(bed = NULL,
                      ...) {
 
   # Check the bed file
-
   colnames(bed)[which(colnames(bed) == Target_col)] <- "target"
   bed <- checkBed(bed)
 
-  # Loading a genome each time takes long so giving an option to load it once and input it
-
+  # Loads genom ebased on inputed geneID or TxID
   Region <- GetGene(geneID = geneID, species = species, TxID = TxID, gtf = gtf)
 
   # Filter Bed
-
   bed <- FilterBed(
     bed = bed,
     chr = Region$seqnames[1],
@@ -250,9 +249,8 @@ PlotGene <- function(bed = NULL,
     ...
   )
 
-  # ---- BAM coverage tracks ----
+  # BAM coverage tracks
   if (!is.null(bam_files)) {
-
     # Ensure names exist; fall back to filename without extension
     if (is.null(names(bam_files))) {
       names(bam_files) <- vapply(bam_files, BAM_Label_From_Path, character(1))
@@ -263,7 +261,7 @@ PlotGene <- function(bed = NULL,
       )
     }
 
-    # Expand fill colours to match number of BAM files
+    # Expand fill colors to match number of BAM files
     n_bam <- length(bam_files)
     fill_cols <- rep_len(bam_fill_col, n_bam)
 

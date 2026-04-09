@@ -5,7 +5,7 @@ make_intron_arrows <- function(
     min_per_intron = 0,
     max_per_intron = 5,
     margin_buff  = 0,   # keep arrow tips away from intron ends
-    seg_frac       = 0.5,  # arrow shaft ≈ this fraction of the spacing
+    seg_frac       = 0.5,  # arrow shaft roughly this fraction of the spacing
     seg_min_bp     = 20,
     seg_max_bp     = 180
 ){
@@ -40,8 +40,8 @@ make_intron_arrows <- function(
   tot_use <- sum(usable)
 
   if(tot_use < 400){
-    # total_arrows <- min(6L, max(1L, floor(tot_use / max(1, seg_min_bp))))
-     total_arrows <-6
+    total_arrows <- min(6L, max(1L, floor(tot_use / max(1, seg_min_bp))))
+
   }
   #If there is no space total introns inputted is 0 return empty
   if (tot_use == 0 || total_arrows <= 0){
