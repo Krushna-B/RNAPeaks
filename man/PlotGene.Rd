@@ -24,6 +24,13 @@ PlotGene(
   total_arrows = 6,
   max_per_intron = 2,
   five_to_three = FALSE,
+  bam_files = NULL,
+  bam_fill_col = "navy",
+  bam_fill_alpha = 0.75,
+  bam_label_size = 9,
+  bam_axis_text_size = 8,
+  bam_ylim = NULL,
+  bam_track_height = 1,
   RNA_Peaks_File_Path = "~/Desktop/RNAPeaks.pdf",
   Bed_File_Path = "~/Desktop/BEDFILE_PEAKS.csv",
   ...
@@ -75,6 +82,22 @@ Default is 2.}
 \item{five_to_three}{Logical. If TRUE, orients the plot so that 5' is on the
 left and 3' is on the right, regardless of strand. For negative strand genes,
 this reverses the x-axis. Default is FALSE (genomic coordinates left-to-right).}
+
+\item{bam_files}{Optional. A named character vector of BAM file paths to
+display as coverage tracks above the gene structure. Names are used as
+track labels on the left-hand side of each panel. If unnamed, the filename
+(without extension) is used as the label. BAM files must be sorted and
+indexed (a \code{.bai} file must exist alongside each BAM).
+Example: \code{c("Sample A" = "/path/to/a.bam", "Sample B" = "/path/to/b.bam")}}
+
+\item{bam_fill_col}{Fill colour for BAM coverage tracks. A single colour
+applied to all tracks, or a character vector the same length as
+\code{bam_files} for per-track colours. Default \code{"steelblue"}.}
+
+\item{bam_fill_alpha}{Opacity of BAM track fill. Default \code{0.75}.}
+
+\item{bam_track_height}{Relative height of each BAM coverage panel compared
+to the gene plot panel. Default \code{1} (gene plot is \code{4} units tall).}
 
 \item{RNA_Peaks_File_Path}{File path to save the output PDF plot.}
 
