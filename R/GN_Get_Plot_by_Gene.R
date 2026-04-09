@@ -1,9 +1,6 @@
-
-
 Get_Plot_by_Gene<-function(bed,
                            gene,
                            rank_,
-                           density=F,
                            utr_col="dark gray",
                            peak_col="purple",
                            peaks_width=0.3,
@@ -19,12 +16,6 @@ Get_Plot_by_Gene<-function(bed,
   #Return prepared bed with labeled coordinates positions for proteins
   bed <- Prepare_Bed(bed, rank_ = rank_, gene = gene,
                         peaks_width = peaks_width, peak_col = peak_col, margin = margin)
-
-  #if density is T
-  if (isTRUE(density)){
-    Dens<-Density(Chr=gene$seqnames[1],Start=min(gene$start),End=max(gene$end),df=bed)
-  }
-
 
   # Build Gene Structure and return out positions for Gene, Exons, and UTRS
   gs <- Build_Gene_Structure(gene,
@@ -49,7 +40,7 @@ Get_Plot_by_Gene<-function(bed,
   do.call(
     Draw_Gene_Plot,
     c(
-      list(                # fixed arguments you computed
+      list(
       Gene_s = gs$Gene_s,
       Exons  = gs$Exons,
       UTRs   = gs$UTRs,
@@ -69,21 +60,6 @@ Get_Plot_by_Gene<-function(bed,
 
 
 #--------Helper Functions----------
-#Calculate Density of Peaks
-Density<-function(Chr,Start,End,df){
-  peaks_gr<-GenomicRanges::makeGRangesFromDataFrame(df,keep.extra.columns = T,
-                                     start.field = "Start",
-                                     end.field = "End",
-                                     seqnames.field = "seqnames")
-  bins<-GenomicRanges::GRanges(seqnames=Chr,strand="*",
-                ranges = IRanges::IRanges(start = seq(Start,End,by=10),width = 10))
-  Overlaps<-GenomicRanges::countOverlaps(bins,peaks_gr)
-  S4Vectors::values(bins)<-S4Vectors::DataFrame(Density=Overlaps)
-  bins<-as.data.frame(bins)
-  return(bins)
-}
-
-
 #Prepare Background
 Background_Table<-function(df,Start,End){
   Background<-df[c("y_start","y_end")]

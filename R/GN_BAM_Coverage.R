@@ -1,16 +1,16 @@
 
-# Compute per-base read coverage for a BAM file over a genomic region.
+#' Compute per-base read coverage for a BAM file over a genomic region.
+#'
+#' @param bam_path  Character. Path to a sorted, indexed BAM file (.bai must exist).
+#' @param chr       Character. Chromosome name as it appears in the BAM header (e.g. "chr12" or "12").
+#' @param start     Integer. Region start position (1-based).
+#' @param end       Integer. Region end position (1-based, inclusive).
 #
-# @param bam_path  Character. Path to a sorted, indexed BAM file (.bai must exist).
-# @param chr       Character. Chromosome name as it appears in the BAM header (e.g. "chr12" or "12").
-# @param start     Integer. Region start position (1-based).
-# @param end       Integer. Region end position (1-based, inclusive).
-#
-# @return A data.frame with columns:
-#   \describe{
-#     \item{pos}{Integer genomic position.}
-#     \item{coverage}{Integer read depth at that position.}
-#   }
+#' @return A data.frame with columns:
+#'   \describe{
+#'    \item{pos}{Integer genomic position.}
+#'     \item{coverage}{Integer read depth at that position.}
+#'   }
 Compute_BAM_Coverage <- function(bam_path, chr, start, end) {
 
   # Resolve chromosome name against the BAM header — handles "19" vs "chr19"
