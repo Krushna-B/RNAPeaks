@@ -40,11 +40,9 @@
 #' }
 checkBed <- function(df) {
   # Convert to data frame
-
   df <- as.data.frame(df, stringsAsFactors = FALSE)
 
   # Require at least 3 columns (chr, start, end)
-
   if (ncol(df) < 3) {
     stop("BED file must have at least 3 columns (chr, start, end)")
   }
