@@ -34,7 +34,6 @@
 #' @param control_iterations Integer number for sampling iterations for control
 #'   sampling. The final control frequency is the mean across iterations, with
 #'   standard deviation shown as a shaded band. Default is 20.
-#' @param cores Number of cores for parallel processing. Default is 1 (sequential).
 #' @param z_threshold Z-score threshold for significance testing. Default is 1.96
 #'   (corresponds to p < 0.025 one-sided, or p < 0.05 two-tailed).
 #'   Only used when use_fdr = FALSE.
@@ -105,9 +104,6 @@
 #' # Basic usage
 #' createSplicingMap(bed_file = bed, SEMATS = semats)
 #'
-#' # Use parallel processing
-#' createSplicingMap(bed_file = bed, SEMATS = semats, cores = 4)
-#'
 #' # Return data instead of plot
 #' freq_data <- createSplicingMap(bed_file = bed,
 #'                                 SEMATS = semats,
@@ -128,7 +124,6 @@ createSplicingMap <- function(bed_file,
                                groups = c("Retained", "Excluded", "Control"),
                                control_multiplier = 2.0,
                                control_iterations = 20,
-                               cores = 1,
                                z_threshold = 1.96,
                                min_consecutive = 10,
                                one_sided = TRUE,
@@ -195,12 +190,6 @@ createSplicingMap <- function(bed_file,
     }
   }
 
-  # Cap cores at max available
-  max_cores <- parallel::detectCores() - 1
-  if (is.na(max_cores) || max_cores < 1) max_cores <- 1
-  cores <- min(cores, max_cores)
-  cores <- max(cores, 1)
-
   # Filter SEMATS into Controls, Retained, and Excluded using helper function
   filtered_events <- filter_SEMATS_events(
     SEMATS,
@@ -237,8 +226,7 @@ createSplicingMap <- function(bed_file,
     # Calculate binding frequency
     freq_data <- calculate_binding_frequency(bins_gr,
                                              buckets,
-                                             bin_width,
-                                             cores = cores)
+                                             bin_width)
 
     total_events <- nrow(data)
     freq_data$frequency <- freq_data$overlap_count / total_events

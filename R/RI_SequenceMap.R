@@ -33,7 +33,6 @@
 #'   Default is 2.0.
 #' @param control_iterations Integer number for sampling iterations for control
 #'   sampling. Default is 20.
-#' @param cores Integer number of cores for parallel processing. Default is 1.
 #' @param z_threshold Z-score threshold for significance testing. Default is 1.96.
 #'   Only used when use_fdr = FALSE.
 #' @param min_consecutive Minimum number of consecutive significant positions
@@ -113,7 +112,6 @@ createRetainedIntronSequenceMap <- function(RIMATS,
                                              groups = c("Retained", "Excluded", "Control"),
                                              control_multiplier = 2.0,
                                              control_iterations = 20,
-                                             cores = 1,
                                              z_threshold = 1.96,
                                              min_consecutive = 10,
                                              one_sided = TRUE,
@@ -182,23 +180,6 @@ createRetainedIntronSequenceMap <- function(RIMATS,
     }
   }
 
-  # Cap cores at max available - 1
-  max_cores <- parallel::detectCores() - 1
-  if (is.na(max_cores) || max_cores < 1) max_cores <- 1
-  cores <- min(cores, max_cores)
-  cores <- max(cores, 1)
-  # Save and restore global state on exit (error or normal completion)
-  on.exit(options(future.globals.maxSize = getOption("future.globals.maxSize")), add = TRUE)
-  options(future.globals.maxSize = 8 * 1024^3)
-
-  warmup_future <- NULL
-  if (cores > 1) {
-    on.exit(future::plan(future::sequential), add = TRUE)
-    if (verbose) message(sprintf("Starting %d parallel workers...", cores))
-    future::plan(future::multisession, workers = cores)
-    warmup_future <- future::future({ TRUE }, seed = TRUE)
-  }
-
   # Filter events using the shared SE.MATS filter
   filtered_events <- filter_SEMATS_events(
     RIMATS,
@@ -242,10 +223,6 @@ createRetainedIntronSequenceMap <- function(RIMATS,
 
     freq_data$group <- group_name
     return(freq_data)
-  }
-
-  if (!is.null(warmup_future)) {
-    invisible(future::value(warmup_future))
   }
 
   results_list <- list()
@@ -338,23 +315,29 @@ createRetainedIntronSequenceMap <- function(RIMATS,
       }
 
       iteration_results <- vector("list", control_iterations)
+
+      pb <- progress::progress_bar$new(
+        format = "  Sampling iterations [:bar] :current/:total (:percent) eta::eta",
+        total = control_iterations, clear = FALSE, width = 80
+      )
+
       loop_start <- 20
       loop_end <- 90
 
       for (iter in seq_len(control_iterations)) {
+        pb$tick()
+
         sampled_ids <- all_sampled_indices[[iter]]
         match_counts <- rowSums(cache_matrix[, sampled_ids, drop = FALSE])
         freq_vec <- match_counts / sample_size
         iteration_results[[iter]] <- apply_moving_avg(freq_vec)
 
-        if (iter %% 10 == 0 || iter == control_iterations) {
-          progress_pct <- loop_start + (iter / control_iterations) * (loop_end - loop_start)
-          .report_progress(
-            progress_pct,
-            100,
-            sprintf("Bootstrap iteration %d/%d", iter, control_iterations)
-          )
-        }
+        progress_pct <- loop_start + (iter / control_iterations) * (loop_end - loop_start)
+        .report_progress(
+          progress_pct,
+          100,
+          sprintf("Control sampling iteration %d/%d", iter, control_iterations)
+        )
       }
 
       freq_matrix <- do.call(cbind, iteration_results)

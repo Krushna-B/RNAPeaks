@@ -19,7 +19,6 @@ createRetainedIntronSequenceMap(
   groups = c("Retained", "Excluded", "Control"),
   control_multiplier = 2,
   control_iterations = 20,
-  cores = 1,
   z_threshold = 1.96,
   min_consecutive = 10,
   one_sided = TRUE,
@@ -88,8 +87,6 @@ Default is 2.0.}
 
 \item{control_iterations}{Integer number for sampling iterations for control
 sampling. Default is 20.}
-
-\item{cores}{Integer number of cores for parallel processing. Default is 1.}
 
 \item{z_threshold}{Z-score threshold for significance testing. Default is 1.96.
 Only used when use_fdr = FALSE.}

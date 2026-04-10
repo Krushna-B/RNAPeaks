@@ -133,11 +133,10 @@ make_bins_matrix <- function(MAT, WidthIntoExon, WidthIntoIntron) {
 }
 
 
-#' Precompute protein binding overlaps for all events (for caching)
+#' Precompute protein binding overlaps for all events
 #'
 #' Computes protein binding overlaps for each event separately and returns a matrix
 #' where each column represents one event's overlaps across all positions.
-#' This enables fast bootstrap sampling by just summing cached columns.
 #'
 #' @param events_data Data frame with event data (SE.MATS format)
 #' @param protein GRanges object of protein binding sites
@@ -267,12 +266,10 @@ precompute_binding_cache <- function(events_data,
 #'   metadata column, results are returned per group.
 #' @param protein GRanges object of protein binding sites
 #' @param bin_width Width of each bin region
-#' @param cores Number of cores for parallel processing (default 1, Sync)
-#'
 #' @return Data frame with global_position and overlap_count columns.
 #'   If bins_gr has a 'group' column, includes group column.
 #' @noRd
-calculate_binding_frequency <- function(bins_gr, protein, bin_width, cores = 1, n_bins = 4) {
+calculate_binding_frequency <- function(bins_gr, protein, bin_width, n_bins = 4) {
 
   total_positions <- n_bins * bin_width
 
@@ -301,7 +298,6 @@ calculate_binding_frequency <- function(bins_gr, protein, bin_width, cores = 1, 
   n_overlapping <- length(overlapping_bins)
 
   # Pre-compute bin metadata
-
   bins_chr <- as.character(GenomicRanges::seqnames(overlapping_bins))
   bins_start <- GenomicRanges::start(overlapping_bins)
   bins_end <- GenomicRanges::end(overlapping_bins)
@@ -340,7 +336,6 @@ calculate_binding_frequency <- function(bins_gr, protein, bin_width, cores = 1, 
   }
 
   # Calculate bin widths and total positions to expand
-
   bin_widths <- bins_end - bins_start + 1L
   total_1bp_positions <- sum(bin_widths)
 
@@ -392,7 +387,6 @@ calculate_binding_frequency <- function(bins_gr, protein, bin_width, cores = 1, 
   global_pos[is_minus] <- (n_bins - hit_bin_indices[is_minus]) * bin_width + (bin_width - hit_position_in_bin[is_minus] + 1L)
 
   # Clamp to valid range
-
   global_pos <- pmax(1L, pmin(global_pos, total_positions))
 
   # Aggregate results
@@ -469,8 +463,6 @@ calculate_moving_average <- function(freq_data, window_size = NULL, bins = NULL)
 #' @param sequence Target sequence motif
 #' @param bsgenome_obj BSgenome object
 #' @param bin_width Width of each bin
-#' @param cores Number of cores for parallel processing (default 1 = sequential).
-#'   Caller is responsible for validating/capping this value.
 #'
 #' @return Data frame with global_position and match_count columns
 #' @noRd
@@ -579,7 +571,6 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
 #'
 #' Computes motif matches for each event separately and returns a matrix
 #' where each column represents one event's matches across all positions.
-#' This enables fast bootstrap sampling by just summing cached columns.
 #'
 #' @param events_data Data frame with event data (SE.MATS format)
 #' @param sequence Target sequence motif
@@ -718,8 +709,8 @@ precompute_sequence_cache <- function(events_data,
 #' @param compare_to Which group to compare against. Default "Control".
 #' @param one_sided Logical. If TRUE, only test for enrichment (z > threshold).
 #'   If FALSE, test for both enrichment and depletion.
-#' @param use_fdr Logical. If TRUE, use FDR-corrected p-values for significance.
-#'   If FALSE (default), use z_threshold directly.
+#' @param use_fdr Logical. If TRUE (default), use FDR-corrected p-values for significance.
+#'   If FALSE, use z_threshold directly.
 #' @param fdr_threshold FDR threshold for significance when use_fdr = TRUE.
 #'   Default 0.05.
 #'
@@ -860,36 +851,6 @@ calculate_significance <- function(freq_data,
     significant_regions = significant_regions
   ))
 }
-
-
-#' Add region labels to combined data
-#' @param Combined Data frame with Pos column
-#' @param WidthIntoExon Width into exon
-#' @param WidthIntoIntron Width into intron
-#'
-#' @return Data frame with Region column added
-#' @noRd
-add_regions <- function(Combined, WidthIntoExon = 50, WidthIntoIntron = 300) {
-  bin_width <- WidthIntoExon + WidthIntoIntron
-  Combined$Region <- NA
-  Combined$Region[which(Combined$Pos <= WidthIntoExon)] <- "UE"
-  Combined$Region[which(Combined$Pos >= (WidthIntoExon + 1) &
-                          Combined$Pos <= bin_width)] <- "UI5"
-  Combined$Region[which(Combined$Pos >= (bin_width + 1) &
-                          Combined$Pos <= (bin_width + WidthIntoIntron))] <- "UI3"
-  Combined$Region[which(Combined$Pos >= (bin_width + WidthIntoIntron + 1) &
-                          Combined$Pos <= (2 * bin_width))] <- "EX3"
-  Combined$Region[which(Combined$Pos >= (2 * bin_width + 1) &
-                          Combined$Pos <= (2 * bin_width + WidthIntoExon))] <- "EX5"
-  Combined$Region[which(Combined$Pos >= (2 * bin_width + WidthIntoExon + 1) &
-                          Combined$Pos <= (3 * bin_width))] <- "DI5"
-  Combined$Region[which(Combined$Pos >= (3 * bin_width + 1) &
-                          Combined$Pos <= (3 * bin_width + WidthIntoIntron))] <- "DI3"
-  Combined$Region[which(Combined$Pos >= (3 * bin_width + WidthIntoIntron + 1) &
-                          Combined$Pos <= (4 * bin_width))] <- "DE"
-  return(Combined)
-}
-
 
 #' Plot Splicing/Sequence Map
 #'
@@ -1206,9 +1167,8 @@ plot_splicing_sequence_map <- function(freq_data,
 }
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+
 # Retained Intron helpers
-# ─────────────────────────────────────────────────────────────────────────────
 
 #' Create bins matrix for retained intron events
 #' Divides each RI event into 2 bins around the two exon/intron boundaries.
@@ -1228,12 +1188,12 @@ make_ri_bins_matrix <- function(MAT, WidthIntoExon, WidthIntoIntron) {
   exonStart <- MAT$exonStart_0base
   exonEnd   <- MAT$exonEnd
 
-  # Bin 1 (UE-RI5): Upstream exon end into retained intron
+  # Bin 1: Upstream exon end into retained intron
   # Clamp at exonStart (matching SE bin 1) to avoid bleeding into skipped exon
   bin1_start <- pmax(upE - WidthIntoExon, upS)
   bin1_end   <- pmin(upE + WidthIntoIntron, exonStart)
 
-  # Bin 2 (RI3-DE): Retained intron end into downstream exon
+  # Bin 2: Retained intron end into downstream exon
   # Clamp at exonEnd (matching SE bin 4) to avoid bleeding into skipped exon
   bin2_start <- pmax(downS - WidthIntoIntron, exonEnd)
   bin2_end   <- pmin(downS + WidthIntoExon, downE)
@@ -1253,7 +1213,7 @@ make_ri_bins_matrix <- function(MAT, WidthIntoExon, WidthIntoIntron) {
   if ("group" %in% colnames(MAT)) {
     GenomicRanges::mcols(gr)$group <- rep(MAT$group, each = 2)
   }
-  gr
+  return(gr)
 }
 
 

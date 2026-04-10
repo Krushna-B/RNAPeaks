@@ -18,7 +18,6 @@ createSplicingMap(
   groups = c("Retained", "Excluded", "Control"),
   control_multiplier = 2,
   control_iterations = 20,
-  cores = 1,
   z_threshold = 1.96,
   min_consecutive = 10,
   one_sided = TRUE,
@@ -87,8 +86,6 @@ number of control events sampled per iteration is
 \item{control_iterations}{Integer number for sampling iterations for control
 sampling. The final control frequency is the mean across iterations, with
 standard deviation shown as a shaded band. Default is 20.}
-
-\item{cores}{Number of cores for parallel processing. Default is 1 (sequential).}
 
 \item{z_threshold}{Z-score threshold for significance testing. Default is 1.96
 (corresponds to p < 0.025 one-sided, or p < 0.05 two-tailed).
@@ -189,9 +186,6 @@ semats <- read.table("SE.MATS.JC.txt", header = TRUE)
 
 # Basic usage
 createSplicingMap(bed_file = bed, SEMATS = semats)
-
-# Use parallel processing
-createSplicingMap(bed_file = bed, SEMATS = semats, cores = 4)
 
 # Return data instead of plot
 freq_data <- createSplicingMap(bed_file = bed,

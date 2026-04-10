@@ -41,8 +41,6 @@
 #' @param control_iterations Integer number for sampling iterations for control
 #'   sampling. The final control frequency is the mean across iterations, with
 #'   standard deviation shown as a shaded band. Default is 20.
-#' @param cores Integer number of cores for parallel processing. Default is 1
-#'   (sequential).
 #' @param z_threshold Z-score threshold for significance testing. Default is 1.96
 #' Only used when use_fdr = FALSE.
 #' @param min_consecutive Minimum number of consecutive significant positions
@@ -144,7 +142,6 @@ createSequenceMap <- function(SEMATS,
                                groups = c("Retained", "Excluded", "Control"),
                                control_multiplier = 2.0,
                                control_iterations = 20,
-                               cores = 1,
                                z_threshold = 1.96,
                                min_consecutive = 10,
                                one_sided = TRUE,
@@ -208,7 +205,6 @@ createSequenceMap <- function(SEMATS,
         groups = groups,
         control_multiplier = control_multiplier,
         control_iterations = control_iterations,
-        cores = cores,
         z_threshold = z_threshold,
         min_consecutive = min_consecutive,
         one_sided = one_sided,
@@ -253,29 +249,6 @@ createSequenceMap <- function(SEMATS,
       try(progress_callback(current, total, detail), silent = TRUE)
     }
   }
-
-  # Cap cores at max available - 1
-  max_cores <- parallel::detectCores() - 1
-  if (is.na(max_cores) || max_cores < 1) max_cores <- 1
-  cores <- min(cores, max_cores)
-  cores <- max(cores, 1)
-  # Save and restore global state on exit (error or normal completion)
-  on.exit(options(future.globals.maxSize = getOption("future.globals.maxSize")), add = TRUE)
-  options(future.globals.maxSize = 8 * 1024^3)
-
-  # If using parallel, warm up workers early while we do other setup
-  warmup_future <- NULL
-  if (cores > 1) {
-    on.exit(future::plan(future::sequential), add = TRUE)
-    if (verbose) message(sprintf("Starting %d parallel workers...", cores))
-    future::plan(future::multisession, workers = cores)
-
-    # Workers will spawn and load packages in background
-    warmup_future <- future::future({
-      TRUE
-    }, seed = TRUE)
-  }
-
 
   # Filter SEMATS into Controls, Retained, and Excluded
   filtered_events <- filter_SEMATS_events(
@@ -323,11 +296,6 @@ createSequenceMap <- function(SEMATS,
 
     freq_data$group <- group_name
     return(freq_data)
-  }
-
-  # Wait for parallel workers to be ready
-  if (!is.null(warmup_future)) {
-    invisible(future::value(warmup_future))
   }
 
   # Process only selected groups
@@ -429,32 +397,28 @@ createSequenceMap <- function(SEMATS,
       # Bootstrap sampling using cached matrix
       iteration_results <- vector("list", control_iterations)
 
-      # Progress tracking
+      pb <- progress::progress_bar$new(
+        format = "  Sampling iterations [:bar] :current/:total (:percent) eta::eta",
+        total = control_iterations, clear = FALSE, width = 80
+      )
+
       loop_start <- 20
       loop_end <- 90
 
       for (iter in seq_len(control_iterations)) {
-        # Get sampled event indices
+        pb$tick()
+
         sampled_ids <- all_sampled_indices[[iter]]
-
-        # Sum cached columns for sampled events (this is the key speedup!)
         match_counts <- rowSums(cache_matrix[, sampled_ids, drop = FALSE])
-
-        # Calculate frequency
         freq_vec <- match_counts / sample_size
-
-        # Apply moving average
         iteration_results[[iter]] <- apply_moving_avg(freq_vec)
 
-        # Progress callback (only every 10 iterations to reduce overhead)
-        if (iter %% 10 == 0 || iter == control_iterations) {
-          progress_pct <- loop_start + (iter / control_iterations) * (loop_end - loop_start)
-          .report_progress(
-            progress_pct,
-            100,
-            sprintf("Bootstrap iteration %d/%d", iter, control_iterations)
-          )
-        }
+        progress_pct <- loop_start + (iter / control_iterations) * (loop_end - loop_start)
+        .report_progress(
+          progress_pct,
+          100,
+          sprintf("Control sampling iteration %d/%d", iter, control_iterations)
+        )
       }
 
       # Combine results and calculate mean/sd
