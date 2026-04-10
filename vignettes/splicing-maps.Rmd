@@ -30,7 +30,7 @@ across a four-region window spanning the exon-intron junctions of skipped-exon
 library(RNAPeaks)
 ```
 
----
+***
 ## Basic usage
 
 ```{r basic, eval = FALSE}
@@ -40,7 +40,7 @@ createSplicingMap(
 )
 ```
 
----
+***
 
 ## Event classification
 
@@ -65,7 +65,7 @@ createSplicingMap(
 )
 ```
 
----
+***
 
 ## Window size
 
@@ -80,7 +80,7 @@ createSplicingMap(
 )
 ```
 
----
+***
 
 ## Smoothing
 
@@ -95,7 +95,7 @@ createSplicingMap(bed_file = sample_bed, SEMATS = sample_se.mats, moving_average
 createSplicingMap(bed_file = sample_bed, SEMATS = sample_se.mats, moving_average = NULL)
 ```
 
----
+***
 
 ## Bootstrap control and significance testing
 
@@ -128,7 +128,7 @@ createSplicingMap(
 )
 ```
 
----
+***
 
 ## Returning data
 
