@@ -5,14 +5,14 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Gene-Level Visualization • RNAPeaks</title>
+<title>PlotGene • RNAPeaks</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Inter-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Gene-Level Visualization">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="PlotGene">
 <meta name="description" content="RNAPeaks: publication-quality visualization
   of RNA-binding protein peaks on gene structures.">
 </head>
@@ -39,8 +39,20 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/RNAPeaks.html">Getting Started</a></li>
-    <li><a class="dropdown-item" href="../articles/gene-visualization.html">Gene-Level Visualization</a></li>
-    <li><a class="dropdown-item" href="../articles/splicing-maps.html">Splicing Maps</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Visualization</h6></li>
+    <li><a class="dropdown-item" href="../articles/gene-visualization.html">PlotGene</a></li>
+    <li><a class="dropdown-item" href="../articles/plot-region.html">PlotRegion</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Splicing Maps</h6></li>
+    <li><a class="dropdown-item" href="../articles/splicing-maps.html">createSplicingMap</a></li>
+    <li><a class="dropdown-item" href="../articles/ri-splicing-map.html">createRetainedIntronSplicingMap</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Sequence Maps</h6></li>
+    <li><a class="dropdown-item" href="../articles/sequence-map.html">createSequenceMap</a></li>
+    <li><a class="dropdown-item" href="../articles/ri-sequence-map.html">createRetainedIntronSequenceMap</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="../articles/styling.html">Styling Guide</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
@@ -71,7 +83,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Gene-Level Visualization</h1>
+      <h1>PlotGene</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/Krushna-B/RNAPeaks/blob/main/vignettes/gene-visualization.Rmd" class="external-link"><code>vignettes/gene-visualization.Rmd</code></a></small>
@@ -83,52 +95,54 @@
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
-<p>This article covers <code><a href="../reference/PlotGene.html">PlotGene()</a></code> and
-<code><a href="../reference/PlotRegion.html">PlotRegion()</a></code> in depth — the two functions for producing
-peak-on-gene-structure diagrams.</p>
+<p><code><a href="../reference/PlotGene.html">PlotGene()</a></code> draws all RBP peaks that overlap a single
+gene of interest, overlaid on the annotated transcript structure —
+exons, UTRs, introns, and CDS — at accurate genomic scale.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://krushna-b.github.io/RNAPeaks/">RNAPeaks</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">gtf_human</span><span class="op">)</span></span></code></pre></div>
 <hr>
 </div>
 <div class="section level2">
-<h2 id="plotgene">PlotGene()<a class="anchor" aria-label="anchor" href="#plotgene"></a>
+<h2 id="basic-usage">Basic usage<a class="anchor" aria-label="anchor" href="#basic-usage"></a>
 </h2>
-<div class="section level3">
-<h3 id="basic-usage">Basic usage<a class="anchor" aria-label="anchor" href="#basic-usage"></a>
-</h3>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span></span>
 <span>    bed    <span class="op">=</span> <span class="va">sample_bed</span>,</span>
 <span>    geneID <span class="op">=</span> <span class="st">"GAPDH"</span>,</span>
 <span>    gtf    <span class="op">=</span> <span class="va">gtf_human</span></span>
 <span><span class="op">)</span></span>
-<span><span class="va">result</span><span class="op">$</span><span class="va">plot</span></span></code></pre></div>
+<span><span class="va">result</span><span class="op">$</span><span class="va">plot</span>   <span class="co"># ggplot2 object</span></span>
+<span><span class="va">result</span><span class="op">$</span><span class="va">csv</span>    <span class="co"># data frame of peaks used in the figure</span></span></code></pre></div>
+<hr>
 </div>
-<div class="section level3">
-<h3 id="selecting-a-transcript-isoform">Selecting a transcript isoform<a class="anchor" aria-label="anchor" href="#selecting-a-transcript-isoform"></a>
-</h3>
-<p>By default, RNAPeaks selects the longest transcript. To target a
-specific isoform, supply its Ensembl transcript ID:</p>
+<div class="section level2">
+<h2 id="selecting-a-transcript-isoform">Selecting a transcript isoform<a class="anchor" aria-label="anchor" href="#selecting-a-transcript-isoform"></a>
+</h2>
+<p>By default the longest transcript is used. To target a specific
+isoform, supply its Ensembl transcript ID:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span></span>
 <span>    bed    <span class="op">=</span> <span class="va">sample_bed</span>,</span>
 <span>    geneID <span class="op">=</span> <span class="st">"TP53"</span>,</span>
 <span>    gtf    <span class="op">=</span> <span class="va">gtf_human</span>,</span>
 <span>    TxID   <span class="op">=</span> <span class="st">"ENST00000269305"</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">result</span><span class="op">$</span><span class="va">plot</span></span></code></pre></div>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Alternatively, pass an Ensembl gene ID directly:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span>bed <span class="op">=</span> <span class="va">sample_bed</span>, geneID <span class="op">=</span> <span class="st">"ENSG00000141510"</span>, gtf <span class="op">=</span> <span class="va">gtf_human</span><span class="op">)</span></span></code></pre></div>
+<hr>
 </div>
-<div class="section level3">
-<h3 id="ordering-protein-tracks">Ordering protein tracks<a class="anchor" aria-label="anchor" href="#ordering-protein-tracks"></a>
-</h3>
+<div class="section level2">
+<h2 id="ordering-protein-tracks">Ordering protein tracks<a class="anchor" aria-label="anchor" href="#ordering-protein-tracks"></a>
+</h2>
 <p>The <code>order_by</code> argument controls the vertical stacking
 order of RBP tracks:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Order by peak count (most peaks at the bottom — default)</span></span>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Order by peak count — most peaks at bottom (default)</span></span>
 <span><span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span>bed <span class="op">=</span> <span class="va">sample_bed</span>, geneID <span class="op">=</span> <span class="st">"GAPDH"</span>, gtf <span class="op">=</span> <span class="va">gtf_human</span>, order_by <span class="op">=</span> <span class="st">"Count"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Alphabetical order</span></span>
+<span><span class="co"># Alphabetical by protein name</span></span>
 <span><span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span>bed <span class="op">=</span> <span class="va">sample_bed</span>, geneID <span class="op">=</span> <span class="st">"GAPDH"</span>, gtf <span class="op">=</span> <span class="va">gtf_human</span>, order_by <span class="op">=</span> <span class="st">"Target"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Explicit custom order</span></span>
@@ -138,56 +152,60 @@ order of RBP tracks:</p>
 <span>    gtf      <span class="op">=</span> <span class="va">gtf_human</span>,</span>
 <span>    order_in <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"PROTEIN_A"</span>, <span class="st">"PROTEIN_B"</span>, <span class="st">"PROTEIN_C"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+<hr>
 </div>
-<div class="section level3">
-<h3 id="merging-nearby-peaks">Merging nearby peaks<a class="anchor" aria-label="anchor" href="#merging-nearby-peaks"></a>
-</h3>
+<div class="section level2">
+<h2 id="merging-nearby-peaks">Merging nearby peaks<a class="anchor" aria-label="anchor" href="#merging-nearby-peaks"></a>
+</h2>
 <p>Use <code>merge</code> to collapse peaks within a given distance (bp)
 into a single rectangle, reducing visual noise from fragmented binding
 sites:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span></span>
 <span>    bed    <span class="op">=</span> <span class="va">sample_bed</span>,</span>
 <span>    geneID <span class="op">=</span> <span class="st">"GAPDH"</span>,</span>
 <span>    gtf    <span class="op">=</span> <span class="va">gtf_human</span>,</span>
 <span>    merge  <span class="op">=</span> <span class="fl">50</span>     <span class="co"># merge peaks within 50 bp</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+<hr>
 </div>
-<div class="section level3">
-<h3 id="orientation">5′ → 3′ orientation<a class="anchor" aria-label="anchor" href="#orientation"></a>
-</h3>
-<p>For negative-strand genes, the x-axis runs right-to-left by default
+<div class="section level2">
+<h2 id="orientation">5′ → 3′ orientation<a class="anchor" aria-label="anchor" href="#orientation"></a>
+</h2>
+<p>For negative-strand genes the x-axis runs right-to-left by default
 (genomic coordinate order). Set <code>five_to_three = TRUE</code> to
-flip the axis so 5′ is always on the left:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+flip so 5′ is always on the left:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span></span>
 <span>    bed           <span class="op">=</span> <span class="va">sample_bed</span>,</span>
 <span>    geneID        <span class="op">=</span> <span class="st">"ACTB"</span>,</span>
 <span>    gtf           <span class="op">=</span> <span class="va">gtf_human</span>,</span>
 <span>    five_to_three <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+<hr>
 </div>
-<div class="section level3">
-<h3 id="highlighting-a-region">Highlighting a region<a class="anchor" aria-label="anchor" href="#highlighting-a-region"></a>
-</h3>
+<div class="section level2">
+<h2 id="highlighting-a-region">Highlighting a region<a class="anchor" aria-label="anchor" href="#highlighting-a-region"></a>
+</h2>
 <p>Draw a shaded rectangle over any genomic interval to call attention
 to a region of interest:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span></span>
-<span>    bed                       <span class="op">=</span> <span class="va">sample_bed</span>,</span>
-<span>    geneID                    <span class="op">=</span> <span class="st">"GAPDH"</span>,</span>
-<span>    gtf                       <span class="op">=</span> <span class="va">gtf_human</span>,</span>
-<span>    highlighted_region_start  <span class="op">=</span> <span class="fl">6643000</span>,</span>
-<span>    highlighted_region_stop   <span class="op">=</span> <span class="fl">6643500</span>,</span>
-<span>    highlighted_region_color  <span class="op">=</span> <span class="st">"gold"</span>,</span>
+<span>    bed                        <span class="op">=</span> <span class="va">sample_bed</span>,</span>
+<span>    geneID                     <span class="op">=</span> <span class="st">"GAPDH"</span>,</span>
+<span>    gtf                        <span class="op">=</span> <span class="va">gtf_human</span>,</span>
+<span>    highlighted_region_start   <span class="op">=</span> <span class="fl">6643000</span>,</span>
+<span>    highlighted_region_stop    <span class="op">=</span> <span class="fl">6643500</span>,</span>
+<span>    highlighted_region_color   <span class="op">=</span> <span class="st">"gold"</span>,</span>
 <span>    highlighted_region_opacity <span class="op">=</span> <span class="fl">0.4</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+<hr>
 </div>
-<div class="section level3">
-<h3 id="exon-intron-junction-lines">Exon-intron junction lines<a class="anchor" aria-label="anchor" href="#exon-intron-junction-lines"></a>
-</h3>
+<div class="section level2">
+<h2 id="exon-intron-junction-lines">Exon-intron junction lines<a class="anchor" aria-label="anchor" href="#exon-intron-junction-lines"></a>
+</h2>
 <p>Add vertical dashed lines at every exon-intron boundary:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span></span>
 <span>    bed            <span class="op">=</span> <span class="va">sample_bed</span>,</span>
 <span>    geneID         <span class="op">=</span> <span class="st">"GAPDH"</span>,</span>
@@ -197,289 +215,31 @@ to a region of interest:</p>
 <span><span class="op">)</span></span></code></pre></div>
 <hr>
 </div>
-</div>
-<div class="section level2">
-<h2 id="plotregion">PlotRegion()<a class="anchor" aria-label="anchor" href="#plotregion"></a>
-</h2>
-<p><code><a href="../reference/PlotRegion.html">PlotRegion()</a></code> renders all genes (using their longest
-transcript) whose features overlap the specified genomic window, stacked
-vertically.</p>
-<div class="section level3">
-<h3 id="basic-usage-1">Basic usage<a class="anchor" aria-label="anchor" href="#basic-usage-1"></a>
-</h3>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PlotRegion.html">PlotRegion</a></span><span class="op">(</span></span>
-<span>    bed    <span class="op">=</span> <span class="va">sample_bed</span>,</span>
-<span>    gtf    <span class="op">=</span> <span class="va">gtf_human</span>,</span>
-<span>    Chr    <span class="op">=</span> <span class="st">"12"</span>,</span>
-<span>    Start  <span class="op">=</span> <span class="fl">56000000</span>,</span>
-<span>    End    <span class="op">=</span> <span class="fl">56050000</span>,</span>
-<span>    Strand <span class="op">=</span> <span class="st">"+"</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">result</span><span class="op">$</span><span class="va">plot</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="focusing-on-a-single-gene-within-a-region">Focusing on a single gene within a region<a class="anchor" aria-label="anchor" href="#focusing-on-a-single-gene-within-a-region"></a>
-</h3>
-<p>Supply <code>geneID</code> to include only one gene while still using
-the specified coordinate window for peak filtering:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/PlotRegion.html">PlotRegion</a></span><span class="op">(</span></span>
-<span>    bed    <span class="op">=</span> <span class="va">sample_bed</span>,</span>
-<span>    gtf    <span class="op">=</span> <span class="va">gtf_human</span>,</span>
-<span>    Chr    <span class="op">=</span> <span class="st">"12"</span>,</span>
-<span>    Start  <span class="op">=</span> <span class="fl">56000000</span>,</span>
-<span>    End    <span class="op">=</span> <span class="fl">56050000</span>,</span>
-<span>    Strand <span class="op">=</span> <span class="st">"+"</span>,</span>
-<span>    geneID <span class="op">=</span> <span class="st">"GAPDH"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<hr>
-</div>
-</div>
-<div class="section level2">
-<h2 id="styling-reference">Styling reference<a class="anchor" aria-label="anchor" href="#styling-reference"></a>
-</h2>
-<p>Both <code><a href="../reference/PlotGene.html">PlotGene()</a></code> and <code><a href="../reference/PlotRegion.html">PlotRegion()</a></code> accept a
-shared set of styling arguments via <code>...</code>. The most commonly
-used are listed below.</p>
-<div class="section level3">
-<h3 id="gene-structure">Gene structure<a class="anchor" aria-label="anchor" href="#gene-structure"></a>
-</h3>
-<table class="table">
-<thead><tr class="header">
-<th>Parameter</th>
-<th>Default</th>
-<th>Description</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td><code>exon_fill</code></td>
-<td><code>"navy"</code></td>
-<td>Exon / CDS fill color</td>
-</tr>
-<tr class="even">
-<td><code>utr_fill</code></td>
-<td><code>"lightgray"</code></td>
-<td>UTR fill color</td>
-</tr>
-<tr class="odd">
-<td><code>intron_color</code></td>
-<td><code>"gray60"</code></td>
-<td>Intron line color</td>
-</tr>
-<tr class="even">
-<td><code>intron_linewidth</code></td>
-<td><code>0.9</code></td>
-<td>Intron line width</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section level3">
-<h3 id="peaks">Peaks<a class="anchor" aria-label="anchor" href="#peaks"></a>
-</h3>
-<table class="table">
-<thead><tr class="header">
-<th>Parameter</th>
-<th>Default</th>
-<th>Description</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td><code>peak_col</code></td>
-<td><code>"purple"</code></td>
-<td>Peak rectangle fill color</td>
-</tr>
-<tr class="even">
-<td><code>peak_alpha</code></td>
-<td><code>0.95</code></td>
-<td>Peak opacity</td>
-</tr>
-<tr class="odd">
-<td><code>peak_border_color</code></td>
-<td><code>NA</code></td>
-<td>Peak border color (<code>NA</code> = none)</td>
-</tr>
-<tr class="even">
-<td><code>peaks_width</code></td>
-<td><code>0.3</code></td>
-<td>Vertical height of each peak row</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section level3">
-<h3 id="labels">Labels<a class="anchor" aria-label="anchor" href="#labels"></a>
-</h3>
-<table class="table">
-<thead><tr class="header">
-<th>Parameter</th>
-<th>Default</th>
-<th>Description</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td><code>label_size</code></td>
-<td><code>5</code></td>
-<td>Protein label font size</td>
-</tr>
-<tr class="even">
-<td><code>label_color</code></td>
-<td><code>"black"</code></td>
-<td>Protein label color</td>
-</tr>
-<tr class="odd">
-<td><code>title_size</code></td>
-<td><code>25</code></td>
-<td>Plot title font size</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section level3">
-<h3 id="layout">Layout<a class="anchor" aria-label="anchor" href="#layout"></a>
-</h3>
-<table class="table">
-<thead><tr class="header">
-<th>Parameter</th>
-<th>Default</th>
-<th>Description</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td><code>axis_pad_bp</code></td>
-<td><code>500</code></td>
-<td>Padding (bp) added to each side of the plot</td>
-</tr>
-<tr class="even">
-<td><code>axis_breaks_n</code></td>
-<td><code>5</code></td>
-<td>Number of x-axis tick marks</td>
-</tr>
-<tr class="odd">
-<td><code>max_proteins</code></td>
-<td><code>40</code></td>
-<td>Maximum number of protein tracks to show</td>
-</tr>
-<tr class="even">
-<td><code>x_lims</code></td>
-<td><code>NULL</code></td>
-<td>Custom x-axis limits as <code>c(min, max)</code>
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section level3">
-<h3 id="background-bands">Background bands<a class="anchor" aria-label="anchor" href="#background-bands"></a>
-</h3>
-<table class="table">
-<thead><tr class="header">
-<th>Parameter</th>
-<th>Default</th>
-<th>Description</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td><code>band_even_fill</code></td>
-<td><code>"#F7F8FA"</code></td>
-<td>Even-row band fill</td>
-</tr>
-<tr class="even">
-<td><code>band_odd_fill</code></td>
-<td><code>"#FFFFFF"</code></td>
-<td>Odd-row band fill</td>
-</tr>
-<tr class="odd">
-<td><code>band_sep_color</code></td>
-<td><code>"#E5E7EB"</code></td>
-<td>Band separator line color</td>
-</tr>
-</tbody>
-</table>
-<hr>
-</div>
-</div>
 <div class="section level2">
 <h2 id="saving-output">Saving output<a class="anchor" aria-label="anchor" href="#saving-output"></a>
 </h2>
-<p>Both functions write a PDF and a CSV by default. Set paths explicitly
-or pass <code>NULL</code> to suppress file output:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<p>Both a PDF and a CSV are written by default. Set paths explicitly or
+pass <code>NULL</code> to suppress file output:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span></span>
-<span>    bed                <span class="op">=</span> <span class="va">sample_bed</span>,</span>
-<span>    geneID             <span class="op">=</span> <span class="st">"GAPDH"</span>,</span>
-<span>    gtf                <span class="op">=</span> <span class="va">gtf_human</span>,</span>
+<span>    bed                 <span class="op">=</span> <span class="va">sample_bed</span>,</span>
+<span>    geneID              <span class="op">=</span> <span class="st">"GAPDH"</span>,</span>
+<span>    gtf                 <span class="op">=</span> <span class="va">gtf_human</span>,</span>
 <span>    RNA_Peaks_File_Path <span class="op">=</span> <span class="st">"figures/GAPDH_peaks.pdf"</span>,</span>
 <span>    Bed_File_Path       <span class="op">=</span> <span class="st">"data/GAPDH_peaks.csv"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Suppress file output — work with the ggplot object directly</span></span>
+<span><span class="co"># Suppress file output</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span></span>
-<span>    bed                <span class="op">=</span> <span class="va">sample_bed</span>,</span>
-<span>    geneID             <span class="op">=</span> <span class="st">"GAPDH"</span>,</span>
-<span>    gtf                <span class="op">=</span> <span class="va">gtf_human</span>,</span>
+<span>    bed                 <span class="op">=</span> <span class="va">sample_bed</span>,</span>
+<span>    geneID              <span class="op">=</span> <span class="st">"GAPDH"</span>,</span>
+<span>    gtf                 <span class="op">=</span> <span class="va">gtf_human</span>,</span>
 <span>    RNA_Peaks_File_Path <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>    Bed_File_Path       <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Save manually with custom dimensions</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggsave</a></span><span class="op">(</span><span class="st">"GAPDH.pdf"</span>, <span class="va">result</span><span class="op">$</span><span class="va">plot</span>, width <span class="op">=</span> <span class="fl">18</span>, height <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></code></pre></div>
-<hr>
-</div>
-<div class="section level2">
-<h2 id="session-info">Session info<a class="anchor" aria-label="anchor" href="#session-info"></a>
-</h2>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; R version 4.5.3 (2026-03-11)</span></span>
-<span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
-<span><span class="co">#&gt; Running under: Ubuntu 24.04.4 LTS</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Matrix products: default</span></span>
-<span><span class="co">#&gt; BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 </span></span>
-<span><span class="co">#&gt; LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; locale:</span></span>
-<span><span class="co">#&gt;  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       </span></span>
-<span><span class="co">#&gt;  [4] LC_COLLATE=C.UTF-8     LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8   </span></span>
-<span><span class="co">#&gt;  [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C          </span></span>
-<span><span class="co">#&gt; [10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C   </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; time zone: UTC</span></span>
-<span><span class="co">#&gt; tzcode source: system (glibc)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; attached base packages:</span></span>
-<span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] RNAPeaks_1.2.0</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;  [1] KEGGREST_1.50.0      gtable_0.3.6         xfun_0.57           </span></span>
-<span><span class="co">#&gt;  [4] bslib_0.10.0         ggplot2_4.0.2        httr2_1.2.2         </span></span>
-<span><span class="co">#&gt;  [7] Biobase_2.70.0       vctrs_0.7.2          tools_4.5.3         </span></span>
-<span><span class="co">#&gt; [10] generics_0.1.4       stats4_4.5.3         curl_7.0.0          </span></span>
-<span><span class="co">#&gt; [13] tibble_3.3.1         AnnotationDbi_1.72.0 RSQLite_2.4.6       </span></span>
-<span><span class="co">#&gt; [16] blob_1.3.0           pkgconfig_2.0.3      RColorBrewer_1.1-3  </span></span>
-<span><span class="co">#&gt; [19] dbplyr_2.5.2         S7_0.2.1             desc_1.4.3          </span></span>
-<span><span class="co">#&gt; [22] S4Vectors_0.48.0     lifecycle_1.0.5      farver_2.1.2        </span></span>
-<span><span class="co">#&gt; [25] compiler_4.5.3       textshaping_1.0.5    Biostrings_2.78.0   </span></span>
-<span><span class="co">#&gt; [28] Seqinfo_1.0.0        GenomeInfoDb_1.46.2  htmltools_0.5.9     </span></span>
-<span><span class="co">#&gt; [31] sass_0.4.10          yaml_2.3.12          pillar_1.11.1       </span></span>
-<span><span class="co">#&gt; [34] pkgdown_2.2.0        crayon_1.5.3         jquerylib_0.1.4     </span></span>
-<span><span class="co">#&gt; [37] cachem_1.1.0         AnnotationHub_4.0.0  tidyselect_1.2.1    </span></span>
-<span><span class="co">#&gt; [40] digest_0.6.39        dplyr_1.2.1          BiocVersion_3.22.0  </span></span>
-<span><span class="co">#&gt; [43] fastmap_1.2.0        grid_4.5.3           cli_3.6.5           </span></span>
-<span><span class="co">#&gt; [46] magrittr_2.0.5       filelock_1.0.3       UCSC.utils_1.6.1    </span></span>
-<span><span class="co">#&gt; [49] scales_1.4.0         rappdirs_0.3.4       bit64_4.6.0-1       </span></span>
-<span><span class="co">#&gt; [52] rmarkdown_2.31       XVector_0.50.0       httr_1.4.8          </span></span>
-<span><span class="co">#&gt; [55] bit_4.6.0            ragg_1.5.2           png_0.1-9           </span></span>
-<span><span class="co">#&gt; [58] memoise_2.0.1        evaluate_1.0.5       knitr_1.51          </span></span>
-<span><span class="co">#&gt; [61] GenomicRanges_1.62.1 IRanges_2.44.0       BiocFileCache_3.0.0 </span></span>
-<span><span class="co">#&gt; [64] rlang_1.1.7          glue_1.8.0           DBI_1.3.0           </span></span>
-<span><span class="co">#&gt; [67] BiocManager_1.30.27  BiocGenerics_0.56.0  jsonlite_2.0.0      </span></span>
-<span><span class="co">#&gt; [70] R6_2.6.1             systemfonts_1.3.2    fs_2.0.1</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

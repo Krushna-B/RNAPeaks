@@ -1,9 +1,9 @@
-# Analyzes the frequency of a target sequence motif across splicing junction regions. Compares motif frequency between Retained, Excluded, and Control splicing events to identify position-specific enrichment patterns.
+# Create Sequence Map Analyzes the frequency of a target sequence motif across splicing junction regions. Compares motif frequency between Retained, Excluded, and Control splicing events to identify position-specific enrichment patterns.
 
-Analyzes the frequency of a target sequence motif across splicing
-junction regions. Compares motif frequency between Retained, Excluded,
-and Control splicing events to identify position-specific enrichment
-patterns.
+Create Sequence Map Analyzes the frequency of a target sequence motif
+across splicing junction regions. Compares motif frequency between
+Retained, Excluded, and Control splicing events to identify
+position-specific enrichment patterns.
 
 ## Usage
 
@@ -24,7 +24,6 @@ createSequenceMap(
   groups = c("Retained", "Excluded", "Control"),
   control_multiplier = 2,
   control_iterations = 20,
-  cores = 1,
   z_threshold = 1.96,
   min_consecutive = 10,
   one_sided = TRUE,
@@ -119,14 +118,13 @@ createSequenceMap(
 
   Character vector specifying which event groups to process. Options are
   "Retained", "Excluded", and/or "Control". Default is c("Retained",
-  "Excluded", "Control") to process all groups. Use c("Retained",
-  "Excluded") to skip the Control group (which can be large).
+  "Excluded", "Control") to process all groups.
 
 - control_multiplier:
 
   Numeric multiplier for control sample size. The number of control
   events sampled per iteration is (n_retained + n_excluded) \*
-  control_multiplier. Default is 1.0.
+  control_multiplier. Default is 2.0.
 
 - control_iterations:
 
@@ -134,15 +132,10 @@ createSequenceMap(
   control frequency is the mean across iterations, with standard
   deviation shown as a shaded band. Default is 20.
 
-- cores:
-
-  Integer number of cores for parallel processing. Default is 1
-  (sequential). Set higher for faster processing on multi-core systems.
-
 - z_threshold:
 
-  Z-score threshold for significance testing. Default is 1.96
-  (corresponds to p \< 0.05 two-tailed). Only used when use_fdr = FALSE.
+  Z-score threshold for significance testing. Default is 1.96 Only used
+  when use_fdr = FALSE.
 
 - min_consecutive:
 
@@ -157,8 +150,9 @@ createSequenceMap(
 
 - use_fdr:
 
-  Logical. If TRUE, use FDR-corrected p-values (Benjamini-Hochberg) for
-  significance testing. If FALSE (default), use z_threshold directly.
+  Logical. If TRUE (default), use FDR-corrected p-values
+  (Benjamini-Hochberg) for significance testing. If FALSE, use
+  z_threshold directly.
 
 - fdr_threshold:
 

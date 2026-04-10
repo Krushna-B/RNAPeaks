@@ -1,16 +1,16 @@
-# Create Splicing Map
+# Create Retained Intron Splicing Map
 
-Analyzes protein binding frequency across splicing junction regions.
-Uses a 4-region structure to show where protein binding sites appear
-relative to exon/intron boundaries. Filters events into Retained,
-Excluded, and Control groups.
+Analyzes protein binding frequency across retained intron junction
+regions. Uses a 2-region structure to show where protein binding sites
+appear relative to the upstream exon/intron and intron/downstream exon
+boundaries. Filters events into Retained, Excluded, and Control groups.
 
 ## Usage
 
 ``` r
-createSplicingMap(
+createRetainedIntronSplicingMap(
   bed_file,
-  SEMATS,
+  RIMATS,
   moving_average = 50,
   WidthIntoExon = 50,
   WidthIntoIntron = 300,
@@ -56,12 +56,12 @@ createSplicingMap(
   Either a file path to a BED file or a data frame containing BED data
   with columns: chr, start, end, tag, score, strand
 
-- SEMATS:
+- RIMATS:
 
-  A data frame containing SE.MATS output with columns: chr, strand,
-  upstreamES, upstreamEE, exonStart_0base, exonEnd, downstreamES,
-  downstreamEE, GeneID, PValue, FDR, IncLevelDifference, IJC_SAMPLE_1,
-  SJC_SAMPLE_1, IJC_SAMPLE_2, SJC_SAMPLE_2, IncLevel1, IncLevel2
+  A data frame containing rMATS output with columns: chr, strand,
+  upstreamES, upstreamEE, downstreamES, downstreamEE, GeneID, PValue,
+  FDR, IncLevelDifference, IJC_SAMPLE_1, SJC_SAMPLE_1, IJC_SAMPLE_2,
+  SJC_SAMPLE_2, IncLevel1, IncLevel2
 
 - moving_average:
 
@@ -118,26 +118,21 @@ createSplicingMap(
 
 - z_threshold:
 
-  Z-score threshold for significance testing. Default is 1.96
-  (corresponds to p \< 0.025 one-sided, or p \< 0.05 two-tailed). Only
-  used when use_fdr = FALSE.
+  Z-score threshold for significance testing. Default is 1.96. Only used
+  when use_fdr = FALSE.
 
 - min_consecutive:
 
   Minimum number of consecutive significant positions required to form a
-  significant region. Default is 10. Helps reduce false positives from
-  noise.
+  significant region. Default is 10.
 
 - one_sided:
 
-  Logical. If TRUE (default), only test for enrichment (frequency \>
-  control). If FALSE, test for both enrichment and depletion.
+  Logical. If TRUE (default), only test for enrichment.
 
 - use_fdr:
 
-  Logical. If TRUE (default), use FDR-corrected p-values
-  (Benjamini-Hochberg) for significance testing. If FALSE, use
-  z_threshold directly.
+  Logical. If TRUE, use FDR-corrected p-values. Default is TRUE.
 
 - fdr_threshold:
 
@@ -147,7 +142,7 @@ createSplicingMap(
 
   Logical. If TRUE (default), displays colored bars above the plot
   indicating regions where Retained/Excluded differ significantly from
-  Control.
+  Control based on z-test.
 
 - return_data:
 
@@ -156,10 +151,8 @@ createSplicingMap(
 
 - return_diagnostics:
 
-  Logical. If TRUE, returns a list containing the frequency data, raw
-  bootstrap iteration results (for normality testing), and significance
-  results. Useful for validating bootstrap assumptions. Default is
-  FALSE.
+  Logical. If TRUE, returns a list containing the frequency data and
+  bootstrap diagnostics. Default is FALSE.
 
 - verbose:
 
@@ -167,12 +160,11 @@ createSplicingMap(
 
 - progress_callback:
 
-  Optional function to report progress. Called with two arguments:
-  current iteration number and total iterations. Default is NULL.
+  Optional function to report progress. Default is NULL.
 
 - title:
 
-  Character string for the plot title. Default is "" (no title).
+  Character string for the plot title. Default is "".
 
 - retained_col:
 
@@ -192,7 +184,7 @@ createSplicingMap(
 
 - line_alpha:
 
-  Numeric alpha (opacity) for the frequency lines. Default is 0.7.
+  Numeric alpha for the frequency lines. Default is 0.7.
 
 - ribbon_alpha:
 
@@ -216,8 +208,7 @@ createSplicingMap(
 
 - exon_col:
 
-  Fill color for the skipped (middle) exon in the schematic. Default is
-  "navy".
+  Unused parameter kept for API consistency. Default is "navy".
 
 - legend_position:
 
@@ -229,23 +220,19 @@ createSplicingMap(
 
 ## Value
 
-A ggplot object showing protein binding frequency across the 4 regions
-for Retained, Excluded, and Control groups. Significant regions (z-test
-vs Control) are shown as colored bars above the plot. Returns a data
-frame if return_data = TRUE.
+A ggplot object showing protein binding frequency across the 2 regions
+for Retained, Excluded, and Control groups. The bottom schematic shows
+two exon boxes connected by a single intron line. Returns a data frame
+if return_data = TRUE.
 
 ## Details
 
-The function divides each splicing event into 4 regions of
+The function divides each retained intron event into 2 regions of
 (WidthIntoExon + WidthIntoIntron) bp each:
 
-- Region 1 (UE-UI5): Upstream exon end to first intron
+- Region 1 (UE-RI5): Upstream exon end to retained intron
 
-- Region 2 (UI3-EX3): First intron end to middle (skipped) exon start
-
-- Region 3 (EX5-DI5): Middle exon end to second intron
-
-- Region 4 (DI3-DE): Second intron end to downstream exon start
+- Region 2 (RI3-DE): Retained intron end to downstream exon start
 
 Events are filtered into three groups:
 
@@ -261,16 +248,15 @@ Events are filtered into three groups:
 
 ``` r
 if (FALSE) { # \dontrun{
-# Load BED file and SE.MATS data
-bed <- read.table("peaks.bed")
-semats <- read.table("SE.MATS.JC.txt", header = TRUE)
+# Load BED file and RI.MATS data
+bed <- checkBed("peaks.bed")
+rimats <- read.table("RI.MATS.JC.txt", header = TRUE)
 
 # Basic usage
-createSplicingMap(bed_file = bed, SEMATS = semats)
+createRetainedIntronSplicingMap(bed_file = bed, RIMATS = rimats)
 
 # Return data instead of plot
-freq_data <- createSplicingMap(bed_file = bed,
-                                SEMATS = semats,
-                                return_data = TRUE)
+freq_data <- createRetainedIntronSplicingMap(bed_file = bed, RIMATS = rimats,
+                                      return_data = TRUE)
 } # }
 ```

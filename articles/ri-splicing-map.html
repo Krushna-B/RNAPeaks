@@ -5,14 +5,14 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>createSplicingMap • RNAPeaks</title>
+<title>createRetainedIntronSplicingMap • RNAPeaks</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Inter-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="createSplicingMap">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="createRetainedIntronSplicingMap">
 <meta name="description" content="RNAPeaks: publication-quality visualization
   of RNA-binding protein peaks on gene structures.">
 </head>
@@ -83,11 +83,11 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>createSplicingMap</h1>
+      <h1>createRetainedIntronSplicingMap</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/Krushna-B/RNAPeaks/blob/main/vignettes/splicing-maps.Rmd" class="external-link"><code>vignettes/splicing-maps.Rmd</code></a></small>
-      <div class="d-none name"><code>splicing-maps.Rmd</code></div>
+      <small class="dont-index">Source: <a href="https://github.com/Krushna-B/RNAPeaks/blob/main/vignettes/ri-splicing-map.Rmd" class="external-link"><code>vignettes/ri-splicing-map.Rmd</code></a></small>
+      <div class="d-none name"><code>ri-splicing-map.Rmd</code></div>
     </div>
 
     
@@ -95,10 +95,11 @@
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
-<p><code><a href="../reference/createSplicingMap.html">createSplicingMap()</a></code> quantifies RBP binding frequency at
-every position across a four-region window spanning the exon-intron
-junctions of skipped-exon (SE) alternative splicing events from rMATS
-output.</p>
+<p><code><a href="../reference/createRetainedIntronSplicingMap.html">createRetainedIntronSplicingMap()</a></code> quantifies RBP binding
+frequency around the two junctions of retained-intron (RI) events: the
+upstream exon/intron boundary and the downstream intron/exon boundary.
+It accepts the same SE.MATS column format and the same parameters as
+<code><a href="../reference/createSplicingMap.html">createSplicingMap()</a></code>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://krushna-b.github.io/RNAPeaks/">RNAPeaks</a></span><span class="op">)</span></span></code></pre></div>
 <hr>
@@ -107,93 +108,54 @@ output.</p>
 <h2 id="basic-usage">Basic usage<a class="anchor" aria-label="anchor" href="#basic-usage"></a>
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/createSplicingMap.html">createSplicingMap</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/createRetainedIntronSplicingMap.html">createRetainedIntronSplicingMap</a></span><span class="op">(</span></span>
 <span>    bed_file <span class="op">=</span> <span class="va">sample_bed</span>,</span>
-<span>    SEMATS   <span class="op">=</span> <span class="va">sample_se.mats</span></span>
+<span>    RIMATS   <span class="op">=</span> <span class="va">sample_se.mats</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <hr>
 </div>
 <div class="section level2">
 <h2 id="event-classification">Event classification<a class="anchor" aria-label="anchor" href="#event-classification"></a>
 </h2>
-<p>Events are classified into three groups based on
-<code>IncLevelDifference</code>, <code>PValue</code>, and
-<code>FDR</code>:</p>
+<p>Events are classified using the same thresholds as
+<code><a href="../reference/createSplicingMap.html">createSplicingMap()</a></code>:</p>
 <ul>
 <li>
 <strong>Retained</strong> —
-<code>IncLevelDifference &lt; -0.1</code>: exon inclusion significantly
-higher in condition 1</li>
+<code>IncLevelDifference &lt; -0.1</code>
+</li>
 <li>
 <strong>Excluded</strong> —
-<code>IncLevelDifference &gt; 0.1</code>: exon skipping significantly
-higher in condition 1</li>
+<code>IncLevelDifference &gt; 0.1</code>
+</li>
 <li>
-<strong>Control</strong> — non-significant, stable inclusion (PValue
-&gt; 0.95)</li>
+<strong>Control</strong> — non-significant, stable inclusion</li>
 </ul>
-<p>Control which events fall into each group:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/createSplicingMap.html">createSplicingMap</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/createRetainedIntronSplicingMap.html">createRetainedIntronSplicingMap</a></span><span class="op">(</span></span>
 <span>    bed_file                     <span class="op">=</span> <span class="va">sample_bed</span>,</span>
-<span>    SEMATS                       <span class="op">=</span> <span class="va">sample_se.mats</span>,</span>
-<span>    p_valueRetainedAndExclusion  <span class="op">=</span> <span class="fl">0.05</span>,</span>
-<span>    p_valueControls              <span class="op">=</span> <span class="fl">0.95</span>,</span>
+<span>    RIMATS                       <span class="op">=</span> <span class="va">sample_se.mats</span>,</span>
 <span>    retained_IncLevelDifference  <span class="op">=</span> <span class="op">-</span><span class="fl">0.1</span>,</span>
 <span>    exclusion_IncLevelDifference <span class="op">=</span> <span class="fl">0.1</span>,</span>
+<span>    p_valueRetainedAndExclusion  <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>    p_valueControls              <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>    Min_Count                    <span class="op">=</span> <span class="fl">50</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <hr>
 </div>
 <div class="section level2">
-<h2 id="window-size">Window size<a class="anchor" aria-label="anchor" href="#window-size"></a>
+<h2 id="bootstrap-control-and-significance">Bootstrap control and significance<a class="anchor" aria-label="anchor" href="#bootstrap-control-and-significance"></a>
 </h2>
-<p>Adjust how far into exons and introns the analysis extends:</p>
+<p>The same bootstrap z-score approach is used as in
+<code><a href="../reference/createSplicingMap.html">createSplicingMap()</a></code>. See the <a href="splicing-maps.html">createSplicingMap article</a> for full
+details.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/createSplicingMap.html">createSplicingMap</a></span><span class="op">(</span></span>
-<span>    bed_file        <span class="op">=</span> <span class="va">sample_bed</span>,</span>
-<span>    SEMATS          <span class="op">=</span> <span class="va">sample_se.mats</span>,</span>
-<span>    WidthIntoExon   <span class="op">=</span> <span class="fl">75</span>,</span>
-<span>    WidthIntoIntron <span class="op">=</span> <span class="fl">400</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<hr>
-</div>
-<div class="section level2">
-<h2 id="smoothing">Smoothing<a class="anchor" aria-label="anchor" href="#smoothing"></a>
-</h2>
-<p>A per-bin moving average is applied to reduce positional noise.
-Adjust the window size or disable smoothing:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Wider smoothing window</span></span>
-<span><span class="fu"><a href="../reference/createSplicingMap.html">createSplicingMap</a></span><span class="op">(</span>bed_file <span class="op">=</span> <span class="va">sample_bed</span>, SEMATS <span class="op">=</span> <span class="va">sample_se.mats</span>, moving_average <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># No smoothing</span></span>
-<span><span class="fu"><a href="../reference/createSplicingMap.html">createSplicingMap</a></span><span class="op">(</span>bed_file <span class="op">=</span> <span class="va">sample_bed</span>, SEMATS <span class="op">=</span> <span class="va">sample_se.mats</span>, moving_average <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
-<hr>
-</div>
-<div class="section level2">
-<h2 id="bootstrap-control-and-significance-testing">Bootstrap control and significance testing<a class="anchor" aria-label="anchor" href="#bootstrap-control-and-significance-testing"></a>
-</h2>
-<p>The control distribution is built by bootstrapping: at each of
-<code>control_iterations</code> replicates, a random sample of
-<code>(n_retained + n_excluded) × control_multiplier</code> control
-events is drawn and their binding frequency computed. The mean ± SD
-across replicates forms the control ribbon on the plot.</p>
-<p>Significance is assessed at each position using a z-score:</p>
-<pre><code>z = (observed_frequency − control_mean) / control_SD</code></pre>
-<p>Contiguous runs of ≥ <code>min_consecutive</code> significant
-positions are reported as enriched regions and drawn as colored bars
-above the plot.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/createSplicingMap.html">createSplicingMap</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/createRetainedIntronSplicingMap.html">createRetainedIntronSplicingMap</a></span><span class="op">(</span></span>
 <span>    bed_file           <span class="op">=</span> <span class="va">sample_bed</span>,</span>
-<span>    SEMATS             <span class="op">=</span> <span class="va">sample_se.mats</span>,</span>
-<span>    control_multiplier <span class="op">=</span> <span class="fl">2.0</span>,</span>
+<span>    RIMATS             <span class="op">=</span> <span class="va">sample_se.mats</span>,</span>
 <span>    control_iterations <span class="op">=</span> <span class="fl">30</span>,</span>
 <span>    use_fdr            <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>    fdr_threshold      <span class="op">=</span> <span class="fl">0.05</span>,</span>
-<span>    min_consecutive    <span class="op">=</span> <span class="fl">10</span>,</span>
-<span>    one_sided          <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>    show_significance  <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <hr>
@@ -201,10 +163,10 @@ above the plot.</p>
 <div class="section level2">
 <h2 id="returning-data">Returning data<a class="anchor" aria-label="anchor" href="#returning-data"></a>
 </h2>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">freq_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createSplicingMap.html">createSplicingMap</a></span><span class="op">(</span></span>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">freq_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createRetainedIntronSplicingMap.html">createRetainedIntronSplicingMap</a></span><span class="op">(</span></span>
 <span>    bed_file    <span class="op">=</span> <span class="va">sample_bed</span>,</span>
-<span>    SEMATS      <span class="op">=</span> <span class="va">sample_se.mats</span>,</span>
+<span>    RIMATS      <span class="op">=</span> <span class="va">sample_se.mats</span>,</span>
 <span>    return_data <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">freq_df</span><span class="op">)</span></span></code></pre></div>

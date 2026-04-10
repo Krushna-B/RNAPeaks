@@ -3,9 +3,14 @@ pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
   gene-visualization: gene-visualization.html
+  plot-region: plot-region.html
+  ri-sequence-map: ri-sequence-map.html
+  ri-splicing-map: ri-splicing-map.html
   RNAPeaks: RNAPeaks.html
+  sequence-map: sequence-map.html
   splicing-maps: splicing-maps.html
-last_built: 2026-04-06T15:57Z
+  styling: styling.html
+last_built: 2026-04-10T17:46Z
 urls:
   reference: https://krushna-b.github.io/RNAPeaks/reference
   article: https://krushna-b.github.io/RNAPeaks/articles

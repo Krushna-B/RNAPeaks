@@ -29,11 +29,15 @@ motif frequency around exon-intron boundaries.
 
 - [`createSplicingMap()`](https://krushna-b.github.io/RNAPeaks/reference/createSplicingMap.md)
   : Create Splicing Map
+- [`createRetainedIntronSplicingMap()`](https://krushna-b.github.io/RNAPeaks/reference/createRetainedIntronSplicingMap.md)
+  : Create Retained Intron Splicing Map
 - [`createSequenceMap()`](https://krushna-b.github.io/RNAPeaks/reference/createSequenceMap.md)
-  : Analyzes the frequency of a target sequence motif across splicing
-  junction regions. Compares motif frequency between Retained, Excluded,
-  and Control splicing events to identify position-specific enrichment
-  patterns.
+  : Create Sequence Map Analyzes the frequency of a target sequence
+  motif across splicing junction regions. Compares motif frequency
+  between Retained, Excluded, and Control splicing events to identify
+  position-specific enrichment patterns.
+- [`createRetainedIntronSequenceMap()`](https://krushna-b.github.io/RNAPeaks/reference/createRetainedIntronSequenceMap.md)
+  : Create Retained Intron Sequence Map
 
 ## Utilities
 
@@ -42,9 +46,7 @@ Helper functions for loading annotations and preparing input data.
 - [`LoadGTF()`](https://krushna-b.github.io/RNAPeaks/reference/LoadGTF.md)
   :
 
-  Loads GTF gene annotation data from AnnotationHub for Human or Mouse.
-  This function can be called once to load the annotation, which can
-  then be passed to other functions like
+  Can be called once and the result passed to
   [`PlotGene()`](https://krushna-b.github.io/RNAPeaks/reference/PlotGene.md)
   or
   [`PlotRegion()`](https://krushna-b.github.io/RNAPeaks/reference/PlotRegion.md)
@@ -76,9 +78,13 @@ Package-level documentation.
 
 ### All vignettes
 
-- [Gene-Level
-  Visualization](https://krushna-b.github.io/RNAPeaks/articles/gene-visualization.md):
+- [PlotGene](https://krushna-b.github.io/RNAPeaks/articles/gene-visualization.md):
+- [PlotRegion](https://krushna-b.github.io/RNAPeaks/articles/plot-region.md):
+- [createRetainedIntronSequenceMap](https://krushna-b.github.io/RNAPeaks/articles/ri-sequence-map.md):
+- [createRetainedIntronSplicingMap](https://krushna-b.github.io/RNAPeaks/articles/ri-splicing-map.md):
 - [Getting Started with
   RNAPeaks](https://krushna-b.github.io/RNAPeaks/articles/RNAPeaks.md):
-- [Splicing Maps and Sequence Motif
-  Analysis](https://krushna-b.github.io/RNAPeaks/articles/splicing-maps.md):
+- [createSequenceMap](https://krushna-b.github.io/RNAPeaks/articles/sequence-map.md):
+- [createSplicingMap](https://krushna-b.github.io/RNAPeaks/articles/splicing-maps.md):
+- [Styling
+  Guide](https://krushna-b.github.io/RNAPeaks/articles/styling.md):

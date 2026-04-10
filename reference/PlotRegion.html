@@ -27,8 +27,20 @@ within the specified coordinates."><meta name="description" content="RNAPeaks: p
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/RNAPeaks.html">Getting Started</a></li>
-    <li><a class="dropdown-item" href="../articles/gene-visualization.html">Gene-Level Visualization</a></li>
-    <li><a class="dropdown-item" href="../articles/splicing-maps.html">Splicing Maps</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Visualization</h6></li>
+    <li><a class="dropdown-item" href="../articles/gene-visualization.html">PlotGene</a></li>
+    <li><a class="dropdown-item" href="../articles/plot-region.html">PlotRegion</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Splicing Maps</h6></li>
+    <li><a class="dropdown-item" href="../articles/splicing-maps.html">createSplicingMap</a></li>
+    <li><a class="dropdown-item" href="../articles/ri-splicing-map.html">createRetainedIntronSplicingMap</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Sequence Maps</h6></li>
+    <li><a class="dropdown-item" href="../articles/sequence-map.html">createSequenceMap</a></li>
+    <li><a class="dropdown-item" href="../articles/ri-sequence-map.html">createRetainedIntronSequenceMap</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="../articles/styling.html">Styling Guide</a></li>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
@@ -78,14 +90,21 @@ within the specified coordinates.</p>
 <span>  order_in <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  merge <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  peaks_width <span class="op">=</span> <span class="fl">0.3</span>,</span>
-<span>  utr_col <span class="op">=</span> <span class="st">"dark gray"</span>,</span>
+<span>  utr_col <span class="op">=</span> <span class="st">"darkgray"</span>,</span>
 <span>  peak_col <span class="op">=</span> <span class="st">"Blue"</span>,</span>
 <span>  exon_width <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  utr_width <span class="op">=</span> <span class="fl">0.3</span>,</span>
-<span>  exon_col <span class="op">=</span> <span class="st">"black"</span>,</span>
+<span>  exon_col <span class="op">=</span> <span class="st">"navy"</span>,</span>
 <span>  total_arrows <span class="op">=</span> <span class="fl">12</span>,</span>
 <span>  max_per_intron <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>  five_to_three <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  bam_files <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  bam_fill_col <span class="op">=</span> <span class="st">"navy"</span>,</span>
+<span>  bam_fill_alpha <span class="op">=</span> <span class="fl">0.75</span>,</span>
+<span>  bam_label_size <span class="op">=</span> <span class="fl">9</span>,</span>
+<span>  bam_axis_text_size <span class="op">=</span> <span class="fl">8</span>,</span>
+<span>  bam_ylim <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  bam_track_height <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  RNA_Peaks_File_Path <span class="op">=</span> <span class="st">"~/Desktop/RNAPeaks.pdf"</span>,</span>
 <span>  Bed_File_Path <span class="op">=</span> <span class="st">"~/Desktop/BEDFILE_PEAKS.csv"</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -191,6 +210,44 @@ Default is 5.</p></dd>
 <dt id="arg-five-to-three">five_to_three<a class="anchor" aria-label="anchor" href="#arg-five-to-three"></a></dt>
 <dd><p>Logical. If TRUE and Strand is "-", flips the x-axis so
 5' is on the left. Default FALSE.</p></dd>
+
+
+<dt id="arg-bam-files">bam_files<a class="anchor" aria-label="anchor" href="#arg-bam-files"></a></dt>
+<dd><p>Optional. A named character vector of BAM file paths to
+display as coverage tracks above the gene structure. Names are used as
+track labels on the left-hand side of each panel. If unnamed, the filename
+(without extension) is used as the label. BAM files must be sorted and
+indexed (a <code>.bai</code> file must exist alongside each BAM).
+Example: <code>c("Sample A" = "/path/to/a.bam", "Sample B" = "/path/to/b.bam")</code></p></dd>
+
+
+<dt id="arg-bam-fill-col">bam_fill_col<a class="anchor" aria-label="anchor" href="#arg-bam-fill-col"></a></dt>
+<dd><p>Fill color for BAM coverage tracks. A single color
+applied to all tracks, or a character vector the same length as
+<code>bam_files</code> for per-track colours. Default <code>"navy"</code>.</p></dd>
+
+
+<dt id="arg-bam-fill-alpha">bam_fill_alpha<a class="anchor" aria-label="anchor" href="#arg-bam-fill-alpha"></a></dt>
+<dd><p>Opacity of BAM track fill. Default <code>0.75</code>.</p></dd>
+
+
+<dt id="arg-bam-label-size">bam_label_size<a class="anchor" aria-label="anchor" href="#arg-bam-label-size"></a></dt>
+<dd><p>Font size of the BAM track name label on the left. Default <code>9</code>.</p></dd>
+
+
+<dt id="arg-bam-axis-text-size">bam_axis_text_size<a class="anchor" aria-label="anchor" href="#arg-bam-axis-text-size"></a></dt>
+<dd><p>Font size of the 0 and max coverage values. Default <code>8</code>.</p></dd>
+
+
+<dt id="arg-bam-ylim">bam_ylim<a class="anchor" aria-label="anchor" href="#arg-bam-ylim"></a></dt>
+<dd><p>Optional global y-axis limits <code>c(min, max)</code> applied to
+all BAM tracks. If <code>NULL</code>, all tracks share a common scale derived
+from the maximum coverage across all BAMs.</p></dd>
+
+
+<dt id="arg-bam-track-height">bam_track_height<a class="anchor" aria-label="anchor" href="#arg-bam-track-height"></a></dt>
+<dd><p>Relative height of each BAM panel compared to the
+gene plot panel (which is always 4 units). Default <code>1</code>.</p></dd>
 
 
 <dt id="arg-rna-peaks-file-path">RNA_Peaks_File_Path<a class="anchor" aria-label="anchor" href="#arg-rna-peaks-file-path"></a></dt>

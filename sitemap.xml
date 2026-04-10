@@ -3,7 +3,12 @@
 <url><loc>https://krushna-b.github.io/RNAPeaks/articles/RNAPeaks.html</loc></url>
 <url><loc>https://krushna-b.github.io/RNAPeaks/articles/gene-visualization.html</loc></url>
 <url><loc>https://krushna-b.github.io/RNAPeaks/articles/index.html</loc></url>
+<url><loc>https://krushna-b.github.io/RNAPeaks/articles/plot-region.html</loc></url>
+<url><loc>https://krushna-b.github.io/RNAPeaks/articles/ri-sequence-map.html</loc></url>
+<url><loc>https://krushna-b.github.io/RNAPeaks/articles/ri-splicing-map.html</loc></url>
+<url><loc>https://krushna-b.github.io/RNAPeaks/articles/sequence-map.html</loc></url>
 <url><loc>https://krushna-b.github.io/RNAPeaks/articles/splicing-maps.html</loc></url>
+<url><loc>https://krushna-b.github.io/RNAPeaks/articles/styling.html</loc></url>
 <url><loc>https://krushna-b.github.io/RNAPeaks/authors.html</loc></url>
 <url><loc>https://krushna-b.github.io/RNAPeaks/index.html</loc></url>
 <url><loc>https://krushna-b.github.io/RNAPeaks/reference/LoadGTF.html</loc></url>
@@ -11,6 +16,8 @@
 <url><loc>https://krushna-b.github.io/RNAPeaks/reference/PlotRegion.html</loc></url>
 <url><loc>https://krushna-b.github.io/RNAPeaks/reference/RNAPeaks-package.html</loc></url>
 <url><loc>https://krushna-b.github.io/RNAPeaks/reference/checkBed.html</loc></url>
+<url><loc>https://krushna-b.github.io/RNAPeaks/reference/createRetainedIntronSequenceMap.html</loc></url>
+<url><loc>https://krushna-b.github.io/RNAPeaks/reference/createRetainedIntronSplicingMap.html</loc></url>
 <url><loc>https://krushna-b.github.io/RNAPeaks/reference/createSequenceMap.html</loc></url>
 <url><loc>https://krushna-b.github.io/RNAPeaks/reference/createSplicingMap.html</loc></url>
 <url><loc>https://krushna-b.github.io/RNAPeaks/reference/gtf_human.html</loc></url>

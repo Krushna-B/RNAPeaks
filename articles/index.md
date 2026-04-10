@@ -2,9 +2,13 @@
 
 ### All vignettes
 
-- [Gene-Level
-  Visualization](https://krushna-b.github.io/RNAPeaks/articles/gene-visualization.md):
+- [PlotGene](https://krushna-b.github.io/RNAPeaks/articles/gene-visualization.md):
+- [PlotRegion](https://krushna-b.github.io/RNAPeaks/articles/plot-region.md):
+- [createRetainedIntronSequenceMap](https://krushna-b.github.io/RNAPeaks/articles/ri-sequence-map.md):
+- [createRetainedIntronSplicingMap](https://krushna-b.github.io/RNAPeaks/articles/ri-splicing-map.md):
 - [Getting Started with
   RNAPeaks](https://krushna-b.github.io/RNAPeaks/articles/RNAPeaks.md):
-- [Splicing Maps and Sequence Motif
-  Analysis](https://krushna-b.github.io/RNAPeaks/articles/splicing-maps.md):
+- [createSequenceMap](https://krushna-b.github.io/RNAPeaks/articles/sequence-map.md):
+- [createSplicingMap](https://krushna-b.github.io/RNAPeaks/articles/splicing-maps.md):
+- [Styling
+  Guide](https://krushna-b.github.io/RNAPeaks/articles/styling.md):

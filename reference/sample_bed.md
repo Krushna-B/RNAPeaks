@@ -1,8 +1,8 @@
 # Sample K562 RBP Binding Peaks
 
 A curated dataset of RNA-binding protein (RBP) peak calls from the K562
-chronic myelogenous leukemia cell line, provided for testing and
-demonstration of the RNAPeaks visualization functions.
+cell line, provided for testing and demonstration of the RNAPeaks
+visualization functions.
 
 ## Usage
 
@@ -56,6 +56,7 @@ head(sample_bed)
 #> 6  16  2760062  2760143 AARS_K562_IDR  1000      +
 
 if (FALSE) { # \dontrun{
+  data(sample_bed)
   data(gtf_human)
   PlotGene(bed = sample_bed, geneID = "GAPDH", gtf = gtf_human)
 } # }
