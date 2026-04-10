@@ -1,0 +1,164 @@
+---
+title: "Styling Guide"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
+vignette: >
+  %\VignetteIndexEntry{Styling Guide}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse  = TRUE,
+  comment   = "#>",
+  fig.width = 10,
+  fig.height = 6,
+  out.width = "100%"
+)
+```
+
+## Overview
+
+This article documents all visual styling parameters across the RNAPeaks
+function suite. Parameters are grouped by function family.
+
+```{r load}
+library(RNAPeaks)
+data(gtf_human)
+```
+
+---
+
+## PlotGene and PlotRegion
+
+`PlotGene()` and `PlotRegion()` share a common set of styling arguments.
+
+### Gene structure
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `exon_fill` | `"navy"` | Exon / CDS fill color |
+| `utr_fill` | `"lightgray"` | UTR fill color |
+| `utr_col` | `"darkgray"` | UTR border color |
+| `intron_color` | `"gray60"` | Intron line color |
+| `intron_linewidth` | `0.9` | Intron line width |
+
+### Peaks
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `peak_col` | `"purple"` | Peak rectangle fill color |
+| `peak_alpha` | `0.95` | Peak opacity (0–1) |
+| `peak_border_color` | `NA` | Peak border color (`NA` = none) |
+| `peaks_width` | `0.3` | Vertical height of each peak row |
+
+### Labels
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `label_size` | `5` | Protein track label font size |
+| `label_color` | `"black"` | Protein track label color |
+| `title_size` | `25` | Plot title font size |
+| `bam_label_size` | `8` | BAM coverage track label size |
+
+### Layout
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `axis_pad_bp` | `500` | Padding (bp) added to each side of the x-axis |
+| `axis_breaks_n` | `5` | Number of x-axis tick marks |
+| `max_proteins` | `40` | Maximum number of protein tracks shown |
+| `x_lims` | `NULL` | Custom x-axis limits as `c(min, max)` |
+
+### Background bands
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `band_even_fill` | `"#F7F8FA"` | Even-row band fill |
+| `band_odd_fill` | `"#FFFFFF"` | Odd-row band fill |
+| `band_sep_color` | `"#E5E7EB"` | Band separator line color |
+
+### Example
+
+```{r vis-style, eval = FALSE}
+PlotGene(
+    bed             = sample_bed,
+    geneID          = "GAPDH",
+    gtf             = gtf_human,
+    exon_fill       = "steelblue",
+    utr_fill        = "lightblue",
+    peak_col        = "firebrick",
+    peak_alpha      = 0.8,
+    label_size      = 4,
+    band_even_fill  = "#F0F4FF",
+    band_odd_fill   = "#FFFFFF"
+)
+```
+
+---
+
+## createSplicingMap, createRetainedIntronSplicingMap, createSequenceMap, createRetainedIntronSequenceMap
+
+All four analysis functions share the same visual parameters.
+
+### Line colors
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `retained_col` | `"blue"` | Retained group line color |
+| `excluded_col` | `"red"` | Excluded group line color |
+| `control_col` | `"black"` | Control group line color |
+
+### Lines and ribbon
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `line_width` | `0.8` | Frequency line width |
+| `line_alpha` | `0.7` | Frequency line opacity |
+| `ribbon_alpha` | `0.3` | Opacity of the control SD ribbon |
+
+### Schematic
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `boundary_col` | `"gray70"` | Region boundary dashed line color |
+| `exon_col` | `"navy"` | Skipped / flanking exon fill in the schematic |
+
+### Title and axes
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `title` | `""` | Plot title |
+| `title_size` | `20` | Plot title font size |
+| `title_color` | `"black"` | Plot title color |
+| `axis_text_size` | `11` | Y-axis tick label font size |
+| `ylab` | `"Frequency"` | Y-axis label |
+
+### Legend
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `legend_position` | `"bottom"` | Legend position: `"bottom"`, `"top"`, `"left"`, `"right"`, or `"none"` |
+
+### Example
+
+```{r map-style, eval = FALSE}
+createSplicingMap(
+    bed_file        = sample_bed,
+    SEMATS          = sample_se.mats,
+    retained_col    = "#1f77b4",
+    excluded_col    = "#d62728",
+    control_col     = "#7f7f7f",
+    ribbon_alpha    = 0.2,
+    exon_col        = "steelblue",
+    boundary_col    = "gray50",
+    title           = "RBP Binding Around SE Junctions",
+    title_size      = 18,
+    ylab            = "Binding Frequency",
+    legend_position = "right"
+)
+```
+

@@ -27,29 +27,28 @@
 #' @param Min_Count Minimum read count threshold. Default is 50.
 #' @param groups Character vector specifying which event groups to process.
 #'   Options are "Retained", "Excluded", and/or "Control". Default is
-#'   c("Retained", "Excluded", "Control") to process all groups. Use
-#'   c("Retained", "Excluded") to skip the Control group (which can be large).
+#'   c("Retained", "Excluded", "Control") to process all groups.
 #' @param control_multiplier Numeric multiplier for control sample size. The
 #'   number of control events sampled per iteration is
 #'   (n_retained + n_excluded) * control_multiplier. Default is 2.0.
 #' @param control_iterations Integer number for sampling iterations for control
 #'   sampling. The final control frequency is the mean across iterations, with
 #'   standard deviation shown as a shaded band. Default is 20.
-#' @param cores Number of cores for parallel processing. Default is 1 (sequential).
 #' @param z_threshold Z-score threshold for significance testing. Default is 1.96
-#'   (corresponds to p < 0.05 two-tailed). Only used when use_fdr = FALSE.
+#'   (corresponds to p < 0.025 one-sided, or p < 0.05 two-tailed).
+#'   Only used when use_fdr = FALSE.
 #' @param min_consecutive Minimum number of consecutive significant positions
 #'   required to form a significant region. Default is 10. Helps reduce false
 #'   positives from noise.
 #' @param one_sided Logical. If TRUE (default), only test for enrichment
 #'   (frequency > control). If FALSE, test for both enrichment and depletion.
-#' @param use_fdr Logical. If TRUE, use FDR-corrected p-values (Benjamini-Hochberg)
-#'   for significance testing. If FALSE (default), use z_threshold directly.
+#' @param use_fdr Logical. If TRUE (default), use FDR-corrected p-values (Benjamini-Hochberg)
+#'   for significance testing. If FALSE, use z_threshold directly.
 #' @param fdr_threshold FDR threshold for significance when use_fdr = TRUE.
 #'   Default is 0.05.
 #' @param show_significance Logical. If TRUE (default), displays colored bars above
 #'   the plot indicating regions where Retained/Excluded differ significantly
-#'   from Control based on z-test.
+#'   from Control.
 #' @param return_data Logical. If TRUE, returns the frequency data frame instead
 #'   of a plot. Default is FALSE.
 #' @param return_diagnostics Logical. If TRUE, returns a list containing the
@@ -105,9 +104,6 @@
 #' # Basic usage
 #' createSplicingMap(bed_file = bed, SEMATS = semats)
 #'
-#' # Use parallel processing
-#' createSplicingMap(bed_file = bed, SEMATS = semats, cores = 4)
-#'
 #' # Return data instead of plot
 #' freq_data <- createSplicingMap(bed_file = bed,
 #'                                 SEMATS = semats,
@@ -128,7 +124,6 @@ createSplicingMap <- function(bed_file,
                                groups = c("Retained", "Excluded", "Control"),
                                control_multiplier = 2.0,
                                control_iterations = 20,
-                               cores = 1,
                                z_threshold = 1.96,
                                min_consecutive = 10,
                                one_sided = TRUE,
@@ -169,7 +164,6 @@ createSplicingMap <- function(bed_file,
   SEMATS$chr <- sub("^chr", "", SEMATS$chr)
 
   # Convert BED to GRanges and reduce overlapping peaks
-
   buckets <- GenomicRanges::makeGRangesFromDataFrame(
     bed_data,
     seqnames.field = "chr",
@@ -196,12 +190,6 @@ createSplicingMap <- function(bed_file,
     }
   }
 
-  # Cap cores at max available
-  max_cores <- parallel::detectCores() - 1
-  if (is.na(max_cores) || max_cores < 1) max_cores <- 1
-  cores <- min(cores, max_cores)
-  cores <- max(cores, 1)
-
   # Filter SEMATS into Controls, Retained, and Excluded using helper function
   filtered_events <- filter_SEMATS_events(
     SEMATS,
@@ -212,10 +200,11 @@ createSplicingMap <- function(bed_file,
     Min_Count = Min_Count
   )
 
+  # Compute width of each bin
   bin_width <- WidthIntoExon + WidthIntoIntron + 1
 
-  # Helper function to process a group
-  process_group <- function(data, group_name, all_data_n = NULL) {
+  # Helper: process a single event group into a frequency data frame
+  process_group <- function(data, group_name) {
     if (nrow(data) == 0) {
       if (verbose) message("No events found for group: ", group_name)
       return(data.frame(
@@ -231,17 +220,15 @@ createSplicingMap <- function(bed_file,
     # Build bins matrix
     data$group <- group_name
     bins_gr <- make_bins_matrix(data,
-                                 WidthIntoExon = WidthIntoExon,
-                                 WidthIntoIntron = WidthIntoIntron)
+                                WidthIntoExon = WidthIntoExon,
+                                WidthIntoIntron = WidthIntoIntron)
 
     # Calculate binding frequency
     freq_data <- calculate_binding_frequency(bins_gr,
-                                              buckets,
-                                              bin_width,
-                                              cores = cores)
+                                             buckets,
+                                             bin_width)
 
-    # Use provided n or calculate from data
-    total_events <- if (!is.null(all_data_n)) all_data_n else nrow(data)
+    total_events <- nrow(data)
     freq_data$frequency <- freq_data$overlap_count / total_events
 
     # Apply moving average
@@ -251,9 +238,28 @@ createSplicingMap <- function(bed_file,
     return(freq_data)
   }
 
+  # Helper: apply per-bin moving average to a raw frequency vector (bootstrap path)
+  apply_moving_avg <- function(freq_vec) {
+    if (is.null(moving_average) || moving_average <= 0) {
+      return(freq_vec)
+    }
+    result <- numeric(length(freq_vec))
+    half_window <- floor((moving_average - 1) / 2)
+    for (b in 1:4) {
+      bin_start <- (b - 1) * bin_width + 1
+      bin_end <- b * bin_width
+      bin_vals <- freq_vec[bin_start:bin_end]
+      smoothed <- slider::slide_dbl(bin_vals, mean,
+                                    .before = half_window,
+                                    .after = half_window,
+                                    .complete = FALSE)
+      result[bin_start:bin_end] <- smoothed
+    }
+    return(result)
+  }
+
   # Process only selected groups
   results_list <- list()
-
   if ("Retained" %in% groups) {
     if (verbose) message("Processing Retained events...")
     .report_progress(1, 100, "Processing Retained events...")
@@ -303,29 +309,9 @@ createSplicingMap <- function(bed_file,
       results_list$Control <- process_group(control_data, "Control")
       results_list$Control$moving_avg_sd <- 0
     } else {
-      # Bootstrap sampling with CACHING for performance
+      # Bootstrap sampling with caching for performance
       iteration_results <- vector("list", control_iterations)
 
-      # Helper function to apply moving average to a frequency vector
-      apply_moving_avg <- function(freq_vec) {
-        if (is.null(moving_average) || moving_average <= 0) {
-          return(freq_vec)
-        }
-        # Apply moving average per bin (4 bins)
-        result <- numeric(length(freq_vec))
-        half_window <- floor((moving_average - 1) / 2)
-        for (b in 1:4) {
-          bin_start <- (b - 1) * bin_width + 1
-          bin_end <- b * bin_width
-          bin_vals <- freq_vec[bin_start:bin_end]
-          smoothed <- slider::slide_dbl(bin_vals, mean,
-                                         .before = half_window,
-                                         .after = half_window,
-                                         .complete = FALSE)
-          result[bin_start:bin_end] <- smoothed
-        }
-        return(result)
-      }
 
       # Pre-compute binding overlaps for all control events once
       if (verbose) message("  Pre-computing binding cache for all control events...")
@@ -369,7 +355,7 @@ createSplicingMap <- function(bed_file,
         # Get pre-generated sample indices
         sampled_ids <- all_sampled_indices[[iter]]
 
-        # Sum overlaps from cached columns (vectorized, very fast)
+        # Sum overlaps from cached columns: vectorized
         overlap_counts <- rowSums(cache_matrix[, sampled_ids, drop = FALSE])
 
         # Calculate frequency
@@ -492,4 +478,3 @@ createSplicingMap <- function(bed_file,
                               legend_position = legend_position,
                               ylab = ylab)
 }
-

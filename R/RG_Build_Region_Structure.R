@@ -41,7 +41,6 @@ Build_Region_Structure <- function(
 
 
 # ---------HELPER FUNCTIONS----------
-
 # Clips the parts of exons, introns, UTRS not included in exact given region
 clip_overlapping_parts <- function(gtf_rows_df, range_gr, Strand = NULL) {
 

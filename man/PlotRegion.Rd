@@ -20,14 +20,21 @@ PlotRegion(
   order_in = NULL,
   merge = 0,
   peaks_width = 0.3,
-  utr_col = "dark gray",
+  utr_col = "darkgray",
   peak_col = "Blue",
   exon_width = 0.5,
   utr_width = 0.3,
-  exon_col = "black",
+  exon_col = "navy",
   total_arrows = 12,
   max_per_intron = 5,
   five_to_three = FALSE,
+  bam_files = NULL,
+  bam_fill_col = "navy",
+  bam_fill_alpha = 0.75,
+  bam_label_size = 9,
+  bam_axis_text_size = 8,
+  bam_ylim = NULL,
+  bam_track_height = 1,
   RNA_Peaks_File_Path = "~/Desktop/RNAPeaks.pdf",
   Bed_File_Path = "~/Desktop/BEDFILE_PEAKS.csv",
   ...
@@ -84,6 +91,30 @@ Default is 5.}
 
 \item{five_to_three}{Logical. If TRUE and Strand is "-", flips the x-axis so
 5' is on the left. Default FALSE.}
+
+\item{bam_files}{Optional. A named character vector of BAM file paths to
+display as coverage tracks above the gene structure. Names are used as
+track labels on the left-hand side of each panel. If unnamed, the filename
+(without extension) is used as the label. BAM files must be sorted and
+indexed (a \code{.bai} file must exist alongside each BAM).
+Example: \code{c("Sample A" = "/path/to/a.bam", "Sample B" = "/path/to/b.bam")}}
+
+\item{bam_fill_col}{Fill color for BAM coverage tracks. A single color
+applied to all tracks, or a character vector the same length as
+\code{bam_files} for per-track colours. Default \code{"navy"}.}
+
+\item{bam_fill_alpha}{Opacity of BAM track fill. Default \code{0.75}.}
+
+\item{bam_label_size}{Font size of the BAM track name label on the left. Default \code{9}.}
+
+\item{bam_axis_text_size}{Font size of the 0 and max coverage values. Default \code{8}.}
+
+\item{bam_ylim}{Optional global y-axis limits \code{c(min, max)} applied to
+all BAM tracks. If \code{NULL}, all tracks share a common scale derived
+from the maximum coverage across all BAMs.}
+
+\item{bam_track_height}{Relative height of each BAM panel compared to the
+gene plot panel (which is always 4 units). Default \code{1}.}
 
 \item{RNA_Peaks_File_Path}{File path to save the output PDF plot.}
 

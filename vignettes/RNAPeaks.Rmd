@@ -34,8 +34,10 @@ The package provides four analysis modes:
 |------|----------|-------|
 | Single-gene peak plot | `PlotGene()` | BED + gene ID |
 | Genomic region peak plot | `PlotRegion()` | BED + coordinates |
-| Splicing map | `createSplicingMap()` | BED + SE.MATS |
-| Sequence motif map | `createSequenceMap()` | SE.MATS + motif |
+| Splicing map (SE) | `createSplicingMap()` | BED + SE.MATS |
+| Splicing map (RI) | `createRetainedIntronSplicingMap()` | BED + RI.MATS |
+| Sequence motif map (SE) | `createSequenceMap()` | SE.MATS + motif |
+| Sequence motif map (RI) | `createRetainedIntronSequenceMap()` | RI.MATS + motif |
 
 ---
 
@@ -180,9 +182,9 @@ createSplicingMap(
 The function classifies events into three groups based on `IncLevelDifference`
 and `PValue` / `FDR`:
 
-- **Retained** — significantly more inclusion in condition 1
-- **Excluded** — significantly more skipping in condition 1
-- **Control** — non-significant, stable inclusion
+- **Retained** — `IncLevelDifference < -0.1`: exon inclusion significantly higher in condition 1
+- **Excluded** — `IncLevelDifference > 0.1`: exon skipping significantly higher in condition 1
+- **Control** — non-significant, stable inclusion (PValue > 0.95)
 
 A bootstrap procedure samples a matched number of control events across
 `control_iterations` replicates to build a null distribution. Positions where
@@ -193,7 +195,6 @@ highlighted as significant regions.
 createSplicingMap(
     bed_file           = sample_bed,
     SEMATS             = sample_se.mats,
-    cores              = 4,           # parallel processing
     control_iterations = 20,          # bootstrap replicates
     show_significance  = TRUE,        # overlay significance bars
     WidthIntoExon      = 50,          # bp into flanking exons
@@ -212,7 +213,7 @@ sequence motif. Full IUPAC ambiguity codes are supported.
 ```{r seq-map, eval = FALSE}
 library(BSgenome.Hsapiens.UCSC.hg38)
 
-# YCAY motif (Y = C or T; classic NOVA binding site)
+# YCAY motif (Y = C or T)
 createSequenceMap(
     SEMATS   = sample_se.mats,
     sequence = "YCAY"
@@ -231,18 +232,32 @@ Common IUPAC codes:
 
 ---
 
-## Citation
+## Retained intron splicing map
 
-If you use RNAPeaks in your research, please cite:
+`createRetainedIntronSplicingMap()` quantifies RBP binding frequency around
+retained-intron junctions: the upstream exon/intron boundary (UE-RI5) and
+the downstream intron/exon boundary (RI3-DE).
 
-> Bhanushali K, Giri G, et al. (2025). *RNAPeaks: publication-quality
-> visualization of RNA-binding protein peaks on gene structures.*
-> GitHub: <https://github.com/Krushna-B/RNAPeaks>
+```{r ri-splicing, eval = FALSE}
+createRetainedIntronSplicingMap(
+    bed_file = sample_bed,
+    RIMATS   = sample_se.mats
+)
+```
 
 ---
 
-## Session info
+## Retained intron sequence map
 
-```{r session-info}
-sessionInfo()
+`createRetainedIntronSequenceMap()` measures per-position motif frequency at
+retained intron junctions using the same approach as `createSequenceMap()`.
+
+```{r ri-seq, eval = FALSE}
+library(BSgenome.Hsapiens.UCSC.hg38)
+
+createRetainedIntronSequenceMap(
+    RIMATS   = sample_se.mats,
+    sequence = "YCAY"
+)
 ```
+

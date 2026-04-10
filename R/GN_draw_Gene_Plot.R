@@ -112,21 +112,22 @@ Draw_Gene_Plot <- function(Gene_s,
     bed$xpos <- x_min - protein_label_x_offset
   }
 
-  # When flipping, move labels to the right side (which appears on left after flip)
-  # Position labels just past x_max, similar offset as normal case uses past x_min
+  # When flipping, ensure labels are on correct side
   if (should_flip) {
     bed$xpos <- x_max + protein_label_x_offset
     label_hjust <- 1  # Right-align so text extends left (into margin)
   } else {
     label_hjust <- 1
   }
+
   # Keep margins the same - left margin always holds label space
   final_left_margin <- left_margin_pt
   final_right_margin <- plot_right_margin
+
   # Arrow head size
   arrow_head <- grid::unit(intron_arrow_len_in, "inches")
 
-  #Sub Title
+
   chr <- as.character(Gene_s$seqnames[1])
   sub_txt <- paste0(
     "Chr ", chr, subtitle_sep,
@@ -148,7 +149,7 @@ Draw_Gene_Plot <- function(Gene_s,
   Intron_s$dir_end   <- ifelse(Intron_s$strand == "+", Intron_s$end, Intron_s$start)
 
 
-  # ---- title text ----
+  # Title Text
   gene_names <- unique(stats::na.omit(gene$gene_name))
   if (length(gene_names) == 0) {
     # fall back to gene_id(s)
@@ -203,9 +204,6 @@ Draw_Gene_Plot <- function(Gene_s,
               ggplot2::aes(xmin=start-0.5, xmax=end+0.5, ymin=y_start, ymax=y_end),
               fill=exon_fill, color=NA) +
 
-
-    #Bottom row with spaced out bp markers
-    # xlim(x_min,x_max)+
     # Use scale_x_reverse for 5' to 3' orientation on negative strand
     {
       if (should_flip) {
@@ -366,24 +364,13 @@ Draw_Gene_Plot <- function(Gene_s,
   return(g)
 }
 
+
+#----Helper Functions-----
 # Draw a single BAM coverage track as a ggplot panel.
 #
 # Returns a minimal ggplot (geom_area) that is meant to be stacked above the
 # gene plot via patchwork.  The BAM label is shown as the y-axis title so it
 # sits on the left-hand side of the panel, matching the gene plot layout.
-#
-# @param cov_df    data.frame with columns `pos` and `coverage`.
-# @param label     Character label displayed on the left (y-axis title).
-# @param x_min     Numeric. Left bound of the gene (matches gene plot).
-# @param x_max     Numeric. Right bound of the gene (matches gene plot).
-# @param axis_pad_bp Numeric. Same padding used in the gene plot.
-# @param fill_col  Fill colour for the area. Default "steelblue".
-# @param fill_alpha Opacity of the fill. Default 0.75.
-# @param line_col  Colour of the top line. Default same as fill_col.
-# @param five_to_three Logical. Reverse x-axis for negative-strand genes.
-# @param gene_strand Character. "+" or "-".
-#
-# @return A ggplot2 object.
 Draw_BAM_Track <- function(cov_df,
                            label,
                            x_min,
@@ -454,8 +441,7 @@ Draw_BAM_Track <- function(cov_df,
   g
 }
 
-
-#---------Helper Functions---------
+#Compute how wide of a margin is needed on the lefthand side due to protein names from bed file
 Finding_Left_Margin <- function(bed,
                                 label_size_mm = 5,              # font size (mm) used to measure labels
                                 pad_pt       = 8,              # extra left padding (points)
@@ -478,7 +464,7 @@ Finding_Left_Margin <- function(bed,
 }
 
 
-
+#Adding Highlighing Region
 add_highlight_band <- function(g,
                                hstart = NULL,
                                hstop  = NULL,

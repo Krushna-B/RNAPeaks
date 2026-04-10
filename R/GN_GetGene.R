@@ -11,21 +11,16 @@
 #'
 #' @return A data frame containing GTF annotation rows for the specified
 #'   gene/transcript, including exons, UTRs, and CDS features.
-#'
 #' @details
-#' If both `geneID` and `TxID` are provided, the function verifies that the
-
-#' transcript belongs to the specified gene. If only `geneID` is provided,
-#' the longest transcript is selected.
-#'
-#'
+#' If both \code{geneID} and \code{TxID} are provided, the function verifies
+#' that the transcript belongs to the specified gene. If only \code{geneID}
+#' is provided, the longest transcript is selected.
 #'
 #' @noRd
 #' @examples
 #' \dontrun{
 #'   # Get TP53 annotation (longest transcript)
 #'   gene_data <- GetGene(geneID = "TP53", species = "Human")
-#'
 #'   # Get specific transcript
 #'   gene_data <- GetGene(
 #'     geneID = "TP53",
@@ -48,7 +43,7 @@ GetGene <- function(geneID, species, TxID, gtf) {
     # Gets transcript if only transcript id is provided
     gtf <- gtf[which(gtf$transcript_id == TxID), ]
     if (is.null(gtf) | nrow(gtf) == 0) {
-      stop("Check Transcript ID")
+      stop("Transcript ID not found in GTF: ", TxID)
     }
   } else if (is.na(TxID) & !is.null(geneID)) {
     if (grepl("ENSG", geneID)) {
@@ -67,7 +62,7 @@ GetGene <- function(geneID, species, TxID, gtf) {
     # Check if both geneID and transcript ID are provided
     all_possible_transcripts <- unique(gtf[which(gtf$type == "transcript"), c("transcript_id", "width")])
     if (!TxID %in% all_possible_transcripts$transcript_id) {
-      stop("Transcript ID not in Gene")
+      stop("Transcript ", TxID, " does not belong to gene ", geneID)
     }
     gtf <- gtf[which(gtf$transcript_id == TxID), ]
   }

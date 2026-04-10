@@ -23,14 +23,14 @@ sample_bed
 }
 \description{
 A curated dataset of RNA-binding protein (RBP) peak calls from the K562
-chronic myelogenous leukemia cell line, provided for testing and
-demonstration of the RNAPeaks visualization functions.
+cell line, provided for testing and demonstration of the RNAPeaks visualization functions.
 }
 \examples{
 data(sample_bed)
 head(sample_bed)
 
 \dontrun{
+  data(sample_bed)
   data(gtf_human)
   PlotGene(bed = sample_bed, geneID = "GAPDH", gtf = gtf_human)
 }

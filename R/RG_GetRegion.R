@@ -1,4 +1,4 @@
-
+#Internal helper to get Structure Encompassed by a Region
 getRegion <- function(gtf,
                       Chr,
                       Start,
@@ -43,7 +43,7 @@ getRegion <- function(gtf,
     }
 
     rows <- rows[rows$transcript_id %in% transcripts_keep, , drop = FALSE]
-    rows
+    return(rows)
   }
 
 

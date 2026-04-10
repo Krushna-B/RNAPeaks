@@ -1,10 +1,11 @@
 
-#' Loads GTF gene annotation data from AnnotationHub for Human or Mouse.
-#' This function can be called once to load the annotation, which can then
-#' be passed to other functions like `PlotGene()` or `PlotRegion()` to avoid
-#' repeated downloads.
+# Loads GTF gene annotation data from AnnotationHub for Human or Mouse.
+#' Can be called once and the result passed to \code{PlotGene()} or
+#' \code{PlotRegion()} to avoid repeated downloads.
 #'
 #' @param species Species to load annotation for: "Human" or "Mouse".
+#' @param file Optional file path to a local GTF file. If provided, imports
+#'   directly without connecting to AnnotationHub.
 #'
 #' @return A data frame containing GTF annotation with columns including
 #'   seqnames, start, end, strand, type, gene_id, gene_name, transcript_id, etc.
@@ -46,9 +47,7 @@ LoadGTF <- function(species = "Human", file = NULL) {
   if (!species %in% c("Human", "Mouse"))
     stop("Species must be 'Human' or 'Mouse'")
 
-  # Use localHub=TRUE when the cache already exists (e.g. Docker) to avoid
-  # outbound FTP/HTTPS checks against NCBI and AnnotationHub servers, which
-  # are blocked in many cloud environments and add ~2 min of timeout overhead.
+  # Skip network calls if cache is already populated in deployment setting
   cache_exists <- tryCatch({
     cache_dir <- AnnotationHub::getAnnotationHubOption("CACHE")
     file.exists(cache_dir) && length(list.files(cache_dir)) > 0
