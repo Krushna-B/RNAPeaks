@@ -23,11 +23,11 @@ home:
     Publication-quality visualization of RNA-binding protein peaks on
     gene structures. Single-gene and region-level peak plots, splicing maps,
     and sequence motif analysis around splice junctions.
+  sidebar:
+    structure: [links, authors, dev]
   links:
   - text: GitHub repository
     href: https://github.com/Krushna-B/RNAPeaks
-  - text: Report a bug
-    href: https://github.com/Krushna-B/RNAPeaks/issues
 
 navbar:
   structure:
@@ -42,10 +42,27 @@ navbar:
       menu:
       - text: Getting Started
         href: articles/RNAPeaks.html
-      - text: Gene-Level Visualization
+      - text: "-------"
+      - text: "Visualization"
+      - text: PlotGene
         href: articles/gene-visualization.html
-      - text: Splicing Maps
+      - text: PlotRegion
+        href: articles/plot-region.html
+      - text: "-------"
+      - text: "Splicing Maps"
+      - text: createSplicingMap
         href: articles/splicing-maps.html
+      - text: createRetainedIntronSplicingMap
+        href: articles/ri-splicing-map.html
+      - text: "-------"
+      - text: "Sequence Maps"
+      - text: createSequenceMap
+        href: articles/sequence-map.html
+      - text: createRetainedIntronSequenceMap
+        href: articles/ri-sequence-map.html
+      - text: "-------"
+      - text: Styling Guide
+        href: articles/styling.html
     github:
       icon: fab fa-github
       href: https://github.com/Krushna-B/RNAPeaks
@@ -66,7 +83,9 @@ reference:
     motif frequency around exon-intron boundaries.
   contents:
   - createSplicingMap
+  - createRetainedIntronSplicingMap
   - createSequenceMap
+  - createRetainedIntronSequenceMap
 
 - title: Utilities
   desc: >

@@ -11,6 +11,7 @@
 #'    \item{pos}{Integer genomic position.}
 #'     \item{coverage}{Integer read depth at that position.}
 #'   }
+#' @noRd
 Compute_BAM_Coverage <- function(bam_path, chr, start, end) {
 
   # Resolve chromosome name against the BAM header — handles "19" vs "chr19"

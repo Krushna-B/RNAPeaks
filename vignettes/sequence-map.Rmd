@@ -1,0 +1,123 @@
+---
+title: "createSequenceMap"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
+vignette: >
+  %\VignetteIndexEntry{createSequenceMap}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse  = TRUE,
+  comment   = "#>",
+  fig.width = 10,
+  fig.height = 5,
+  out.width = "100%"
+)
+```
+
+## Overview
+
+`createSequenceMap()` measures per-position sequence motif frequency across
+the same four-region window used by `createSplicingMap()`, applied to
+skipped-exon (SE) events. Full IUPAC ambiguity codes are supported, enabling
+analysis of degenerate RBP binding motifs.
+
+The analysis logic, event classification, bootstrap procedure, and significance
+testing are identical to `createSplicingMap()`. See the
+[createSplicingMap article](splicing-maps.html) for details on those
+parameters.
+
+```{r load}
+library(RNAPeaks)
+```
+
+---
+
+## Basic usage
+
+```{r basic, eval = FALSE}
+library(BSgenome.Hsapiens.UCSC.hg38)
+
+createSequenceMap(
+    SEMATS   = sample_se.mats,
+    sequence = "YCAY"    # NOVA binding motif; Y = C or T
+)
+```
+
+---
+
+## IUPAC ambiguity codes
+
+Any standard IUPAC code is supported:
+
+| Code | Matches |
+|------|---------|
+| `R` | A, G |
+| `Y` | C, T |
+| `S` | G, C |
+| `W` | A, T |
+| `K` | G, T |
+| `M` | A, C |
+| `B` | C, G, T |
+| `D` | A, G, T |
+| `H` | A, C, T |
+| `V` | A, C, G |
+| `N` | A, C, G, T |
+
+```{r iupac, eval = FALSE}
+# YGCY motif (MBNL binding site)
+createSequenceMap(SEMATS = sample_se.mats, sequence = "YGCY")
+
+# Poly-C run
+createSequenceMap(SEMATS = sample_se.mats, sequence = "CCCC")
+```
+
+---
+
+## Multiple motifs
+
+Pass a character vector to `sequence` to generate one plot per motif:
+
+```{r multi, eval = FALSE}
+plots <- createSequenceMap(
+    SEMATS   = sample_se.mats,
+    sequence = c("YCAY", "YGCY", "CCCC")
+)
+plots[["YCAY"]]
+```
+
+---
+
+## Using a custom genome
+
+By default `createSequenceMap()` uses `BSgenome.Hsapiens.UCSC.hg38`. Supply
+any installed BSgenome object to use a different assembly:
+
+```{r custom-genome, eval = FALSE}
+library(BSgenome.Mmusculus.UCSC.mm10)
+
+createSequenceMap(
+    SEMATS   = sample_se.mats,
+    sequence = "YCAY",
+    genome   = BSgenome.Mmusculus.UCSC.mm10
+)
+```
+
+---
+
+## Returning data
+
+```{r return-data, eval = FALSE}
+freq_df <- createSequenceMap(
+    SEMATS      = sample_se.mats,
+    sequence    = "YCAY",
+    return_data = TRUE
+)
+head(freq_df)
+```
+
