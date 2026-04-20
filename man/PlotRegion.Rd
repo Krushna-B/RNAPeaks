@@ -56,16 +56,16 @@ are loaded from AnnotationHub based on species.}
 
 \item{bed}{A data frame containing BED-format peak data.}
 
-\item{species}{Species for annotation lookup. Either "Human" or "Mouse".}
+\item{species}{Species for annotation lookup.}
 
-\item{TxID}{Optional transcript ID to plot a specific transcript isoform.}
+\item{TxID}{Optional transcript ID to plot a specific transcript.}
 
 \item{Target_col}{Column name in bed containing the protein/target identifiers.}
 
 \item{omit}{Character vector of target names to exclude from the plot.}
 
 \item{order_by}{Method for ordering protein tracks: "Count" (default),
-"Target", or "Region".}
+"Target".}
 
 \item{order_in}{Optional character vector specifying exact order of targets.}
 

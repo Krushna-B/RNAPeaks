@@ -45,9 +45,9 @@ columns for chromosome, start, end, and strand positions.}
 \item{gtf}{Optional pre-loaded GTF annotation data frame. If NULL, annotations
 are loaded from AnnotationHub based on species.}
 
-\item{species}{Species for annotation lookup. Either "Human" or "Mouse".}
+\item{species}{Species for annotation lookup.}
 
-\item{TxID}{Optional transcript ID to plot a specific transcript isoform.
+\item{TxID}{Optional transcript ID to plot a specific transcript.
 If NA, the longest transcript is selected.}
 
 \item{Target_col}{Column name in bed containing the protein/target identifiers.}
@@ -55,7 +55,7 @@ If NA, the longest transcript is selected.}
 \item{omit}{Character vector of target names to exclude from the plot.}
 
 \item{order_by}{Method for ordering protein tracks: "Count" (default, by number
-of peaks), "Target" (alphabetically), or "Region" (by genomic clustering).}
+of peaks), "Target" (alphabetically).}
 
 \item{order_in}{Optional character vector specifying exact order of targets.}
 

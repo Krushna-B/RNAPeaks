@@ -10,7 +10,7 @@
 #'   for (e.g., \code{"YCAY"} or \code{c("YCAY", "CCCC")}). Supports IUPAC ambiguity
 #'   codes. When multiple motifs are provided, behaviour depends on \code{motif_mode}.
 #' @param motif_mode How to handle multiple motifs. \code{"combined"} (default) treats
-#'   all motifs as a single hit set — a position counts if any motif matches there —
+#'   all motifs as a single hit set where a position counts if any motif matches there
 #'   and returns one plot. \code{"individual"} runs the full analysis independently for
 #'   each motif and returns a named list of plots (one per motif). Ignored when
 #'   \code{sequence} is a single motif.
@@ -157,351 +157,117 @@ createSequenceMap <- function(SEMATS,
                                legend_position = "bottom",
                                ylab = "Frequency") {
 
-  # Load default genome if not provided
-  if (is.null(genome)) {
-    if (!requireNamespace("BSgenome.Hsapiens.UCSC.hg38", quietly = TRUE)) {
-      stop("BSgenome.Hsapiens.UCSC.hg38 is required. Install with:\n",
-           "BiocManager::install('BSgenome.Hsapiens.UCSC.hg38')")
-    }
-    genome <- BSgenome::getBSgenome("BSgenome.Hsapiens.UCSC.hg38")
+
+  required_cols <- c("chr", "strand",
+                     "exonStart_0base", "exonEnd",
+                     "upstreamES", "upstreamEE",
+                     "downstreamES", "downstreamEE",
+                     "GeneID", "PValue", "FDR", "IncLevelDifference",
+                     "IJC_SAMPLE_1", "SJC_SAMPLE_1",
+                     "IJC_SAMPLE_2", "SJC_SAMPLE_2")
+  missing_cols <- setdiff(required_cols, colnames(SEMATS))
+  if (length(missing_cols) > 0) {
+    stop("SEMATS is missing required columns: ", paste(missing_cols, collapse = ", "))
   }
 
-  # Validate sequence input
+
   if (missing(sequence) || !is.character(sequence) ||
       length(sequence) == 0 || any(nchar(trimws(sequence)) == 0)) {
     stop("A valid sequence motif (or character vector of motifs) must be provided")
   }
-  sequence <- toupper(trimws(sequence))
+  sequence   <- toupper(trimws(sequence))
   motif_mode <- match.arg(motif_mode)
 
-  # Individual mode: run full pipeline once per motif, return named list
   if (motif_mode == "individual" && length(sequence) > 1) {
     plot_list <- lapply(sequence, function(motif) {
       motif_title <- if (nchar(title) == 0) motif else paste0(title, " \u2014 ", motif)
       createSequenceMap(
-        SEMATS = SEMATS,
-        sequence = motif,
-        motif_mode = "combined",
-        genome = genome,
-        moving_average = moving_average,
-        WidthIntoExon = WidthIntoExon,
-        WidthIntoIntron = WidthIntoIntron,
-        p_valueRetainedAndExclusion = p_valueRetainedAndExclusion,
-        p_valueControls = p_valueControls,
-        retained_IncLevelDifference = retained_IncLevelDifference,
+        SEMATS                       = SEMATS,
+        sequence                     = motif,
+        motif_mode                   = "combined",
+        genome                       = genome,
+        moving_average               = moving_average,
+        WidthIntoExon                = WidthIntoExon,
+        WidthIntoIntron              = WidthIntoIntron,
+        p_valueRetainedAndExclusion  = p_valueRetainedAndExclusion,
+        p_valueControls              = p_valueControls,
+        retained_IncLevelDifference  = retained_IncLevelDifference,
         exclusion_IncLevelDifference = exclusion_IncLevelDifference,
-        Min_Count = Min_Count,
-        groups = groups,
-        control_multiplier = control_multiplier,
-        control_iterations = control_iterations,
-        z_threshold = z_threshold,
-        min_consecutive = min_consecutive,
-        one_sided = one_sided,
-        use_fdr = use_fdr,
-        fdr_threshold = fdr_threshold,
-        show_significance = show_significance,
-        return_data = return_data,
-        return_diagnostics = return_diagnostics,
-        verbose = verbose,
-        progress_callback = NULL,
-        title = motif_title,
-        retained_col = retained_col,
-        excluded_col = excluded_col,
-        control_col = control_col,
-        line_width = line_width,
-        line_alpha = line_alpha,
-        ribbon_alpha = ribbon_alpha,
-        title_size = title_size,
-        title_color = title_color,
-        axis_text_size = axis_text_size,
-        boundary_col = boundary_col,
-        exon_col = exon_col,
-        legend_position = legend_position,
-        ylab = ylab
+        Min_Count                    = Min_Count,
+        groups                       = groups,
+        control_multiplier           = control_multiplier,
+        control_iterations           = control_iterations,
+        z_threshold                  = z_threshold,
+        min_consecutive              = min_consecutive,
+        one_sided                    = one_sided,
+        use_fdr                      = use_fdr,
+        fdr_threshold                = fdr_threshold,
+        show_significance            = show_significance,
+        return_data                  = return_data,
+        return_diagnostics           = return_diagnostics,
+        verbose                      = verbose,
+        progress_callback            = NULL,
+        title                        = motif_title,
+        retained_col                 = retained_col,
+        excluded_col                 = excluded_col,
+        control_col                  = control_col,
+        line_width                   = line_width,
+        line_alpha                   = line_alpha,
+        ribbon_alpha                 = ribbon_alpha,
+        title_size                   = title_size,
+        title_color                  = title_color,
+        axis_text_size               = axis_text_size,
+        boundary_col                 = boundary_col,
+        exon_col                     = exon_col,
+        legend_position              = legend_position,
+        ylab                         = ylab
       )
     })
     names(plot_list) <- sequence
     return(plot_list)
   }
 
-  # Validate groups parameter
-  valid_groups <- c("Retained", "Excluded", "Control")
-  groups <- match.arg(groups, valid_groups, several.ok = TRUE)
-
-  if (length(groups) == 0) {
-    stop("At least one group must be specified")
-  }
-
-  if (verbose) message("Processing groups: ", paste(groups, collapse = ", "))
-  .report_progress <- function(current, total, detail = NULL) {
-    if (is.function(progress_callback)) {
-      try(progress_callback(current, total, detail), silent = TRUE)
-    }
-  }
-
-  # Filter SEMATS into Controls, Retained, and Excluded
-  filtered_events <- filter_SEMATS_events(
-    SEMATS,
-    p_valueRetainedAndExclusion = p_valueRetainedAndExclusion,
-    p_valueControls = p_valueControls,
-    retained_IncLevelDifference = retained_IncLevelDifference,
+  .sequence_map_worker(
+    mats_data                    = SEMATS,
+    bins_fn                      = make_bins_matrix,
+    n_bins                       = 4L,
+    plot_fn                      = plot_splicing_sequence_map,
+    genome                       = genome,
+    sequence                     = sequence,
+    moving_average               = moving_average,
+    WidthIntoExon                = WidthIntoExon,
+    WidthIntoIntron              = WidthIntoIntron,
+    p_valueRetainedAndExclusion  = p_valueRetainedAndExclusion,
+    p_valueControls              = p_valueControls,
+    retained_IncLevelDifference  = retained_IncLevelDifference,
     exclusion_IncLevelDifference = exclusion_IncLevelDifference,
-    Min_Count = Min_Count
+    Min_Count                    = Min_Count,
+    groups                       = groups,
+    control_multiplier           = control_multiplier,
+    control_iterations           = control_iterations,
+    z_threshold                  = z_threshold,
+    min_consecutive              = min_consecutive,
+    one_sided                    = one_sided,
+    use_fdr                      = use_fdr,
+    fdr_threshold                = fdr_threshold,
+    show_significance            = show_significance,
+    return_data                  = return_data,
+    return_diagnostics           = return_diagnostics,
+    verbose                      = verbose,
+    progress_callback            = progress_callback,
+    title                        = title,
+    retained_col                 = retained_col,
+    excluded_col                 = excluded_col,
+    control_col                  = control_col,
+    line_width                   = line_width,
+    line_alpha                   = line_alpha,
+    ribbon_alpha                 = ribbon_alpha,
+    title_size                   = title_size,
+    title_color                  = title_color,
+    axis_text_size               = axis_text_size,
+    boundary_col                 = boundary_col,
+    exon_col                     = exon_col,
+    legend_position              = legend_position,
+    ylab                         = ylab
   )
-
-  bin_width <- WidthIntoExon + WidthIntoIntron + 1
-
-  # Process each group
-  process_group <- function(data, group_name) {
-    if (nrow(data) == 0) {
-      if (verbose) message("No events found for group: ", group_name)
-      return(data.frame(
-        global_position = 1:(4 * bin_width),
-        match_count = 0,
-        frequency = 0,
-        bin = rep(1:4, each = bin_width),
-        moving_avg = 0,
-        group = group_name
-      ))
-    }
-
-    # Build bins matrix
-    bins_gr <- make_bins_matrix(data,
-                                 WidthIntoExon = WidthIntoExon,
-                                 WidthIntoIntron = WidthIntoIntron)
-
-    # Calculate sequence frequency
-    freq_data <- calculate_sequence_frequency(bins_gr,
-                                               sequence,
-                                               bsgenome_obj = genome,
-                                               bin_width
-                                              )
-
-    total_events <- length(unique(bins_gr$event_id))
-    freq_data$frequency <- freq_data$match_count / total_events
-
-    # Apply moving average using helper function
-    freq_data <- calculate_moving_average(freq_data, moving_average, bins = bin_width)
-
-    freq_data$group <- group_name
-    return(freq_data)
-  }
-
-  # Process only selected groups
-  results_list <- list()
-
-  if ("Retained" %in% groups) {
-    if (verbose) message("Processing Retained events...")
-    .report_progress(1, 100, "Processing Retained events...")
-    results_list$Retained <- process_group(filtered_events$Retained, "Retained")
-    results_list$Retained$moving_avg_sd <- 0
-  }
-
-  if ("Excluded" %in% groups) {
-    if (verbose) message("Processing Excluded events...")
-    .report_progress(5, 100, "Processing Excluded events...")
-    results_list$Excluded <- process_group(filtered_events$Excluded, "Excluded")
-    results_list$Excluded$moving_avg_sd <- 0
-  }
-
-  if ("Control" %in% groups) {
-    if (verbose) message("Processing Control events with sampling...")
-    .report_progress(10, 100, "Preparing control sampling...")
-
-    control_data <- filtered_events$Control
-    n_controls <- nrow(control_data)
-
-    # Calculate sample size based on retained + excluded counts
-    n_retained <- nrow(filtered_events$Retained)
-    n_excluded <- nrow(filtered_events$Excluded)
-    sample_size <- round((n_retained + n_excluded) * control_multiplier)
-
-    if (verbose) {
-      message(sprintf("  Retained: %d, Excluded: %d, Sample size: %d",
-                      n_retained, n_excluded, sample_size))
-      message(sprintf("  Controls: %d, Iterations: %d",
-                      n_controls, control_iterations))
-    }
-
-    if (n_controls == 0) {
-      if (verbose) message("No control events found")
-      results_list$Control <- data.frame(
-        global_position = 1:(4 * bin_width),
-        match_count = 0,
-        frequency = 0,
-        bin = rep(1:4, each = bin_width),
-        moving_avg = 0,
-        group = "Control",
-        moving_avg_sd = 0
-      )
-    } else if (sample_size >= n_controls || sample_size == 0) {
-      # If sample size >= available controls, just use all controls once
-      if (verbose) message("Using all controls without bootstrap")
-      results_list$Control <- process_group(control_data, "Control")
-      results_list$Control$moving_avg_sd <- 0
-    } else {
-      #Pre-compute motif matches for all control events once
-      if (verbose) message("  Pre-computing sequence cache for all control events...")
-      .report_progress(12, 100, "Building sequence cache...")
-
-      cache_matrix <- precompute_sequence_cache(
-        events_data = control_data,
-        sequence = sequence,
-        bsgenome_obj = genome,
-        WidthIntoExon = WidthIntoExon,
-        WidthIntoIntron = WidthIntoIntron,
-        verbose = verbose
-      )
-
-      if (verbose) message("  Cache built. Running bootstrap iterations...")
-      .report_progress(20, 100, "Running bootstrap iterations...")
-
-      # Pre-generate all random samples
-      all_sampled_indices <- lapply(seq_len(control_iterations), function(i) {
-        sample(n_controls, sample_size, replace = FALSE)
-      })
-
-      # Helper to apply moving average to a frequency vector
-      apply_moving_avg <- function(freq_vec) {
-        if (is.null(moving_average) || moving_average <= 0) {
-          return(freq_vec)
-        }
-        # Apply moving average per bin
-        result <- numeric(length(freq_vec))
-        for (b in 1:4) {
-          start_idx <- (b - 1) * bin_width + 1
-          end_idx <- b * bin_width
-          bin_data <- freq_vec[start_idx:end_idx]
-          result[start_idx:end_idx] <- slider::slide_dbl(
-            bin_data,
-            mean,
-            .before = floor(moving_average / 2),
-            .after = ceiling(moving_average / 2) - 1,
-            .complete = FALSE
-          )
-        }
-        result
-      }
-
-      # Bootstrap sampling using cached matrix
-      iteration_results <- vector("list", control_iterations)
-
-      pb <- progress::progress_bar$new(
-        format = "  Sampling iterations [:bar] :current/:total (:percent) eta::eta",
-        total = control_iterations, clear = FALSE, width = 80
-      )
-
-      loop_start <- 20
-      loop_end <- 90
-
-      for (iter in seq_len(control_iterations)) {
-        pb$tick()
-
-        sampled_ids <- all_sampled_indices[[iter]]
-        match_counts <- rowSums(cache_matrix[, sampled_ids, drop = FALSE])
-        freq_vec <- match_counts / sample_size
-        iteration_results[[iter]] <- apply_moving_avg(freq_vec)
-
-        progress_pct <- loop_start + (iter / control_iterations) * (loop_end - loop_start)
-        .report_progress(
-          progress_pct,
-          100,
-          sprintf("Control sampling iteration %d/%d", iter, control_iterations)
-        )
-      }
-
-      # Combine results and calculate mean/sd
-      freq_matrix <- do.call(cbind, iteration_results)
-      mean_freq <- rowMeans(freq_matrix, na.rm = TRUE)
-      sd_freq <- apply(freq_matrix, 1, stats::sd, na.rm = TRUE)
-
-      results_list$Control <- data.frame(
-        global_position = 1:(4 * bin_width),
-        match_count = NA,
-        frequency = mean_freq,
-        bin = rep(1:4, each = bin_width),
-        moving_avg = mean_freq,
-        group = "Control",
-        moving_avg_sd = sd_freq
-      )
-
-      # Store raw bootstrap matrix for diagnostics
-      bootstrap_matrix <- freq_matrix
-    }
-  }
-
-  # Combine selected groups
-  combined_data <- dplyr::bind_rows(results_list)
-
-  # Return data if requested
-  if (return_data) {
-    return(combined_data)
-  }
-
-  # Return diagnostics if requested (for normality testing)
-  if (return_diagnostics) {
-    diagnostics <- list(
-      data = combined_data,
-      bootstrap_matrix = if (exists("bootstrap_matrix")) bootstrap_matrix else NULL,
-      n_iterations = if (exists("bootstrap_matrix")) control_iterations else 0,
-      sample_size = if (exists("sample_size")) sample_size else NA,
-      n_controls = if (exists("n_controls")) n_controls else NA
-    )
-    return(diagnostics)
-  }
-  .report_progress(92, 100, "Combining results...")
-
-  # Calculate significance if Control group is present and has SD
-  sig_regions <- NULL
-  if (show_significance && "Control" %in% groups) {
-    control_has_sd <- any(combined_data$moving_avg_sd[combined_data$group == "Control"] > 0,
-                          na.rm = TRUE)
-    if (control_has_sd) {
-      if (verbose) message("Calculating significance...")
-      .report_progress(96, 100, "Calculating significance...")
-      sig_result <- calculate_significance(
-        combined_data,
-        z_threshold = z_threshold,
-        min_consecutive = min_consecutive,
-        compare_to = "Control",
-        one_sided = one_sided,
-        use_fdr = use_fdr,
-        fdr_threshold = fdr_threshold
-      )
-      sig_regions <- sig_result$significant_regions
-
-      if (verbose) {
-        if (!is.null(sig_regions) && nrow(sig_regions) > 0) {
-          message(sprintf("Found %d significant regions", nrow(sig_regions)))
-        } else {
-          message("No significant regions found")
-        }
-      }
-    } else if (verbose) {
-      message("Skipping significance: Control SD is zero")
-    }
-  }
-
-  # Plot using the shared plotting function
-  .report_progress(100, 100, "Complete")
-  plot_splicing_sequence_map(combined_data,
-                             WidthIntoExon = WidthIntoExon,
-                             WidthIntoIntron = WidthIntoIntron,
-                             title = title,
-                             sig_regions = sig_regions,
-                             retained_cutoff = retained_IncLevelDifference,
-                             excluded_cutoff = exclusion_IncLevelDifference,
-                             retained_col = retained_col,
-                             excluded_col = excluded_col,
-                             control_col = control_col,
-                             line_width = line_width,
-                             line_alpha = line_alpha,
-                             ribbon_alpha = ribbon_alpha,
-                             title_size = title_size,
-                             title_color = title_color,
-                             axis_text_size = axis_text_size,
-                             boundary_col = boundary_col,
-                             exon_col = exon_col,
-                             legend_position = legend_position,
-                             ylab = ylab)
 }

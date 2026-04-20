@@ -21,12 +21,18 @@
 #'   \item{\code{\link{createSequenceMap}}}{Analyze sequence motif frequency
 #'     around splice junctions. Identifies position-specific enrichment of
 #'     motifs in different splicing event categories.}
+#'    \item{\code{\link{createRetainedIntronSequenceMap}}}{Analyze sequence motif frequency
+#'     around retained intron splice junctions. Identifies position-specific enrichment of
+#'     motifs in different splicing event categories.}
+#'   \item{\code{\link{createRetainedIntronSplicingMap}}}{Analyze protein binding frequency
+#'     around retained intron splice junctions. Shows where RBPs bind relative to exon/intron
+#'     boundaries in retained vs excluded splicing events.}
 #' }
 #'
 #' @section Included Data:
 #' The package includes sample data for testing:
 #' \describe{
-#'   \item{\code{\link{sample_bed}}}{K562 cell line RBP binding peaks, ready to use}
+#'   \item{\code{\link{sample_bed}}}{RBP binding peaks, ready to use}
 #'   \item{\code{\link{sample_se.mats}}}{Sample SE.MATS output for splicing analysis}
 #' }
 #'
@@ -37,16 +43,18 @@
 #'     and validate it with \code{\link{checkBed}}
 #'   \item Load GTF annotation once with \code{\link{LoadGTF}} and store locally
 #'     (e.g., \code{gtf <- LoadGTF("Human")}; save with \code{saveRDS(gtf, "gtf.rds")}
-#'     for future sessions)
+#'     for future sessions), or use the gtf_human that is pre-loaded
 #'   \item Call \code{\link{PlotGene}} or \code{\link{PlotRegion}}, passing the
 #'     stored \code{gtf} object
 #' }
 #'
 #' For splicing analysis:
 #' \enumerate{
-#'   \item Prepare SE.MATS output from rMATS or use \code{sample_se.mats}
-#'   \item Call \code{\link{createSplicingMap}} with BED and SE.MATS data
+#'   \item Prepare SE.MATS file or use \code{sample_se.mats}
+#'   \item Call \code{\link{createSplicingMap}} with BED and SE.MATS data to analyze protein binding
 #'   \item Call \code{\link{createSequenceMap}} to analyze sequence motifs
+#'    \item Call \code{\link{createRetainedIntronSplicingMap}} with BED and SE.MATS data to analyze protein binding for retained introns
+#'   \item Call \code{\link{createRetainedIntronSequenceMap}} to analyze sequence motifs for retained introns
 #' }
 #'
 #' @section Helper Functions:
@@ -54,7 +62,7 @@
 #'   \item{\code{\link{checkBed}}}{Validate and standardize BED file format}
 #'   \item{\code{\link{LoadGTF}}}{Load GTF annotation from AnnotationHub. Call once
 #'     and store the result in a local variable or save to disk with
-#'     \code{saveRDS()} to avoid repeated downloads. Supports "Human" and "Mouse".}
+#'     \code{saveRDS()} to avoid repeated downloads.}
 #' }
 #'
 #' @examples
@@ -96,7 +104,7 @@
 #' library(BSgenome.Hsapiens.UCSC.hg38)
 #' createSequenceMap(
 #'   SEMATS = sample_se.mats,
-#'   sequence = "YCAY"
+#'   sequence = "CCCC"
 #' )
 #' }
 #'

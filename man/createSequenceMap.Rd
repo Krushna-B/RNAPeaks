@@ -50,17 +50,14 @@ createSequenceMap(
 )
 }
 \arguments{
-\item{SEMATS}{A data frame containing SE.MATS output with columns:
-chr, strand, upstreamES, upstreamEE, exonStart_0base, exonEnd,
-downstreamES, downstreamEE, GeneID, PValue, FDR, IncLevelDifference,
-IJC_SAMPLE_1, SJC_SAMPLE_1, IJC_SAMPLE_2, SJC_SAMPLE_2, IncLevel1, IncLevel2}
+\item{SEMATS}{A data frame containing SE.MATS output}
 
 \item{sequence}{Character string or character vector of sequence motifs to search
 for (e.g., \code{"YCAY"} or \code{c("YCAY", "CCCC")}). Supports IUPAC ambiguity
 codes. When multiple motifs are provided, behaviour depends on \code{motif_mode}.}
 
 \item{motif_mode}{How to handle multiple motifs. \code{"combined"} (default) treats
-all motifs as a single hit set — a position counts if any motif matches there —
+all motifs as a single hit set where a position counts if any motif matches there
 and returns one plot. \code{"individual"} runs the full analysis independently for
 each motif and returns a named list of plots (one per motif). Ignored when
 \code{sequence} is a single motif.}
@@ -185,14 +182,6 @@ WidthIntoIntron) bp each:
 \item Region 3: Middle exon end to second intron
 \item Region 4: Second intron end to downstream exon start
 }
-
-Events are filtered into three groups:
-\itemize{
-\item Retained: Significant events (PValue < threshold) with positive inclusion
-\item Excluded: Significant events (PValue < threshold) with negative inclusion
-\item Control: Non-significant events
-}
-
 At each position, the function checks if the target sequence starts there.
 The frequency is calculated as: (events with motif at position) / (total events)
 }

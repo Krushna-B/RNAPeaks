@@ -3,13 +3,13 @@
 \docType{data}
 \name{sample_bed}
 \alias{sample_bed}
-\title{Sample K562 RBP Binding Peaks}
+\title{Sample RBP Binding Peaks}
 \format{
 A data frame with the following columns:
 \describe{
 \item{chr}{Chromosome identifier (without "chr" prefix, e.g., "1", "X")}
-\item{start}{Peak start coordinate (0-based, BED convention)}
-\item{end}{Peak end coordinate (1-based, BED convention)}
+\item{start}{Peak start coordinate}
+\item{end}{Peak end coordinate }
 \item{tag}{Protein or peak identifier}
 \item{score}{Peak score or confidence value}
 \item{strand}{Genomic strand ("+" or "-")}
