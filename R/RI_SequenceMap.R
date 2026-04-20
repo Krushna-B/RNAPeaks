@@ -5,13 +5,10 @@
 #' Control events to identify position-specific enrichment patterns around the
 #' upstream exon/intron and intron/downstream exon boundaries.
 #'
-#' @param RIMATS A data frame containing rMATS output with columns:
-#'   chr, strand, upstreamES, upstreamEE, downstreamES, downstreamEE,
-#'   GeneID, PValue, FDR, IncLevelDifference, IJC_SAMPLE_1, SJC_SAMPLE_1,
-#'   IJC_SAMPLE_2, SJC_SAMPLE_2, IncLevel1, IncLevel2
+#' @param RIMATS A data frame containing retained intron outputs.
 #' @param sequence Character string or character vector of sequence motifs to search
 #'   for (e.g., \code{"YCAY"} or \code{c("YCAY", "CCCC")}). Supports IUPAC ambiguity
-#'   codes. When multiple motifs are provided, behaviour depends on \code{motif_mode}.
+#'   codes. When multiple motifs are provided, behavior depends on \code{motif_mode}.
 #' @param motif_mode How to handle multiple motifs. \code{"combined"} (default) treats
 #'   all motifs as a single hit set, a position counts if any motif matches there —
 #'   and returns one plot. \code{"individual"} runs the full analysis independently for
@@ -81,8 +78,8 @@
 #' The function divides each retained intron event into 2 regions of
 #' (WidthIntoExon + WidthIntoIntron) bp each:
 #' \itemize{
-#'   \item Region 1 (UE-RI5): Upstream exon end to retained intron
-#'   \item Region 2 (RI3-DE): Retained intron end to downstream exon start
+#'   \item Region 1: Upstream exon end to retained intron start
+#'   \item Region 2: Retained intron end to downstream exon start
 #' }
 #'
 #' At each position, the function checks if the target sequence starts there.
@@ -149,9 +146,10 @@ createRetainedIntronSequenceMap <- function(RIMATS,
   # Validate required RI.MATS columns
   required_cols <- c("chr", "strand",
                       "upstreamES", "upstreamEE",
-                      "exonStart_0base", "exonEnd",
                       "downstreamES", "downstreamEE",
-                      "GeneID", "PValue", "FDR", "IncLevelDifference")
+                      "GeneID", "PValue", "FDR", "IncLevelDifference","IJC_SAMPLE_1", "SJC_SAMPLE_1",
+                     "IJC_SAMPLE_2", "SJC_SAMPLE_2")
+
   missing_cols <- setdiff(required_cols, colnames(RIMATS))
   if (length(missing_cols) > 0) {
     stop("RIMATS is missing required columns: ",

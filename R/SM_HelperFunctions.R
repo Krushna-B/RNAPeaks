@@ -129,11 +129,11 @@ make_bins_matrix <- function(MAT, WidthIntoExon, WidthIntoIntron) {
   if ("group" %in% colnames(MAT)) {
     GenomicRanges::mcols(gr)$group <- rep(MAT$group, each = 4)
   }
-  gr
+  return(gr)
 }
 
 
-#' Precompute protein binding overlaps for all events
+#' Compute protein binding overlaps for all events
 #'
 #' Computes protein binding overlaps for each event separately and returns a matrix
 #' where each column represents one event's overlaps across all positions.
@@ -378,7 +378,7 @@ calculate_binding_frequency <- function(bins_gr, protein, bin_width, n_bins = 4)
   hit_bin_indices <- bin_indices[hit_bin_idx]
   hit_strands <- bins_strand[hit_bin_idx]
 
-  # Calculate global positions (strand-aware)
+  # Calculate global positions accounting for strands orientation
   # Plus strand: (bin_index - 1) * bin_width + position_in_bin
   # Minus strand: (4 - bin_index) * bin_width + (bin_width - position_in_bin + 1)
   is_minus <- hit_strands == "-"
@@ -569,12 +569,12 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
 }
 
 
-#' Precompute sequence motif matches for all events (for caching)
+#' Precompute sequence motif matches for all events
 #'
 #' Computes motif matches for each event separately and returns a matrix
 #' where each column represents one event's matches across all positions.
 #'
-#' @param events_data Data frame with event data (SE.MATS format)
+#' @param events_data Data frame with event data
 #' @param sequence Target sequence motif
 #' @param bsgenome_obj BSgenome object
 #' @param WidthIntoExon Width into exon
@@ -829,7 +829,7 @@ calculate_significance <- function(freq_data,
           group = grp
         )
 
-        # Add mean z-score for each region (vectorized using cumsum approach)
+        # Add mean z-score for each region
         z_cumsum <- c(0, cumsum(merged$z_score))
         count_cumsum <- c(0, cumsum(!is.na(merged$z_score)))
         start_idx <- starts[sig_runs]
@@ -1188,17 +1188,14 @@ make_ri_bins_matrix <- function(MAT, WidthIntoExon, WidthIntoIntron) {
   upE       <- MAT$upstreamEE
   downS     <- MAT$downstreamES
   downE     <- MAT$downstreamEE
-  exonStart <- MAT$exonStart_0base
-  exonEnd   <- MAT$exonEnd
-
   # Bin 1: Upstream exon end into retained intron
   # Clamp at exonStart (matching SE bin 1) to avoid bleeding into skipped exon
   bin1_start <- pmax(upE - WidthIntoExon, upS)
-  bin1_end   <- pmin(upE + WidthIntoIntron, exonStart)
+  bin1_end   <- pmin(upE + WidthIntoIntron, downS)
 
   # Bin 2: Retained intron end into downstream exon
-  # Clamp at exonEnd (matching SE bin 4) to avoid bleeding into skipped exon
-  bin2_start <- pmax(downS - WidthIntoIntron, exonEnd)
+  # Clamp at exonEnd to avoid bleeding into skipped exon
+  bin2_start <- pmax(downS - WidthIntoIntron, upE)
   bin2_end   <- pmin(downS + WidthIntoExon, downE)
 
   starts <- cbind(bin1_start, bin2_start)

@@ -5,10 +5,7 @@
 #' regions. Compares motif frequency between Retained, Excluded, and Control
 #' splicing events to identify position-specific enrichment patterns.
 #'
-#' @param SEMATS A data frame containing SE.MATS output with columns:
-#'   chr, strand, upstreamES, upstreamEE, exonStart_0base, exonEnd,
-#'   downstreamES, downstreamEE, GeneID, PValue, FDR, IncLevelDifference,
-#'   IJC_SAMPLE_1, SJC_SAMPLE_1, IJC_SAMPLE_2, SJC_SAMPLE_2, IncLevel1, IncLevel2
+#' @param SEMATS A data frame containing SE.MATS output
 #' @param sequence Character string or character vector of sequence motifs to search
 #'   for (e.g., \code{"YCAY"} or \code{c("YCAY", "CCCC")}). Supports IUPAC ambiguity
 #'   codes. When multiple motifs are provided, behaviour depends on \code{motif_mode}.
@@ -95,14 +92,7 @@
 #'   \item Region 3: Middle exon end to second intron
 #'   \item Region 4: Second intron end to downstream exon start
 #' }
-#'
-#' Events are filtered into three groups:
-#' \itemize{
-#'   \item Retained: Significant events (PValue < threshold) with positive inclusion
-#'   \item Excluded: Significant events (PValue < threshold) with negative inclusion
-#'   \item Control: Non-significant events
-#' }
-#'
+
 #' At each position, the function checks if the target sequence starts there.
 #' The frequency is calculated as: (events with motif at position) / (total events)
 #'
@@ -167,8 +157,7 @@ createSequenceMap <- function(SEMATS,
                                legend_position = "bottom",
                                ylab = "Frequency") {
 
-  # Load default genome if not provided (done once here so individual mode
-  # doesn't re-load it on each recursive call)
+  # Load default genome if not provided
   if (is.null(genome)) {
     if (!requireNamespace("BSgenome.Hsapiens.UCSC.hg38", quietly = TRUE)) {
       stop("BSgenome.Hsapiens.UCSC.hg38 is required. Install with:\n",

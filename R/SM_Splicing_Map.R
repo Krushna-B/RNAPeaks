@@ -7,10 +7,7 @@
 #'
 #' @param bed_file Either a file path to a BED file or a data frame containing
 #'   BED data with columns: chr, start, end, tag, score, strand
-#' @param SEMATS A data frame containing SE.MATS output with columns:
-#'   chr, strand, upstreamES, upstreamEE, exonStart_0base, exonEnd,
-#'   downstreamES, downstreamEE, GeneID, PValue, FDR, IncLevelDifference,
-#'   IJC_SAMPLE_1, SJC_SAMPLE_1, IJC_SAMPLE_2, SJC_SAMPLE_2, IncLevel1, IncLevel2
+#' @param SEMATS A data frame containing SE.MATS output.
 #' @param moving_average Integer specifying the window size for moving average
 #'   smoothing. Set to NULL or 0 to disable smoothing. Default is 50.
 #' @param WidthIntoExon Integer specifying how many bp to extend into exons.
@@ -82,18 +79,12 @@
 #' The function divides each splicing event into 4 regions of (WidthIntoExon +
 #' WidthIntoIntron) bp each:
 #' \itemize{
-#'   \item Region 1 (UE-UI5): Upstream exon end to first intron
-#'   \item Region 2 (UI3-EX3): First intron end to middle (skipped) exon start
-#'   \item Region 3 (EX5-DI5): Middle exon end to second intron
-#'   \item Region 4 (DI3-DE): Second intron end to downstream exon start
+#'   \item Region 1: Upstream exon end to first intron
+#'   \item Region 2: First intron end to middle (skipped) exon start
+#'   \item Region 3: Middle exon end to second intron
+#'   \item Region 4: Second intron end to downstream exon start
 #' }
 #'
-#' Events are filtered into three groups:
-#' \itemize{
-#'   \item Retained: Significant events (PValue < threshold) with negative IncLevelDifference
-#'   \item Excluded: Significant events (PValue < threshold) with positive IncLevelDifference
-#'   \item Control: Non-significant events with stable inclusion levels
-#' }
 #'
 #' @examples
 #' \dontrun{
@@ -156,11 +147,10 @@ createSplicingMap <- function(bed_file,
     bed_data <- bed_file
   }
 
-  # Normalize column names (handles data frames read with header=FALSE giving V1,V2,...)
+  # Validate bed file
   bed_data <- checkBed(bed_data)
 
-  # Normalize chromosome names (handle lowercase x, y, m and chr prefix mismatches)
-  bed_data$chr <- toupper(bed_data$chr)
+  # Normalize chromosome names
   SEMATS$chr <- sub("^chr", "", SEMATS$chr)
 
   # Convert BED to GRanges and reduce overlapping peaks

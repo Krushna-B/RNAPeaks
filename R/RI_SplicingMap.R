@@ -7,10 +7,7 @@
 #'
 #' @param bed_file Either a file path to a BED file or a data frame containing
 #'   BED data with columns: chr, start, end, tag, score, strand
-#' @param RIMATS A data frame containing rMATS output with columns:
-#'   chr, strand, upstreamES, upstreamEE, downstreamES, downstreamEE,
-#'   GeneID, PValue, FDR, IncLevelDifference, IJC_SAMPLE_1, SJC_SAMPLE_1,
-#'   IJC_SAMPLE_2, SJC_SAMPLE_2, IncLevel1, IncLevel2
+#' @param RIMATS  A data frame containing retained intron outputs.
 #' @param moving_average Integer specifying the window size for moving average
 #'   smoothing. Set to NULL or 0 to disable smoothing. Default is 50.
 #' @param WidthIntoExon Integer specifying how many bp to extend into exons.
@@ -75,15 +72,8 @@
 #' The function divides each retained intron event into 2 regions of
 #' (WidthIntoExon + WidthIntoIntron) bp each:
 #' \itemize{
-#'   \item Region 1 (UE-RI5): Upstream exon end to retained intron
-#'   \item Region 2 (RI3-DE): Retained intron end to downstream exon start
-#' }
-#'
-#' Events are filtered into three groups:
-#' \itemize{
-#'   \item Retained: Significant events (PValue < threshold) with negative IncLevelDifference
-#'   \item Excluded: Significant events (PValue < threshold) with positive IncLevelDifference
-#'   \item Control: Non-significant events with stable inclusion levels
+#'   \item Region 1: Upstream exon end to retained intron start
+#'   \item Region 2: Retained intron end to downstream exon start
 #' }
 #'
 #' @examples
@@ -141,10 +131,11 @@ createRetainedIntronSplicingMap <- function(bed_file,
 
   # Validate required RI.MATS columns
   required_cols <- c("chr", "strand",
-                      "upstreamES", "upstreamEE",
-                      "exonStart_0base", "exonEnd",
-                      "downstreamES", "downstreamEE",
-                      "GeneID", "PValue", "FDR", "IncLevelDifference")
+                     "upstreamES", "upstreamEE",
+                     "downstreamES", "downstreamEE",
+                     "GeneID", "PValue", "FDR", "IncLevelDifference","IJC_SAMPLE_1", "SJC_SAMPLE_1",
+                     "IJC_SAMPLE_2", "SJC_SAMPLE_2")
+
   missing_cols <- setdiff(required_cols, colnames(RIMATS))
   if (length(missing_cols) > 0) {
     stop("RIMATS is missing required columns: ",
@@ -162,7 +153,6 @@ createRetainedIntronSplicingMap <- function(bed_file,
   bed_data <- checkBed(bed_data)
 
   # Normalize chromosome names
-  bed_data$chr <- toupper(bed_data$chr)
   RIMATS$chr <- sub("^chr", "", RIMATS$chr)
 
   # Convert BED to GRanges and reduce overlapping peaks
