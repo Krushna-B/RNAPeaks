@@ -9,8 +9,14 @@
 #'   chr, strand, upstreamES, upstreamEE, downstreamES, downstreamEE,
 #'   GeneID, PValue, FDR, IncLevelDifference, IJC_SAMPLE_1, SJC_SAMPLE_1,
 #'   IJC_SAMPLE_2, SJC_SAMPLE_2, IncLevel1, IncLevel2
-#' @param sequence Character string of the target sequence motif to search for
-#'   (e.g., "CCCC", "YGCY"). Supports IUPAC ambiguity codes.
+#' @param sequence Character string or character vector of sequence motifs to search
+#'   for (e.g., \code{"YCAY"} or \code{c("YCAY", "CCCC")}). Supports IUPAC ambiguity
+#'   codes. When multiple motifs are provided, behaviour depends on \code{motif_mode}.
+#' @param motif_mode How to handle multiple motifs. \code{"combined"} (default) treats
+#'   all motifs as a single hit set — a position counts if any motif matches there —
+#'   and returns one plot. \code{"individual"} runs the full analysis independently for
+#'   each motif and returns a named list of plots (one per motif). Ignored when
+#'   \code{sequence} is a single motif.
 #' @param genome A BSgenome object. Default uses BSgenome.Hsapiens.UCSC.hg38.
 #' @param moving_average Integer specifying the window size for moving average
 #'   smoothing. Set to NULL or 0 to disable smoothing. Default is 40.
@@ -67,7 +73,9 @@
 #' @return A ggplot object showing sequence motif frequency across the 2 regions
 #'   for Retained, Excluded, and Control groups. The bottom schematic shows two
 #'   exon boxes connected by a single intron line. Returns a data frame if
-#'   return_data = TRUE.
+#'   \code{return_data = TRUE}. When \code{motif_mode = "individual"} and multiple
+#'   motifs are supplied, returns a named list of ggplot objects (or data frames),
+#'   one entry per motif.
 #'
 #' @details
 #' The function divides each retained intron event into 2 regions of
@@ -100,6 +108,7 @@
 #' @export
 createRetainedIntronSequenceMap <- function(RIMATS,
                                              sequence,
+                                             motif_mode = c("combined", "individual"),
                                              genome = NULL,
                                              moving_average = 40,
                                              WidthIntoExon = 50,
@@ -159,10 +168,62 @@ createRetainedIntronSequenceMap <- function(RIMATS,
   }
 
   # Validate sequence input
-  if (missing(sequence) || !is.character(sequence) || nchar(sequence) == 0) {
-    stop("A valid sequence motif must be provided")
+  if (missing(sequence) || !is.character(sequence) ||
+      length(sequence) == 0 || any(nchar(trimws(sequence)) == 0)) {
+    stop("A valid sequence motif (or character vector of motifs) must be provided")
   }
-  sequence <- toupper(sequence)
+  sequence <- toupper(trimws(sequence))
+  motif_mode <- match.arg(motif_mode)
+
+  # Individual mode: run full pipeline once per motif, return named list
+  if (motif_mode == "individual" && length(sequence) > 1) {
+    plot_list <- lapply(sequence, function(motif) {
+      motif_title <- if (nchar(title) == 0) motif else paste0(title, " \u2014 ", motif)
+      createRetainedIntronSequenceMap(
+        RIMATS = RIMATS,
+        sequence = motif,
+        motif_mode = "combined",
+        genome = genome,
+        moving_average = moving_average,
+        WidthIntoExon = WidthIntoExon,
+        WidthIntoIntron = WidthIntoIntron,
+        p_valueRetainedAndExclusion = p_valueRetainedAndExclusion,
+        p_valueControls = p_valueControls,
+        retained_IncLevelDifference = retained_IncLevelDifference,
+        exclusion_IncLevelDifference = exclusion_IncLevelDifference,
+        Min_Count = Min_Count,
+        groups = groups,
+        control_multiplier = control_multiplier,
+        control_iterations = control_iterations,
+        z_threshold = z_threshold,
+        min_consecutive = min_consecutive,
+        one_sided = one_sided,
+        use_fdr = use_fdr,
+        fdr_threshold = fdr_threshold,
+        show_significance = show_significance,
+        return_data = return_data,
+        return_diagnostics = return_diagnostics,
+        verbose = verbose,
+        progress_callback = NULL,
+        title = motif_title,
+        retained_col = retained_col,
+        excluded_col = excluded_col,
+        control_col = control_col,
+        line_width = line_width,
+        line_alpha = line_alpha,
+        ribbon_alpha = ribbon_alpha,
+        title_size = title_size,
+        title_color = title_color,
+        axis_text_size = axis_text_size,
+        boundary_col = boundary_col,
+        exon_col = exon_col,
+        legend_position = legend_position,
+        ylab = ylab
+      )
+    })
+    names(plot_list) <- sequence
+    return(plot_list)
+  }
 
   # Validate groups parameter
   valid_groups <- c("Retained", "Excluded", "Control")

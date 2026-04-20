@@ -468,10 +468,8 @@ calculate_moving_average <- function(freq_data, window_size = NULL, bins = NULL)
 #' @noRd
 calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_width, n_bins = 4) {
 
-  seq_length <- nchar(sequence)
-
-  # Convert sequence to DNAString for matching (handles IUPAC codes)
-  pattern <- Biostrings::DNAString(sequence)
+  # sequence may be a character vector; use max length for extended extraction
+  seq_length <- max(nchar(sequence))
 
   # Force evaluation to avoid scoping issues
   force(bsgenome_obj)
@@ -526,13 +524,17 @@ calculate_sequence_frequency <- function(bins_gr, sequence, bsgenome_obj, bin_wi
   valid_bin_lengths <- bin_lengths[valid_idx]
   valid_strands <- bins_strand[valid_idx]
 
-  # Get all pattern matches
   n_valid <- length(all_seqs)
 
-  hits_all <- Biostrings::vmatchPattern(pattern, all_seqs, fixed = FALSE)
-
-  # Convert to data frame for vectorized operations
-  hits_df <- suppressMessages(as.data.frame(hits_all))
+  # Get all pattern matches; union across motifs for OR semantics
+  hits_df <- do.call(rbind, lapply(sequence, function(seq) {
+    suppressMessages(as.data.frame(
+      Biostrings::vmatchPattern(Biostrings::DNAString(seq), all_seqs, fixed = FALSE)
+    ))
+  }))
+  if (nrow(hits_df) > 0) {
+    hits_df <- unique(hits_df[, c("group", "start")])
+  }
 
   if (nrow(hits_df) > 0) {
     # Add metadata using group as index into vectors
@@ -594,10 +596,8 @@ precompute_sequence_cache <- function(events_data,
   n_events <- nrow(events_data)
   bin_width <- WidthIntoExon + WidthIntoIntron + 1
   total_positions <- n_bins * bin_width
-  seq_length <- nchar(sequence)
-
-  # Convert sequence to DNAString for matching (handles IUPAC codes)
-  pattern <- Biostrings::DNAString(sequence)
+  # sequence may be a character vector; use max length for extended extraction
+  seq_length <- max(nchar(sequence))
 
   # Build bins for ALL events at once
   bins_gr <- make_bins_fn(events_data, WidthIntoExon, WidthIntoIntron)
@@ -649,9 +649,12 @@ precompute_sequence_cache <- function(events_data,
   valid_strands <- bins_strand[valid_idx]
   valid_event_ids <- bins_event_id[valid_idx]
 
-  # Get all pattern matches
-  hits_all <- Biostrings::vmatchPattern(pattern, all_seqs, fixed = FALSE)
-  hits_df <- suppressMessages(as.data.frame(hits_all))
+  # Get all pattern matches across all motifs (idempotent 1L fill gives OR semantics)
+  hits_df <- do.call(rbind, lapply(sequence, function(seq) {
+    suppressMessages(as.data.frame(
+      Biostrings::vmatchPattern(Biostrings::DNAString(seq), all_seqs, fixed = FALSE)
+    ))
+  }))
 
   # Initialize cache matrix (positions x events)
   cache_matrix <- matrix(0L, nrow = total_positions, ncol = n_events)
