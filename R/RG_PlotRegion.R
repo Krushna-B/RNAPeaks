@@ -13,12 +13,12 @@
 #' @param gtf Optional pre-loaded GTF annotation data frame. If NULL, annotations
 #'   are loaded from AnnotationHub based on species.
 #' @param bed A data frame containing BED-format peak data.
-#' @param species Species for annotation lookup. Either "Human" or "Mouse".
-#' @param TxID Optional transcript ID to plot a specific transcript isoform.
+#' @param species Species for annotation lookup.
+#' @param TxID Optional transcript ID to plot a specific transcript.
 #' @param Target_col Column name in bed containing the protein/target identifiers.
 #' @param omit Character vector of target names to exclude from the plot.
 #' @param order_by Method for ordering protein tracks: "Count" (default),
-#'   "Target", or "Region".
+#'   "Target".
 #' @param order_in Optional character vector specifying exact order of targets.
 #' @param merge Minimum gap width (bp) for merging nearby peaks.
 #' @param peaks_width Vertical height of each peak track row.

@@ -21,9 +21,9 @@
 #'   }
 #'
 #' @details
-#' Peaks are assigned to regions hierarchically - if a peak overlaps multiple
+#' Peaks are assigned to regions hierarchically and if a peak overlaps multiple
 #' region types, it is assigned to the first matching category in the order
-#' listed above. A peak must have >50% overlap with a region to be assigned.
+#' listed above.
 #'
 #' @noRd
 #' @examples

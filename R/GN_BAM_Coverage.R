@@ -3,8 +3,8 @@
 #'
 #' @param bam_path  Character. Path to a sorted, indexed BAM file (.bai must exist).
 #' @param chr       Character. Chromosome name as it appears in the BAM header (e.g. "chr12" or "12").
-#' @param start     Integer. Region start position (1-based).
-#' @param end       Integer. Region end position (1-based, inclusive).
+#' @param start     Integer. Region start position.
+#' @param end       Integer. Region end position.
 #
 #' @return A data.frame with columns:
 #'   \describe{
@@ -14,7 +14,7 @@
 #' @noRd
 Compute_BAM_Coverage <- function(bam_path, chr, start, end) {
 
-  # Resolve chromosome name against the BAM header — handles "19" vs "chr19"
+  # Resolve chromosome name against the BAM header which handles "19" vs "chr19"
   bam_seqlevels <- Rsamtools::seqinfo(Rsamtools::BamFile(bam_path))
   bam_chroms    <- GenomeInfoDb::seqnames(bam_seqlevels)
 

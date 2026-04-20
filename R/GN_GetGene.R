@@ -3,7 +3,7 @@
 #'
 #' @param geneID Gene identifier (gene symbol like "TP53" or Ensembl ID
 #'   starting with "ENSG").
-#' @param species Species for automatic annotation loading: "Human" or "Mouse".
+#' @param species Species for automatic annotation loading: "Human".
 #' @param TxID Optional specific transcript ID. If NA, the longest transcript
 #'   is automatically selected.
 #' @param gtf Optional pre-loaded GTF annotation data frame. If NULL,
@@ -36,8 +36,6 @@ GetGene <- function(geneID, species, TxID, gtf) {
   if (is.null(gtf)) {
     gtf <- LoadGTF(species = species)
   }
-
-  df <- gtf
 
   if (!is.na(TxID) & is.null(geneID)) {
     # Gets transcript if only transcript id is provided

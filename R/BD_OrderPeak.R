@@ -8,7 +8,6 @@
 #'   \describe{
 #'     \item{"Count"}{Order by number of peaks (most peaks first)}
 #'     \item{"Target"}{Order alphabetically by target name}
-#'     \item{"Region"}{Order by genomic clustering similarity}
 #'   }
 #'
 #' @return A character vector of target names in the desired display order.

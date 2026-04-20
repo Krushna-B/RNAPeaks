@@ -13,7 +13,7 @@
 #'   for (e.g., \code{"YCAY"} or \code{c("YCAY", "CCCC")}). Supports IUPAC ambiguity
 #'   codes. When multiple motifs are provided, behaviour depends on \code{motif_mode}.
 #' @param motif_mode How to handle multiple motifs. \code{"combined"} (default) treats
-#'   all motifs as a single hit set — a position counts if any motif matches there —
+#'   all motifs as a single hit set, a position counts if any motif matches there —
 #'   and returns one plot. \code{"individual"} runs the full analysis independently for
 #'   each motif and returns a named list of plots (one per motif). Ignored when
 #'   \code{sequence} is a single motif.

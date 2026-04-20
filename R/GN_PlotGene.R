@@ -8,13 +8,13 @@
 #' @param geneID Gene identifier (gene symbol or Ensembl ID starting with "ENSG").
 #' @param gtf Optional pre-loaded GTF annotation data frame. If NULL, annotations
 #'   are loaded from AnnotationHub based on species.
-#' @param species Species for annotation lookup. Either "Human" or "Mouse".
-#' @param TxID Optional transcript ID to plot a specific transcript isoform.
+#' @param species Species for annotation lookup.
+#' @param TxID Optional transcript ID to plot a specific transcript.
 #'   If NA, the longest transcript is selected.
 #' @param Target_col Column name in bed containing the protein/target identifiers.
 #' @param omit Character vector of target names to exclude from the plot.
 #' @param order_by Method for ordering protein tracks: "Count" (default, by number
-#'   of peaks), "Target" (alphabetically), or "Region" (by genomic clustering).
+#'   of peaks), "Target" (alphabetically).
 #' @param order_in Optional character vector specifying exact order of targets.
 #' @param merge Minimum gap width (bp) for merging nearby peaks. Default 0 (no merging).
 #' @param peaks_width Vertical height of each peak track row.

@@ -1,9 +1,8 @@
 
-#'
 #' Filters a BED data frame to retain only peaks within specified genomic
 #' coordinates and optionally merges nearby peaks.
 #'
-#' @param bed A validated BED data frame (from `checkBed()`).
+#' @param bed A validated BED data frame.
 #' @param chr Chromosome to filter on.
 #' @param start Start position of the region.
 #' @param end End position of the region.
@@ -25,7 +24,6 @@
 #'     start = 7565097,
 #'     end = 7590856,
 #'     strand = "-",
-#'     omit = c("IgG"),
 #'     collapse = 10
 #'   )
 #' }
@@ -53,3 +51,4 @@ FilterBed <- function(bed, chr, start, end, strand, omit = c(), collapse) {
   }
   return(red_bed)
 }
+
