@@ -14,11 +14,9 @@ Description: Creates publication-quality visualizations of RNA-binding protein
     Key features include single-gene visualization with PlotGene(), multi-gene
     genomic region plots with PlotRegion(), splicing maps that quantify RBP
     binding frequency around exon-intron boundaries with createSplicingMap(),
-    and position-specific sequence motif frequency analysis with full IUPAC
-    ambiguity code support via createSequenceMap(). Statistical significance is
-    assessed using bootstrap-based z-score testing. Includes
-    curated sample datasets for immediate exploration.
-License: MIT + file LICENSE
+    position-specific sequence motif frequency analysis via createSequenceMap(), 
+    splicing analysis around retained intron events via createRetainedIntronSplicingMap(),
+    and motif analysis around retained intron events via createRetainedIntronSequenceMap().
 URL: https://krushna-b.github.io/RNAPeaks/, https://github.com/Krushna-B/RNAPeaks
 BugReports: https://github.com/Krushna-B/RNAPeaks/issues
 Encoding: UTF-8
