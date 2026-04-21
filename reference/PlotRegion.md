@@ -79,11 +79,11 @@ PlotRegion(
 
 - species:
 
-  Species for annotation lookup. Either "Human" or "Mouse".
+  Species for annotation lookup.
 
 - TxID:
 
-  Optional transcript ID to plot a specific transcript isoform.
+  Optional transcript ID to plot a specific transcript.
 
 - Target_col:
 
@@ -95,8 +95,7 @@ PlotRegion(
 
 - order_by:
 
-  Method for ordering protein tracks: "Count" (default), "Target", or
-  "Region".
+  Method for ordering protein tracks: "Count" (default), "Target".
 
 - order_in:
 

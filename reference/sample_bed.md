@@ -1,4 +1,4 @@
-# Sample K562 RBP Binding Peaks
+# Sample RBP Binding Peaks
 
 A curated dataset of RNA-binding protein (RBP) peak calls from the K562
 cell line, provided for testing and demonstration of the RNAPeaks
@@ -20,11 +20,11 @@ A data frame with the following columns:
 
 - start:
 
-  Peak start coordinate (0-based, BED convention)
+  Peak start coordinate
 
 - end:
 
-  Peak end coordinate (1-based, BED convention)
+  Peak end coordinate
 
 - tag:
 

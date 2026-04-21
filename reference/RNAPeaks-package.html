@@ -99,6 +99,16 @@ boundaries in retained vs excluded splicing events.</p></dd>
 around splice junctions. Identifies position-specific enrichment of
 motifs in different splicing event categories.</p></dd>
 
+<dt><code><a href="createRetainedIntronSequenceMap.html">createRetainedIntronSequenceMap</a></code></dt>
+<dd><p>Analyze sequence motif frequency
+around retained intron splice junctions. Identifies position-specific enrichment of
+motifs in different splicing event categories.</p></dd>
+
+<dt><code><a href="createRetainedIntronSplicingMap.html">createRetainedIntronSplicingMap</a></code></dt>
+<dd><p>Analyze protein binding frequency
+around retained intron splice junctions. Shows where RBPs bind relative to exon/intron
+boundaries in retained vs excluded splicing events.</p></dd>
+
 
 </dl></div>
     <div class="section level2">
@@ -106,7 +116,7 @@ motifs in different splicing event categories.</p></dd>
 
 
 <p>The package includes sample data for testing:</p><dl><dt><code><a href="sample_bed.html">sample_bed</a></code></dt>
-<dd><p>K562 cell line RBP binding peaks, ready to use</p></dd>
+<dd><p>RBP binding peaks, ready to use</p></dd>
 
 <dt><code><a href="sample_se.mats.html">sample_se.mats</a></code></dt>
 <dd><p>Sample SE.MATS output for splicing analysis</p></dd>
@@ -121,12 +131,14 @@ motifs in different splicing event categories.</p></dd>
 and validate it with <code><a href="checkBed.html">checkBed</a></code></p></li>
 <li><p>Load GTF annotation once with <code><a href="LoadGTF.html">LoadGTF</a></code> and store locally
 (e.g., <code>gtf &lt;- LoadGTF("Human")</code>; save with <code>saveRDS(gtf, "gtf.rds")</code>
-for future sessions)</p></li>
+for future sessions), or use the gtf_human that is pre-loaded</p></li>
 <li><p>Call <code><a href="PlotGene.html">PlotGene</a></code> or <code><a href="PlotRegion.html">PlotRegion</a></code>, passing the
 stored <code>gtf</code> object</p></li>
-</ol><p>For splicing analysis:</p><ol><li><p>Prepare SE.MATS output from rMATS or use <code>sample_se.mats</code></p></li>
-<li><p>Call <code><a href="createSplicingMap.html">createSplicingMap</a></code> with BED and SE.MATS data</p></li>
+</ol><p>For splicing analysis:</p><ol><li><p>Prepare SE.MATS file or use <code>sample_se.mats</code></p></li>
+<li><p>Call <code><a href="createSplicingMap.html">createSplicingMap</a></code> with BED and SE.MATS data to analyze protein binding</p></li>
 <li><p>Call <code><a href="createSequenceMap.html">createSequenceMap</a></code> to analyze sequence motifs</p></li>
+<li><p>Call <code><a href="createRetainedIntronSplicingMap.html">createRetainedIntronSplicingMap</a></code> with BED and SE.MATS data to analyze protein binding for retained introns</p></li>
+<li><p>Call <code><a href="createRetainedIntronSequenceMap.html">createRetainedIntronSequenceMap</a></code> to analyze sequence motifs for retained introns</p></li>
 </ol></div>
     <div class="section level2">
     <h2 id="helper-functions">Helper Functions<a class="anchor" aria-label="anchor" href="#helper-functions"></a></h2>
@@ -138,7 +150,7 @@ stored <code>gtf</code> object</p></li>
 <dt><code><a href="LoadGTF.html">LoadGTF</a></code></dt>
 <dd><p>Load GTF annotation from AnnotationHub. Call once
 and store the result in a local variable or save to disk with
-<code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS()</a></code> to avoid repeated downloads. Supports "Human" and "Mouse".</p></dd>
+<code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS()</a></code> to avoid repeated downloads.</p></dd>
 
 
 </dl></div>
@@ -195,7 +207,7 @@ and store the result in a local variable or save to disk with
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">BSgenome.Hsapiens.UCSC.hg38</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="createSequenceMap.html">createSequenceMap</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  SEMATS <span class="op">=</span> <span class="va">sample_se.mats</span>,</span></span>
-<span class="r-in"><span>  sequence <span class="op">=</span> <span class="st">"YCAY"</span></span></span>
+<span class="r-in"><span>  sequence <span class="op">=</span> <span class="st">"CCCC"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>

@@ -57,12 +57,12 @@ PlotGene(
 
 - species:
 
-  Species for annotation lookup. Either "Human" or "Mouse".
+  Species for annotation lookup.
 
 - TxID:
 
-  Optional transcript ID to plot a specific transcript isoform. If NA,
-  the longest transcript is selected.
+  Optional transcript ID to plot a specific transcript. If NA, the
+  longest transcript is selected.
 
 - Target_col:
 
@@ -75,8 +75,7 @@ PlotGene(
 - order_by:
 
   Method for ordering protein tracks: "Count" (default, by number of
-  peaks), "Target" (alphabetically), or "Region" (by genomic
-  clustering).
+  peaks), "Target" (alphabetically).
 
 - order_in:
 

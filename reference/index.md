@@ -48,7 +48,7 @@ Helper functions for loading annotations and preparing input data.
 Curated datasets bundled with the package for testing and demonstration.
 
 - [`sample_bed`](https://krushna-b.github.io/RNAPeaks/reference/sample_bed.md)
-  : Sample K562 RBP Binding Peaks
+  : Sample RBP Binding Peaks
 - [`sample_se.mats`](https://krushna-b.github.io/RNAPeaks/reference/sample_se.mats.md)
   : Sample SE.MATS Skipped-Exon Splicing Events
 - [`gtf_human`](https://krushna-b.github.io/RNAPeaks/reference/gtf_human.md)

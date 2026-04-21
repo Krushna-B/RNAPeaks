@@ -125,10 +125,7 @@ BED data with columns: chr, start, end, tag, score, strand</p></dd>
 
 
 <dt id="arg-semats">SEMATS<a class="anchor" aria-label="anchor" href="#arg-semats"></a></dt>
-<dd><p>A data frame containing SE.MATS output with columns:
-chr, strand, upstreamES, upstreamEE, exonStart_0base, exonEnd,
-downstreamES, downstreamEE, GeneID, PValue, FDR, IncLevelDifference,
-IJC_SAMPLE_1, SJC_SAMPLE_1, IJC_SAMPLE_2, SJC_SAMPLE_2, IncLevel1, IncLevel2</p></dd>
+<dd><p>A data frame containing SE.MATS output.</p></dd>
 
 
 <dt id="arg-moving-average">moving_average<a class="anchor" aria-label="anchor" href="#arg-moving-average"></a></dt>
@@ -307,13 +304,10 @@ the plot. Returns a data frame if return_data = TRUE.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The function divides each splicing event into 4 regions of (WidthIntoExon +
-WidthIntoIntron) bp each:</p><ul><li><p>Region 1 (UE-UI5): Upstream exon end to first intron</p></li>
-<li><p>Region 2 (UI3-EX3): First intron end to middle (skipped) exon start</p></li>
-<li><p>Region 3 (EX5-DI5): Middle exon end to second intron</p></li>
-<li><p>Region 4 (DI3-DE): Second intron end to downstream exon start</p></li>
-</ul><p>Events are filtered into three groups:</p><ul><li><p>Retained: Significant events (PValue &lt; threshold) with negative IncLevelDifference</p></li>
-<li><p>Excluded: Significant events (PValue &lt; threshold) with positive IncLevelDifference</p></li>
-<li><p>Control: Non-significant events with stable inclusion levels</p></li>
+WidthIntoIntron) bp each:</p><ul><li><p>Region 1: Upstream exon end to first intron</p></li>
+<li><p>Region 2: First intron end to middle (skipped) exon start</p></li>
+<li><p>Region 3: Middle exon end to second intron</p></li>
+<li><p>Region 4: Second intron end to downstream exon start</p></li>
 </ul></div>
 
     <div class="section level2">

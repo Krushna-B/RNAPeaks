@@ -58,10 +58,7 @@ createSplicingMap(
 
 - SEMATS:
 
-  A data frame containing SE.MATS output with columns: chr, strand,
-  upstreamES, upstreamEE, exonStart_0base, exonEnd, downstreamES,
-  downstreamEE, GeneID, PValue, FDR, IncLevelDifference, IJC_SAMPLE_1,
-  SJC_SAMPLE_1, IJC_SAMPLE_2, SJC_SAMPLE_2, IncLevel1, IncLevel2
+  A data frame containing SE.MATS output.
 
 - moving_average:
 
@@ -239,23 +236,13 @@ frame if return_data = TRUE.
 The function divides each splicing event into 4 regions of
 (WidthIntoExon + WidthIntoIntron) bp each:
 
-- Region 1 (UE-UI5): Upstream exon end to first intron
+- Region 1: Upstream exon end to first intron
 
-- Region 2 (UI3-EX3): First intron end to middle (skipped) exon start
+- Region 2: First intron end to middle (skipped) exon start
 
-- Region 3 (EX5-DI5): Middle exon end to second intron
+- Region 3: Middle exon end to second intron
 
-- Region 4 (DI3-DE): Second intron end to downstream exon start
-
-Events are filtered into three groups:
-
-- Retained: Significant events (PValue \< threshold) with negative
-  IncLevelDifference
-
-- Excluded: Significant events (PValue \< threshold) with positive
-  IncLevelDifference
-
-- Control: Non-significant events with stable inclusion levels
+- Region 4: Second intron end to downstream exon start
 
 ## Examples
 

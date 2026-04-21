@@ -17,7 +17,7 @@ checkBed(df)
   A data frame with at least 3 columns representing BED data. Columns
   are mapped by position: 1=chr, 2=start, 3=end, 4=tag, 5=score,
   6=strand. If fewer than 6 columns are provided, missing columns are
-  filled with defaults: tag="peak", score=0, strand="+".
+  filled with defaults: tag="peak", score=0.
 
 ## Value
 
@@ -28,11 +28,11 @@ tag, score, strand) and chromosome names without "chr" prefix.
 
 The function performs the following:
 
-- Requires at least 3 columns (chr, start, end)
+- Requires at least 4 columns (chr, start, end, strand)
 
-- Maps columns by position to canonical BED names
+- Maps columns by position to BED names
 
-- Fills missing columns with defaults (tag="peak", score=0, strand="+")
+- Fills missing columns with defaults (tag="peak", score=0)
 
 - Validates chromosome is character type
 
@@ -52,8 +52,8 @@ if (FALSE) { # \dontrun{
   bed <- read.table("peaks.bed", header = FALSE)
   bed <- checkBed(bed)
 
-  # 3-column BED (will add defaults for tag, score, strand)
-  bed3 <- data.frame(chr = "chr1", start = 100, end = 200)
+  # 4-column BED (will add defaults for tag, score)
+  bed3 <- data.frame(chr = "chr1", start = 100, end = 200, strand = "+")
   bed3 <- checkBed(bed3)
 } # }
 ```

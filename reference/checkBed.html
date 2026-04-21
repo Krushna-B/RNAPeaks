@@ -82,7 +82,7 @@ chr, start, end, tag/name, score, strand.</p>
 <dd><p>A data frame with at least 3 columns representing BED data.
 Columns are mapped by position: 1=chr, 2=start, 3=end, 4=tag, 5=score, 6=strand.
 If fewer than 6 columns are provided, missing columns are filled with defaults:
-tag="peak", score=0, strand="+".</p></dd>
+tag="peak", score=0.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -92,9 +92,9 @@ tag, score, strand) and chromosome names without "chr" prefix.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The function performs the following:</p><ul><li><p>Requires at least 3 columns (chr, start, end)</p></li>
-<li><p>Maps columns by position to canonical BED names</p></li>
-<li><p>Fills missing columns with defaults (tag="peak", score=0, strand="+")</p></li>
+    <p>The function performs the following:</p><ul><li><p>Requires at least 4 columns (chr, start, end, strand)</p></li>
+<li><p>Maps columns by position to BED names</p></li>
+<li><p>Fills missing columns with defaults (tag="peak", score=0)</p></li>
 <li><p>Validates chromosome is character type</p></li>
 <li><p>Verifies end &gt;= start for all rows</p></li>
 <li><p>Validates strand values are "+" or "-"</p></li>
@@ -109,8 +109,8 @@ tag, score, strand) and chromosome names without "chr" prefix.</p>
 <span class="r-in"><span>  <span class="va">bed</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="st">"peaks.bed"</span>, header <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="va">bed</span> <span class="op">&lt;-</span> <span class="fu">checkBed</span><span class="op">(</span><span class="va">bed</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span>  <span class="co"># 3-column BED (will add defaults for tag, score, strand)</span></span></span>
-<span class="r-in"><span>  <span class="va">bed3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>chr <span class="op">=</span> <span class="st">"chr1"</span>, start <span class="op">=</span> <span class="fl">100</span>, end <span class="op">=</span> <span class="fl">200</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="co"># 4-column BED (will add defaults for tag, score)</span></span></span>
+<span class="r-in"><span>  <span class="va">bed3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>chr <span class="op">=</span> <span class="st">"chr1"</span>, start <span class="op">=</span> <span class="fl">100</span>, end <span class="op">=</span> <span class="fl">200</span>, strand <span class="op">=</span> <span class="st">"+"</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="va">bed3</span> <span class="op">&lt;-</span> <span class="fu">checkBed</span><span class="op">(</span><span class="va">bed3</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>

@@ -32,13 +32,25 @@ The primary functions for generating plots are:
   position-specific enrichment of motifs in different splicing event
   categories.
 
+- [`createRetainedIntronSequenceMap`](https://krushna-b.github.io/RNAPeaks/reference/createRetainedIntronSequenceMap.md):
+
+  Analyze sequence motif frequency around retained intron splice
+  junctions. Identifies position-specific enrichment of motifs in
+  different splicing event categories.
+
+- [`createRetainedIntronSplicingMap`](https://krushna-b.github.io/RNAPeaks/reference/createRetainedIntronSplicingMap.md):
+
+  Analyze protein binding frequency around retained intron splice
+  junctions. Shows where RBPs bind relative to exon/intron boundaries in
+  retained vs excluded splicing events.
+
 ## Included Data
 
 The package includes sample data for testing:
 
 - [`sample_bed`](https://krushna-b.github.io/RNAPeaks/reference/sample_bed.md):
 
-  K562 cell line RBP binding peaks, ready to use
+  RBP binding peaks, ready to use
 
 - [`sample_se.mats`](https://krushna-b.github.io/RNAPeaks/reference/sample_se.mats.md):
 
@@ -55,7 +67,8 @@ A typical workflow involves:
 2.  Load GTF annotation once with
     [`LoadGTF`](https://krushna-b.github.io/RNAPeaks/reference/LoadGTF.md)
     and store locally (e.g., `gtf <- LoadGTF("Human")`; save with
-    `saveRDS(gtf, "gtf.rds")` for future sessions)
+    `saveRDS(gtf, "gtf.rds")` for future sessions), or use the gtf_human
+    that is pre-loaded
 
 3.  Call
     [`PlotGene`](https://krushna-b.github.io/RNAPeaks/reference/PlotGene.md)
@@ -65,15 +78,24 @@ A typical workflow involves:
 
 For splicing analysis:
 
-1.  Prepare SE.MATS output from rMATS or use `sample_se.mats`
+1.  Prepare SE.MATS file or use `sample_se.mats`
 
 2.  Call
     [`createSplicingMap`](https://krushna-b.github.io/RNAPeaks/reference/createSplicingMap.md)
-    with BED and SE.MATS data
+    with BED and SE.MATS data to analyze protein binding
 
 3.  Call
     [`createSequenceMap`](https://krushna-b.github.io/RNAPeaks/reference/createSequenceMap.md)
     to analyze sequence motifs
+
+4.  Call
+    [`createRetainedIntronSplicingMap`](https://krushna-b.github.io/RNAPeaks/reference/createRetainedIntronSplicingMap.md)
+    with BED and SE.MATS data to analyze protein binding for retained
+    introns
+
+5.  Call
+    [`createRetainedIntronSequenceMap`](https://krushna-b.github.io/RNAPeaks/reference/createRetainedIntronSequenceMap.md)
+    to analyze sequence motifs for retained introns
 
 ## Helper Functions
 
@@ -86,7 +108,7 @@ For splicing analysis:
   Load GTF annotation from AnnotationHub. Call once and store the result
   in a local variable or save to disk with
   [`saveRDS()`](https://rdrr.io/r/base/readRDS.html) to avoid repeated
-  downloads. Supports "Human" and "Mouse".
+  downloads.
 
 ## See also
 
@@ -147,7 +169,7 @@ createSplicingMap(
 library(BSgenome.Hsapiens.UCSC.hg38)
 createSequenceMap(
   SEMATS = sample_se.mats,
-  sequence = "YCAY"
+  sequence = "CCCC"
 )
 } # }
 ```

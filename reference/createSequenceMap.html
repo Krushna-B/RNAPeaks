@@ -122,10 +122,7 @@ splicing events to identify position-specific enrichment patterns.</p>
 
 
 <dl><dt id="arg-semats">SEMATS<a class="anchor" aria-label="anchor" href="#arg-semats"></a></dt>
-<dd><p>A data frame containing SE.MATS output with columns:
-chr, strand, upstreamES, upstreamEE, exonStart_0base, exonEnd,
-downstreamES, downstreamEE, GeneID, PValue, FDR, IncLevelDifference,
-IJC_SAMPLE_1, SJC_SAMPLE_1, IJC_SAMPLE_2, SJC_SAMPLE_2, IncLevel1, IncLevel2</p></dd>
+<dd><p>A data frame containing SE.MATS output</p></dd>
 
 
 <dt id="arg-sequence">sequence<a class="anchor" aria-label="anchor" href="#arg-sequence"></a></dt>
@@ -136,7 +133,7 @@ codes. When multiple motifs are provided, behaviour depends on <code>motif_mode<
 
 <dt id="arg-motif-mode">motif_mode<a class="anchor" aria-label="anchor" href="#arg-motif-mode"></a></dt>
 <dd><p>How to handle multiple motifs. <code>"combined"</code> (default) treats
-all motifs as a single hit set — a position counts if any motif matches there —
+all motifs as a single hit set where a position counts if any motif matches there
 and returns one plot. <code>"individual"</code> runs the full analysis independently for
 each motif and returns a named list of plots (one per motif). Ignored when
 <code>sequence</code> is a single motif.</p></dd>
@@ -327,9 +324,6 @@ WidthIntoIntron) bp each:</p><ul><li><p>Region 1: Upstream exon end to first int
 <li><p>Region 2: First intron end to middle (skipped) exon start</p></li>
 <li><p>Region 3: Middle exon end to second intron</p></li>
 <li><p>Region 4: Second intron end to downstream exon start</p></li>
-</ul><p>Events are filtered into three groups:</p><ul><li><p>Retained: Significant events (PValue &lt; threshold) with positive inclusion</p></li>
-<li><p>Excluded: Significant events (PValue &lt; threshold) with negative inclusion</p></li>
-<li><p>Control: Non-significant events</p></li>
 </ul><p>At each position, the function checks if the target sequence starts there.
 The frequency is calculated as: (events with motif at position) / (total events)</p>
     </div>

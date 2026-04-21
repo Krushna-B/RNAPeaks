@@ -11,6 +11,7 @@ around the upstream exon/intron and intron/downstream exon boundaries.
 createRetainedIntronSequenceMap(
   RIMATS,
   sequence,
+  motif_mode = c("combined", "individual"),
   genome = NULL,
   moving_average = 40,
   WidthIntoExon = 50,
@@ -54,15 +55,22 @@ createRetainedIntronSequenceMap(
 
 - RIMATS:
 
-  A data frame containing rMATS output with columns: chr, strand,
-  upstreamES, upstreamEE, downstreamES, downstreamEE, GeneID, PValue,
-  FDR, IncLevelDifference, IJC_SAMPLE_1, SJC_SAMPLE_1, IJC_SAMPLE_2,
-  SJC_SAMPLE_2, IncLevel1, IncLevel2
+  A data frame containing retained intron outputs.
 
 - sequence:
 
-  Character string of the target sequence motif to search for (e.g.,
-  "CCCC", "YGCY"). Supports IUPAC ambiguity codes.
+  Character string or character vector of sequence motifs to search for
+  (e.g., `"YCAY"` or `c("YCAY", "CCCC")`). Supports IUPAC ambiguity
+  codes. When multiple motifs are provided, behavior depends on
+  `motif_mode`.
+
+- motif_mode:
+
+  How to handle multiple motifs. `"combined"` (default) treats all
+  motifs as a single hit set, a position counts if any motif matches
+  there and returns one plot. `"individual"` runs the full analysis
+  independently for each motif and returns a named list of plots (one
+  per motif). Ignored when `sequence` is a single motif.
 
 - genome:
 
@@ -224,16 +232,18 @@ createRetainedIntronSequenceMap(
 A ggplot object showing sequence motif frequency across the 2 regions
 for Retained, Excluded, and Control groups. The bottom schematic shows
 two exon boxes connected by a single intron line. Returns a data frame
-if return_data = TRUE.
+if `return_data = TRUE`. When `motif_mode = "individual"` and multiple
+motifs are supplied, returns a named list of ggplot objects (or data
+frames), one entry per motif.
 
 ## Details
 
 The function divides each retained intron event into 2 regions of
 (WidthIntoExon + WidthIntoIntron) bp each:
 
-- Region 1 (UE-RI5): Upstream exon end to retained intron
+- Region 1: Upstream exon end to retained intron start
 
-- Region 2 (RI3-DE): Retained intron end to downstream exon start
+- Region 2: Retained intron end to downstream exon start
 
 At each position, the function checks if the target sequence starts
 there. The frequency is calculated as: (events with motif at position) /

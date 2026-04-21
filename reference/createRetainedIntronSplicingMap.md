@@ -58,10 +58,7 @@ createRetainedIntronSplicingMap(
 
 - RIMATS:
 
-  A data frame containing rMATS output with columns: chr, strand,
-  upstreamES, upstreamEE, downstreamES, downstreamEE, GeneID, PValue,
-  FDR, IncLevelDifference, IJC_SAMPLE_1, SJC_SAMPLE_1, IJC_SAMPLE_2,
-  SJC_SAMPLE_2, IncLevel1, IncLevel2
+  A data frame containing retained intron outputs.
 
 - moving_average:
 
@@ -230,19 +227,9 @@ if return_data = TRUE.
 The function divides each retained intron event into 2 regions of
 (WidthIntoExon + WidthIntoIntron) bp each:
 
-- Region 1 (UE-RI5): Upstream exon end to retained intron
+- Region 1: Upstream exon end to retained intron start
 
-- Region 2 (RI3-DE): Retained intron end to downstream exon start
-
-Events are filtered into three groups:
-
-- Retained: Significant events (PValue \< threshold) with negative
-  IncLevelDifference
-
-- Excluded: Significant events (PValue \< threshold) with positive
-  IncLevelDifference
-
-- Control: Non-significant events with stable inclusion levels
+- Region 2: Retained intron end to downstream exon start
 
 ## Examples
 
