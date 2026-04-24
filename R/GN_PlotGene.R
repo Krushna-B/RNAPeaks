@@ -147,10 +147,8 @@
 #'   saveRDS(gtf, "human_gtf.rds")
 #'   # Load in future sessions: gtf <- readRDS("human_gtf.rds")
 #'
-#'   # ----- Using included sample data -----
-#'   # sample_bed is included with the package and ready to use
 #'   result <- PlotGene(
-#'     bed = sample_bed,
+#'     bed = your_bed,
 #'     geneID = "GAPDH",
 #'     gtf = gtf
 #'   )

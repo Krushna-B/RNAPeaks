@@ -1,30 +1,3 @@
-#' Sample RBP Binding Peaks
-#'
-#' A curated dataset of RNA-binding protein (RBP) peak calls from the K562
-#' cell line, provided for testing and demonstration of the RNAPeaks visualization functions.
-#'
-#' @format A data frame with the following columns:
-#' \describe{
-#'   \item{chr}{Chromosome identifier (without "chr" prefix, e.g., "1", "X")}
-#'   \item{start}{Peak start coordinate}
-#'   \item{end}{Peak end coordinate }
-#'   \item{tag}{Protein or peak identifier}
-#'   \item{score}{Peak score or confidence value}
-#'   \item{strand}{Genomic strand ("+" or "-")}
-#' }
-#'
-#' @source ENCODE Project (\url{https://www.encodeproject.org/})
-#'
-#' @examples
-#' data(sample_bed)
-#' head(sample_bed)
-#'
-#' \dontrun{
-#'   data(sample_bed)
-#'   data(gtf_human)
-#'   PlotGene(bed = sample_bed, geneID = "GAPDH", gtf = gtf_human)
-#' }
-"sample_bed"
 
 #' Human GTF Gene Annotation
 #'
@@ -67,12 +40,8 @@
 #'
 #' @examples
 #' \dontrun{
-#'   # Load the bundled GTF
 #'   data(gtf_human)
-#'
-#'   # Use with PlotGene (no download required)
-#'   data(sample_bed)
-#'   PlotGene(bed = sample_bed, geneID = "GAPDH", gtf = gtf_human)
+#'   PlotGene(bed = your_bed, geneID = "GAPDH", gtf = gtf_human)
 #' }
 "gtf_human"
 
@@ -116,7 +85,7 @@
 #' head(sample_se.mats)
 #'
 #' \dontrun{
-#'   createSplicingMap(bed_file = sample_bed, SEMATS = sample_se.mats)
+#'   createSplicingMap(bed_file = your_bed, SEMATS = sample_se.mats)
 #'   createSequenceMap(SEMATS = sample_se.mats, sequence = "CCCC")
 #' }
 "sample_se.mats"

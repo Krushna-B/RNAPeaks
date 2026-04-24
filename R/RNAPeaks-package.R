@@ -32,15 +32,13 @@
 #' @section Included Data:
 #' The package includes sample data for testing:
 #' \describe{
-#'   \item{\code{\link{sample_bed}}}{RBP binding peaks, ready to use}
 #'   \item{\code{\link{sample_se.mats}}}{Sample SE.MATS output for splicing analysis}
 #' }
 #'
 #' @section Workflow:
 #' A typical workflow involves:
 #' \enumerate{
-#'   \item Use the included \code{sample_bed} data, OR load your own BED file
-#'     and validate it with \code{\link{checkBed}}
+#'   \item Load your own BED file and validate it with \code{\link{checkBed}}
 #'   \item Load GTF annotation once with \code{\link{LoadGTF}} and store locally
 #'     (e.g., \code{gtf <- LoadGTF("Human")}; save with \code{saveRDS(gtf, "gtf.rds")}
 #'     for future sessions), or use the gtf_human that is pre-loaded
@@ -78,7 +76,7 @@
 #'
 #' # ----- Gene-level visualization -----
 #' result <- PlotGene(
-#'   bed = sample_bed,
+#'   bed = your_bed,
 #'   geneID = "GAPDH",
 #'   gtf = gtf
 #' )
@@ -86,7 +84,7 @@
 #'
 #' # ----- Region-level visualization -----
 #' PlotRegion(
-#'   bed = sample_bed,
+#'   bed = your_bed,
 #'   Chr = "12",
 #'   Start = 56000000,
 #'   End = 56050000,
@@ -96,7 +94,7 @@
 #'
 #' # ----- Splicing map analysis -----
 #' createSplicingMap(
-#'   bed_file = sample_bed,
+#'   bed_file = your_bed,
 #'   SEMATS = sample_se.mats
 #' )
 #'
