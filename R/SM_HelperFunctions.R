@@ -1010,15 +1010,27 @@ plot_splicing_sequence_map <- function(freq_data,
     }
   }
 
-  # Create dynamic legend labels based on cutoffs
-  retained_label <- sprintf("\u0394\u03A8 > %g", retained_cutoff)
-  excluded_label <- sprintf("\u0394\u03A8 < %g", excluded_cutoff)
+  # Build legend labels with event counts
+  n_per_group <- vapply(c("Retained", "Excluded", "Control"), function(g) {
+    rows <- freq_data$n_events[freq_data$group == g]
+    if (length(rows) == 0L) NA_integer_ else rows[[1L]]
+  }, integer(1))
+
+  retained_label <- sprintf("\u0394\u03A8 > %g [n = %s]", retained_cutoff,
+                            ifelse(is.na(n_per_group["Retained"]), "?",
+                                   format(n_per_group["Retained"], big.mark = ",")))
+  excluded_label <- sprintf("\u0394\u03A8 < %g [n = %s]", excluded_cutoff,
+                            ifelse(is.na(n_per_group["Excluded"]), "?",
+                                   format(n_per_group["Excluded"], big.mark = ",")))
+  control_label  <- sprintf("Control [n = %s]",
+                            ifelse(is.na(n_per_group["Control"]), "?",
+                                   format(n_per_group["Control"], big.mark = ",")))
 
   plot <- plot +
     ggplot2::geom_line(linewidth = line_width, alpha = line_alpha) +
     ggplot2::scale_color_manual(
       values = c("Retained" = retained_col, "Excluded" = excluded_col, "Control" = control_col),
-      labels = c("Retained" = retained_label, "Excluded" = excluded_label, "Control" = "Control"),
+      labels = c("Retained" = retained_label, "Excluded" = excluded_label, "Control" = control_label),
       name = "Event Type"
     ) +
 
@@ -1346,8 +1358,21 @@ plot_retained_intron_map <- function(freq_data,
     }
   }
 
-  retained_label <- sprintf("\u0394\u03a8 > %g", retained_cutoff)
-  excluded_label <- sprintf("\u0394\u03a8 < %g", excluded_cutoff)
+  # Build legend labels with event counts
+  n_per_group <- vapply(c("Retained", "Excluded", "Control"), function(g) {
+    rows <- freq_data$n_events[freq_data$group == g]
+    if (length(rows) == 0L) NA_integer_ else rows[[1L]]
+  }, integer(1))
+
+  retained_label <- sprintf("\u0394\u03a8 > %g [n = %s]", retained_cutoff,
+                            ifelse(is.na(n_per_group["Retained"]), "?",
+                                   format(n_per_group["Retained"], big.mark = ",")))
+  excluded_label <- sprintf("\u0394\u03a8 < %g [n = %s]", excluded_cutoff,
+                            ifelse(is.na(n_per_group["Excluded"]), "?",
+                                   format(n_per_group["Excluded"], big.mark = ",")))
+  control_label  <- sprintf("Control [n = %s]",
+                            ifelse(is.na(n_per_group["Control"]), "?",
+                                   format(n_per_group["Control"], big.mark = ",")))
 
   plot <- plot +
     ggplot2::geom_line(linewidth = line_width, alpha = line_alpha) +
@@ -1355,7 +1380,7 @@ plot_retained_intron_map <- function(freq_data,
       values = c("Retained" = retained_col, "Excluded" = excluded_col,
                  "Control" = control_col),
       labels = c("Retained" = retained_label, "Excluded" = excluded_label,
-                 "Control" = "Control"),
+                 "Control" = control_label),
       name = "Event Type"
     ) +
     ggplot2::geom_vline(data = boundary_lines,

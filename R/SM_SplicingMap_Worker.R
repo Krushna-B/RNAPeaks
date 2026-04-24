@@ -90,15 +90,18 @@
         frequency       = 0,
         bin             = rep(seq_len(n_bins), each = bin_width),
         moving_avg      = 0,
-        group           = group_name
+        group           = group_name,
+        n_events        = 0L
       ))
     }
     data$group <- group_name
+    n_events_val <- nrow(data)
     bins_gr  <- bins_fn(data, WidthIntoExon = WidthIntoExon, WidthIntoIntron = WidthIntoIntron)
     freq_data <- calculate_binding_frequency(bins_gr, buckets, bin_width, n_bins = n_bins)
-    freq_data$frequency <- freq_data$overlap_count / nrow(data)
+    freq_data$frequency <- freq_data$overlap_count / n_events_val
     freq_data <- calculate_moving_average(freq_data, moving_average, bins = bin_width)
-    freq_data$group <- group_name
+    freq_data$group    <- group_name
+    freq_data$n_events <- n_events_val
     freq_data
   }
 
@@ -157,7 +160,8 @@
         bin             = rep(seq_len(n_bins), each = bin_width),
         moving_avg      = 0,
         group           = "Control",
-        moving_avg_sd   = 0
+        moving_avg_sd   = 0,
+        n_events        = 0L
       )
     } else if (sample_size >= n_controls || sample_size == 0) {
       if (verbose) message("Using all controls without bootstrap")
@@ -216,7 +220,8 @@
         bin             = rep(seq_len(n_bins), each = bin_width),
         moving_avg      = mean_freq,
         group           = "Control",
-        moving_avg_sd   = sd_freq
+        moving_avg_sd   = sd_freq,
+        n_events        = n_controls
       )
 
       bootstrap_matrix <- freq_matrix
