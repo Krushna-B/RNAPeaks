@@ -100,6 +100,8 @@ reference:
   contents:
   - sample_se.mats
   - gtf_human
+  - K562_bed
+  - HepG2_bed
 
 - title: Package
   desc: Package-level documentation.
