@@ -108,7 +108,7 @@ exons, UTRs, introns, and CDS — at accurate genomic scale.</p>
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span></span>
-<span>    bed    <span class="op">=</span> <span class="va">sample_bed</span>,</span>
+<span>    bed    <span class="op">=</span> <span class="va">K562_bed</span>,</span>
 <span>    geneID <span class="op">=</span> <span class="st">"GAPDH"</span>,</span>
 <span>    gtf    <span class="op">=</span> <span class="va">gtf_human</span></span>
 <span><span class="op">)</span></span>
@@ -123,14 +123,14 @@ exons, UTRs, introns, and CDS — at accurate genomic scale.</p>
 isoform, supply its Ensembl transcript ID:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span></span>
-<span>    bed    <span class="op">=</span> <span class="va">sample_bed</span>,</span>
+<span>    bed    <span class="op">=</span> <span class="va">K562_bed</span>,</span>
 <span>    geneID <span class="op">=</span> <span class="st">"TP53"</span>,</span>
 <span>    gtf    <span class="op">=</span> <span class="va">gtf_human</span>,</span>
 <span>    TxID   <span class="op">=</span> <span class="st">"ENST00000269305"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Alternatively, pass an Ensembl gene ID directly:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span>bed <span class="op">=</span> <span class="va">sample_bed</span>, geneID <span class="op">=</span> <span class="st">"ENSG00000141510"</span>, gtf <span class="op">=</span> <span class="va">gtf_human</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span>bed <span class="op">=</span> <span class="va">K562_bed</span>, geneID <span class="op">=</span> <span class="st">"ENSG00000141510"</span>, gtf <span class="op">=</span> <span class="va">gtf_human</span><span class="op">)</span></span></code></pre></div>
 <hr>
 </div>
 <div class="section level2">
@@ -140,14 +140,14 @@ isoform, supply its Ensembl transcript ID:</p>
 order of RBP tracks:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Order by peak count — most peaks at bottom (default)</span></span>
-<span><span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span>bed <span class="op">=</span> <span class="va">sample_bed</span>, geneID <span class="op">=</span> <span class="st">"GAPDH"</span>, gtf <span class="op">=</span> <span class="va">gtf_human</span>, order_by <span class="op">=</span> <span class="st">"Count"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span>bed <span class="op">=</span> <span class="va">K562_bed</span>, geneID <span class="op">=</span> <span class="st">"GAPDH"</span>, gtf <span class="op">=</span> <span class="va">gtf_human</span>, order_by <span class="op">=</span> <span class="st">"Count"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Alphabetical by protein name</span></span>
-<span><span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span>bed <span class="op">=</span> <span class="va">sample_bed</span>, geneID <span class="op">=</span> <span class="st">"GAPDH"</span>, gtf <span class="op">=</span> <span class="va">gtf_human</span>, order_by <span class="op">=</span> <span class="st">"Target"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span>bed <span class="op">=</span> <span class="va">K562_bed</span>, geneID <span class="op">=</span> <span class="st">"GAPDH"</span>, gtf <span class="op">=</span> <span class="va">gtf_human</span>, order_by <span class="op">=</span> <span class="st">"Target"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Explicit custom order</span></span>
 <span><span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span></span>
-<span>    bed      <span class="op">=</span> <span class="va">sample_bed</span>,</span>
+<span>    bed      <span class="op">=</span> <span class="va">K562_bed</span>,</span>
 <span>    geneID   <span class="op">=</span> <span class="st">"GAPDH"</span>,</span>
 <span>    gtf      <span class="op">=</span> <span class="va">gtf_human</span>,</span>
 <span>    order_in <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"PROTEIN_A"</span>, <span class="st">"PROTEIN_B"</span>, <span class="st">"PROTEIN_C"</span><span class="op">)</span></span>
@@ -162,7 +162,7 @@ into a single rectangle, reducing visual noise from fragmented binding
 sites:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span></span>
-<span>    bed    <span class="op">=</span> <span class="va">sample_bed</span>,</span>
+<span>    bed    <span class="op">=</span> <span class="va">K562_bed</span>,</span>
 <span>    geneID <span class="op">=</span> <span class="st">"GAPDH"</span>,</span>
 <span>    gtf    <span class="op">=</span> <span class="va">gtf_human</span>,</span>
 <span>    merge  <span class="op">=</span> <span class="fl">50</span>     <span class="co"># merge peaks within 50 bp</span></span>
@@ -177,7 +177,7 @@ sites:</p>
 flip so 5′ is always on the left:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span></span>
-<span>    bed           <span class="op">=</span> <span class="va">sample_bed</span>,</span>
+<span>    bed           <span class="op">=</span> <span class="va">K562_bed</span>,</span>
 <span>    geneID        <span class="op">=</span> <span class="st">"ACTB"</span>,</span>
 <span>    gtf           <span class="op">=</span> <span class="va">gtf_human</span>,</span>
 <span>    five_to_three <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -191,7 +191,7 @@ flip so 5′ is always on the left:</p>
 to a region of interest:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span></span>
-<span>    bed                        <span class="op">=</span> <span class="va">sample_bed</span>,</span>
+<span>    bed                        <span class="op">=</span> <span class="va">K562_bed</span>,</span>
 <span>    geneID                     <span class="op">=</span> <span class="st">"GAPDH"</span>,</span>
 <span>    gtf                        <span class="op">=</span> <span class="va">gtf_human</span>,</span>
 <span>    highlighted_region_start   <span class="op">=</span> <span class="fl">6643000</span>,</span>
@@ -207,7 +207,7 @@ to a region of interest:</p>
 <p>Add vertical dashed lines at every exon-intron boundary:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span></span>
-<span>    bed            <span class="op">=</span> <span class="va">sample_bed</span>,</span>
+<span>    bed            <span class="op">=</span> <span class="va">K562_bed</span>,</span>
 <span>    geneID         <span class="op">=</span> <span class="st">"GAPDH"</span>,</span>
 <span>    gtf            <span class="op">=</span> <span class="va">gtf_human</span>,</span>
 <span>    show_junctions <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -222,7 +222,7 @@ to a region of interest:</p>
 pass <code>NULL</code> to suppress file output:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span></span>
-<span>    bed                 <span class="op">=</span> <span class="va">sample_bed</span>,</span>
+<span>    bed                 <span class="op">=</span> <span class="va">K562_bed</span>,</span>
 <span>    geneID              <span class="op">=</span> <span class="st">"GAPDH"</span>,</span>
 <span>    gtf                 <span class="op">=</span> <span class="va">gtf_human</span>,</span>
 <span>    RNA_Peaks_File_Path <span class="op">=</span> <span class="st">"figures/GAPDH_peaks.pdf"</span>,</span>
@@ -231,7 +231,7 @@ pass <code>NULL</code> to suppress file output:</p>
 <span></span>
 <span><span class="co"># Suppress file output</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span></span>
-<span>    bed                 <span class="op">=</span> <span class="va">sample_bed</span>,</span>
+<span>    bed                 <span class="op">=</span> <span class="va">K562_bed</span>,</span>
 <span>    geneID              <span class="op">=</span> <span class="st">"GAPDH"</span>,</span>
 <span>    gtf                 <span class="op">=</span> <span class="va">gtf_human</span>,</span>
 <span>    RNA_Peaks_File_Path <span class="op">=</span> <span class="cn">NULL</span>,</span>

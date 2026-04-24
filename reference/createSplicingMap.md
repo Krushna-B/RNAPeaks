@@ -19,6 +19,7 @@ createSplicingMap(
   retained_IncLevelDifference = 0.1,
   exclusion_IncLevelDifference = -0.1,
   Min_Count = 50,
+  read_count_cols = c("IJC_SAMPLE_1", "SJC_SAMPLE_1", "IJC_SAMPLE_2", "SJC_SAMPLE_2"),
   groups = c("Retained", "Excluded", "Control"),
   control_multiplier = 2,
   control_iterations = 20,
@@ -93,7 +94,14 @@ createSplicingMap(
 
 - Min_Count:
 
-  Minimum read count threshold. Default is 50.
+  Minimum read count threshold. Default is 50. Set to 0 or NULL to skip
+  filtering.
+
+- read_count_cols:
+
+  Column names for junction read counts, in order c(IJC_s1, SJC_s1,
+  IJC_s2, SJC_s2). Defaults to the standard rMATS names. Only used when
+  `Min_Count > 0`.
 
 - groups:
 

@@ -48,10 +48,6 @@ The primary functions for generating plots are:
 
 The package includes sample data for testing:
 
-- [`sample_bed`](https://krushna-b.github.io/RNAPeaks/reference/sample_bed.md):
-
-  RBP binding peaks, ready to use
-
 - [`sample_se.mats`](https://krushna-b.github.io/RNAPeaks/reference/sample_se.mats.md):
 
   Sample SE.MATS output for splicing analysis
@@ -60,8 +56,7 @@ The package includes sample data for testing:
 
 A typical workflow involves:
 
-1.  Use the included `sample_bed` data, OR load your own BED file and
-    validate it with
+1.  Load your own BED file and validate it with
     [`checkBed`](https://krushna-b.github.io/RNAPeaks/reference/checkBed.md)
 
 2.  Load GTF annotation once with
@@ -143,7 +138,7 @@ saveRDS(gtf, "human_gtf.rds")
 
 # ----- Gene-level visualization -----
 result <- PlotGene(
-  bed = sample_bed,
+  bed = your_bed,
   geneID = "GAPDH",
   gtf = gtf
 )
@@ -151,7 +146,7 @@ result$plot
 
 # ----- Region-level visualization -----
 PlotRegion(
-  bed = sample_bed,
+  bed = your_bed,
   Chr = "12",
   Start = 56000000,
   End = 56050000,
@@ -161,7 +156,7 @@ PlotRegion(
 
 # ----- Splicing map analysis -----
 createSplicingMap(
-  bed_file = sample_bed,
+  bed_file = your_bed,
   SEMATS = sample_se.mats
 )
 

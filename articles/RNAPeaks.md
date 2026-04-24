@@ -95,17 +95,19 @@ my_bed <- read.table("my_peaks.bed", header = FALSE, sep = "\t")
 my_bed <- checkBed(my_bed)
 ```
 
-The package includes a ready-to-use sample dataset:
+The package includes ready-to-use sample datasets from the ENCODE eCLIP
+project:
 
 ``` r
-head(sample_bed)
-#>   chr    start      end           tag score strand
-#> 1  21  8401778  8401840 AARS_K562_IDR  1000      +
-#> 2  19  4035770  4035869 AARS_K562_IDR  1000      +
-#> 3  11 93721690 93721719 AARS_K562_IDR  1000      +
-#> 4  19  2270224  2270300 AARS_K562_IDR  1000      +
-#> 5   m    12167    12208 AARS_K562_IDR  1000      +
-#> 6  16  2760062  2760143 AARS_K562_IDR  1000      +
+data(K562_bed)
+head(K562_bed)
+#>      V1       V2       V3   V4        V5 V6       V7          V8
+#> 1 chr16 88894182 88894282 AATF   CBFA2T3  - 9.394340 5.68023e-10
+#> 2 chr16 88894282 88894382 AATF   CBFA2T3  - 9.074450 5.68023e-10
+#> 3 chr16 88894382 88894482 AATF   CBFA2T3  - 8.939215 5.68023e-10
+#> 4 chr20 26209844 26209944 AATF MIR663AHG  - 8.637735 5.68023e-10
+#> 5  chr3 13377662 13377762 AATF    NUP210  - 8.551355 5.68023e-10
+#> 6 chr16   571060   571160 AATF      PIGQ  + 8.434275 5.68023e-10
 ```
 
 ------------------------------------------------------------------------
@@ -117,7 +119,7 @@ plots all RBP peaks that overlap a single gene of interest.
 
 ``` r
 result <- PlotGene(
-    bed    = sample_bed,
+    bed    = K562_bed,
     geneID = "GAPDH",
     gtf    = gtf
 )
@@ -147,7 +149,7 @@ genomic window.
 
 ``` r
 result <- PlotRegion(
-    bed    = sample_bed,
+    bed    = K562_bed,
     gtf    = gtf,
     Chr    = "12",
     Start  = 56000000,
@@ -168,7 +170,7 @@ rMATS output.
 
 ``` r
 createSplicingMap(
-    bed_file  = sample_bed,
+    bed_file  = K562_bed,
     SEMATS    = sample_se.mats
 )
 ```
@@ -189,7 +191,7 @@ threshold are highlighted as significant regions.
 
 ``` r
 createSplicingMap(
-    bed_file           = sample_bed,
+    bed_file           = K562_bed,
     SEMATS             = sample_se.mats,
     control_iterations = 20,          # bootstrap replicates
     show_significance  = TRUE,        # overlay significance bars
@@ -239,7 +241,7 @@ boundary (RI3-DE).
 
 ``` r
 createRetainedIntronSplicingMap(
-    bed_file = sample_bed,
+    bed_file = K562_bed,
     RIMATS   = sample_se.mats
 )
 ```

@@ -115,10 +115,7 @@ boundaries in retained vs excluded splicing events.</p></dd>
     <h2 id="included-data">Included Data<a class="anchor" aria-label="anchor" href="#included-data"></a></h2>
 
 
-<p>The package includes sample data for testing:</p><dl><dt><code><a href="sample_bed.html">sample_bed</a></code></dt>
-<dd><p>RBP binding peaks, ready to use</p></dd>
-
-<dt><code><a href="sample_se.mats.html">sample_se.mats</a></code></dt>
+<p>The package includes sample data for testing:</p><dl><dt><code><a href="sample_se.mats.html">sample_se.mats</a></code></dt>
 <dd><p>Sample SE.MATS output for splicing analysis</p></dd>
 
 
@@ -127,8 +124,7 @@ boundaries in retained vs excluded splicing events.</p></dd>
     <h2 id="workflow">Workflow<a class="anchor" aria-label="anchor" href="#workflow"></a></h2>
 
 
-<p>A typical workflow involves:</p><ol><li><p>Use the included <code>sample_bed</code> data, OR load your own BED file
-and validate it with <code><a href="checkBed.html">checkBed</a></code></p></li>
+<p>A typical workflow involves:</p><ol><li><p>Load your own BED file and validate it with <code><a href="checkBed.html">checkBed</a></code></p></li>
 <li><p>Load GTF annotation once with <code><a href="LoadGTF.html">LoadGTF</a></code> and store locally
 (e.g., <code>gtf &lt;- LoadGTF("Human")</code>; save with <code>saveRDS(gtf, "gtf.rds")</code>
 for future sessions), or use the gtf_human that is pre-loaded</p></li>
@@ -181,7 +177,7 @@ and store the result in a local variable or save to disk with
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># ----- Gene-level visualization -----</span></span></span>
 <span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="PlotGene.html">PlotGene</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  bed <span class="op">=</span> <span class="va">sample_bed</span>,</span></span>
+<span class="r-in"><span>  bed <span class="op">=</span> <span class="va">your_bed</span>,</span></span>
 <span class="r-in"><span>  geneID <span class="op">=</span> <span class="st">"GAPDH"</span>,</span></span>
 <span class="r-in"><span>  gtf <span class="op">=</span> <span class="va">gtf</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
@@ -189,7 +185,7 @@ and store the result in a local variable or save to disk with
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># ----- Region-level visualization -----</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="PlotRegion.html">PlotRegion</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  bed <span class="op">=</span> <span class="va">sample_bed</span>,</span></span>
+<span class="r-in"><span>  bed <span class="op">=</span> <span class="va">your_bed</span>,</span></span>
 <span class="r-in"><span>  Chr <span class="op">=</span> <span class="st">"12"</span>,</span></span>
 <span class="r-in"><span>  Start <span class="op">=</span> <span class="fl">56000000</span>,</span></span>
 <span class="r-in"><span>  End <span class="op">=</span> <span class="fl">56050000</span>,</span></span>
@@ -199,7 +195,7 @@ and store the result in a local variable or save to disk with
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># ----- Splicing map analysis -----</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="createSplicingMap.html">createSplicingMap</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  bed_file <span class="op">=</span> <span class="va">sample_bed</span>,</span></span>
+<span class="r-in"><span>  bed_file <span class="op">=</span> <span class="va">your_bed</span>,</span></span>
 <span class="r-in"><span>  SEMATS <span class="op">=</span> <span class="va">sample_se.mats</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>

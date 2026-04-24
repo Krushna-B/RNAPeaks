@@ -19,7 +19,7 @@ data(gtf_human)
 
 ``` r
 result <- PlotRegion(
-    bed    = sample_bed,
+    bed    = K562_bed,
     gtf    = gtf_human,
     Chr    = "12",
     Start  = 56000000,
@@ -38,7 +38,7 @@ coordinate window for peak filtering:
 
 ``` r
 PlotRegion(
-    bed    = sample_bed,
+    bed    = K562_bed,
     gtf    = gtf_human,
     Chr    = "12",
     Start  = 56000000,
@@ -54,7 +54,7 @@ PlotRegion(
 
 ``` r
 result <- PlotRegion(
-    bed                 = sample_bed,
+    bed                 = K562_bed,
     gtf                 = gtf_human,
     Chr                 = "12",
     Start               = 56000000,
@@ -66,7 +66,7 @@ result <- PlotRegion(
 
 # Suppress file output
 PlotRegion(
-    bed                 = sample_bed,
+    bed                 = K562_bed,
     gtf                 = gtf_human,
     Chr                 = "12",
     Start               = 56000000,

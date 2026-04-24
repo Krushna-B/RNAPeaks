@@ -68,7 +68,7 @@ share a common set of styling arguments.
 
 ``` r
 PlotGene(
-    bed             = sample_bed,
+    bed             = K562_bed,
     geneID          = "GAPDH",
     gtf             = gtf_human,
     exon_fill       = "steelblue",
@@ -130,7 +130,7 @@ All four analysis functions share the same visual parameters.
 
 ``` r
 createSplicingMap(
-    bed_file        = sample_bed,
+    bed_file        = K562_bed,
     SEMATS          = sample_se.mats,
     retained_col    = "#1f77b4",
     excluded_col    = "#d62728",

@@ -19,7 +19,7 @@ library(RNAPeaks)
 
 ``` r
 createRetainedIntronSplicingMap(
-    bed_file = sample_bed,
+    bed_file = K562_bed,
     RIMATS   = sample_se.mats
 )
 ```
@@ -37,7 +37,7 @@ Events are classified using the same thresholds as
 
 ``` r
 createRetainedIntronSplicingMap(
-    bed_file                     = sample_bed,
+    bed_file                     = K562_bed,
     RIMATS                       = sample_se.mats,
     retained_IncLevelDifference  = -0.1,
     exclusion_IncLevelDifference = 0.1,
@@ -59,7 +59,7 @@ for full details.
 
 ``` r
 createRetainedIntronSplicingMap(
-    bed_file           = sample_bed,
+    bed_file           = K562_bed,
     RIMATS             = sample_se.mats,
     control_iterations = 30,
     use_fdr            = TRUE,
@@ -74,7 +74,7 @@ createRetainedIntronSplicingMap(
 
 ``` r
 freq_df <- createRetainedIntronSplicingMap(
-    bed_file    = sample_bed,
+    bed_file    = K562_bed,
     RIMATS      = sample_se.mats,
     return_data = TRUE
 )

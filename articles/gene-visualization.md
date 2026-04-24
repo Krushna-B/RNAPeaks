@@ -18,7 +18,7 @@ data(gtf_human)
 
 ``` r
 result <- PlotGene(
-    bed    = sample_bed,
+    bed    = K562_bed,
     geneID = "GAPDH",
     gtf    = gtf_human
 )
@@ -35,7 +35,7 @@ supply its Ensembl transcript ID:
 
 ``` r
 result <- PlotGene(
-    bed    = sample_bed,
+    bed    = K562_bed,
     geneID = "TP53",
     gtf    = gtf_human,
     TxID   = "ENST00000269305"
@@ -45,7 +45,7 @@ result <- PlotGene(
 Alternatively, pass an Ensembl gene ID directly:
 
 ``` r
-PlotGene(bed = sample_bed, geneID = "ENSG00000141510", gtf = gtf_human)
+PlotGene(bed = K562_bed, geneID = "ENSG00000141510", gtf = gtf_human)
 ```
 
 ------------------------------------------------------------------------
@@ -57,14 +57,14 @@ tracks:
 
 ``` r
 # Order by peak count — most peaks at bottom (default)
-PlotGene(bed = sample_bed, geneID = "GAPDH", gtf = gtf_human, order_by = "Count")
+PlotGene(bed = K562_bed, geneID = "GAPDH", gtf = gtf_human, order_by = "Count")
 
 # Alphabetical by protein name
-PlotGene(bed = sample_bed, geneID = "GAPDH", gtf = gtf_human, order_by = "Target")
+PlotGene(bed = K562_bed, geneID = "GAPDH", gtf = gtf_human, order_by = "Target")
 
 # Explicit custom order
 PlotGene(
-    bed      = sample_bed,
+    bed      = K562_bed,
     geneID   = "GAPDH",
     gtf      = gtf_human,
     order_in = c("PROTEIN_A", "PROTEIN_B", "PROTEIN_C")
@@ -80,7 +80,7 @@ rectangle, reducing visual noise from fragmented binding sites:
 
 ``` r
 PlotGene(
-    bed    = sample_bed,
+    bed    = K562_bed,
     geneID = "GAPDH",
     gtf    = gtf_human,
     merge  = 50     # merge peaks within 50 bp
@@ -97,7 +97,7 @@ always on the left:
 
 ``` r
 PlotGene(
-    bed           = sample_bed,
+    bed           = K562_bed,
     geneID        = "ACTB",
     gtf           = gtf_human,
     five_to_three = TRUE
@@ -113,7 +113,7 @@ region of interest:
 
 ``` r
 PlotGene(
-    bed                        = sample_bed,
+    bed                        = K562_bed,
     geneID                     = "GAPDH",
     gtf                        = gtf_human,
     highlighted_region_start   = 6643000,
@@ -131,7 +131,7 @@ Add vertical dashed lines at every exon-intron boundary:
 
 ``` r
 PlotGene(
-    bed            = sample_bed,
+    bed            = K562_bed,
     geneID         = "GAPDH",
     gtf            = gtf_human,
     show_junctions = TRUE,
@@ -148,7 +148,7 @@ pass `NULL` to suppress file output:
 
 ``` r
 result <- PlotGene(
-    bed                 = sample_bed,
+    bed                 = K562_bed,
     geneID              = "GAPDH",
     gtf                 = gtf_human,
     RNA_Peaks_File_Path = "figures/GAPDH_peaks.pdf",
@@ -157,7 +157,7 @@ result <- PlotGene(
 
 # Suppress file output
 result <- PlotGene(
-    bed                 = sample_bed,
+    bed                 = K562_bed,
     geneID              = "GAPDH",
     gtf                 = gtf_human,
     RNA_Peaks_File_Path = NULL,

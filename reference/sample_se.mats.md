@@ -146,7 +146,7 @@ head(sample_se.mats)
 #> 6 1.00000000 0.434,0.447,0.778 0.538,0.565,0.613             -0.019
 
 if (FALSE) { # \dontrun{
-  createSplicingMap(bed_file = sample_bed, SEMATS = sample_se.mats)
+  createSplicingMap(bed_file = your_bed, SEMATS = sample_se.mats)
   createSequenceMap(SEMATS = sample_se.mats, sequence = "CCCC")
 } # }
 ```

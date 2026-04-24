@@ -239,16 +239,18 @@ data frame before passing it to a plotting function. Columns are mapped
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">my_bed</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="st">"my_peaks.bed"</span>, header <span class="op">=</span> <span class="cn">FALSE</span>, sep <span class="op">=</span> <span class="st">"\t"</span><span class="op">)</span></span>
 <span><span class="va">my_bed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/checkBed.html">checkBed</a></span><span class="op">(</span><span class="va">my_bed</span><span class="op">)</span></span></code></pre></div>
-<p>The package includes a ready-to-use sample dataset:</p>
+<p>The package includes ready-to-use sample datasets from the ENCODE
+eCLIP project:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sample_bed</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   chr    start      end           tag score strand</span></span>
-<span><span class="co">#&gt; 1  21  8401778  8401840 AARS_K562_IDR  1000      +</span></span>
-<span><span class="co">#&gt; 2  19  4035770  4035869 AARS_K562_IDR  1000      +</span></span>
-<span><span class="co">#&gt; 3  11 93721690 93721719 AARS_K562_IDR  1000      +</span></span>
-<span><span class="co">#&gt; 4  19  2270224  2270300 AARS_K562_IDR  1000      +</span></span>
-<span><span class="co">#&gt; 5   m    12167    12208 AARS_K562_IDR  1000      +</span></span>
-<span><span class="co">#&gt; 6  16  2760062  2760143 AARS_K562_IDR  1000      +</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">K562_bed</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">K562_bed</span><span class="op">)</span></span>
+<span><span class="co">#&gt;      V1       V2       V3   V4        V5 V6       V7          V8</span></span>
+<span><span class="co">#&gt; 1 chr16 88894182 88894282 AATF   CBFA2T3  - 9.394340 5.68023e-10</span></span>
+<span><span class="co">#&gt; 2 chr16 88894282 88894382 AATF   CBFA2T3  - 9.074450 5.68023e-10</span></span>
+<span><span class="co">#&gt; 3 chr16 88894382 88894482 AATF   CBFA2T3  - 8.939215 5.68023e-10</span></span>
+<span><span class="co">#&gt; 4 chr20 26209844 26209944 AATF MIR663AHG  - 8.637735 5.68023e-10</span></span>
+<span><span class="co">#&gt; 5  chr3 13377662 13377762 AATF    NUP210  - 8.551355 5.68023e-10</span></span>
+<span><span class="co">#&gt; 6 chr16   571060   571160 AATF      PIGQ  + 8.434275 5.68023e-10</span></span></code></pre></div>
 <hr>
 </div>
 <div class="section level2">
@@ -258,7 +260,7 @@ data frame before passing it to a plotting function. Columns are mapped
 gene of interest.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PlotGene.html">PlotGene</a></span><span class="op">(</span></span>
-<span>    bed    <span class="op">=</span> <span class="va">sample_bed</span>,</span>
+<span>    bed    <span class="op">=</span> <span class="va">K562_bed</span>,</span>
 <span>    geneID <span class="op">=</span> <span class="st">"GAPDH"</span>,</span>
 <span>    gtf    <span class="op">=</span> <span class="va">gtf</span></span>
 <span><span class="op">)</span></span>
@@ -323,7 +325,7 @@ gene of interest.</p>
 peaks within a specified genomic window.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PlotRegion.html">PlotRegion</a></span><span class="op">(</span></span>
-<span>    bed    <span class="op">=</span> <span class="va">sample_bed</span>,</span>
+<span>    bed    <span class="op">=</span> <span class="va">K562_bed</span>,</span>
 <span>    gtf    <span class="op">=</span> <span class="va">gtf</span>,</span>
 <span>    Chr    <span class="op">=</span> <span class="st">"12"</span>,</span>
 <span>    Start  <span class="op">=</span> <span class="fl">56000000</span>,</span>
@@ -341,7 +343,7 @@ every position across a four-region window spanning exon-intron
 junctions of skipped-exon (SE) events from rMATS output.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/createSplicingMap.html">createSplicingMap</a></span><span class="op">(</span></span>
-<span>    bed_file  <span class="op">=</span> <span class="va">sample_bed</span>,</span>
+<span>    bed_file  <span class="op">=</span> <span class="va">K562_bed</span>,</span>
 <span>    SEMATS    <span class="op">=</span> <span class="va">sample_se.mats</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>The function classifies events into three groups based on
@@ -367,7 +369,7 @@ the control z-score threshold are highlighted as significant
 regions.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/createSplicingMap.html">createSplicingMap</a></span><span class="op">(</span></span>
-<span>    bed_file           <span class="op">=</span> <span class="va">sample_bed</span>,</span>
+<span>    bed_file           <span class="op">=</span> <span class="va">K562_bed</span>,</span>
 <span>    SEMATS             <span class="op">=</span> <span class="va">sample_se.mats</span>,</span>
 <span>    control_iterations <span class="op">=</span> <span class="fl">20</span>,          <span class="co"># bootstrap replicates</span></span>
 <span>    show_significance  <span class="op">=</span> <span class="cn">TRUE</span>,        <span class="co"># overlay significance bars</span></span>
@@ -430,7 +432,7 @@ frequency around retained-intron junctions: the upstream exon/intron
 boundary (UE-RI5) and the downstream intron/exon boundary (RI3-DE).</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/createRetainedIntronSplicingMap.html">createRetainedIntronSplicingMap</a></span><span class="op">(</span></span>
-<span>    bed_file <span class="op">=</span> <span class="va">sample_bed</span>,</span>
+<span>    bed_file <span class="op">=</span> <span class="va">K562_bed</span>,</span>
 <span>    RIMATS   <span class="op">=</span> <span class="va">sample_se.mats</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <hr>

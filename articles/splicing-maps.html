@@ -108,7 +108,7 @@ output.</p>
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/createSplicingMap.html">createSplicingMap</a></span><span class="op">(</span></span>
-<span>    bed_file <span class="op">=</span> <span class="va">sample_bed</span>,</span>
+<span>    bed_file <span class="op">=</span> <span class="va">K562_bed</span>,</span>
 <span>    SEMATS   <span class="op">=</span> <span class="va">sample_se.mats</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <hr>
@@ -135,7 +135,7 @@ higher in condition 1</li>
 <p>Control which events fall into each group:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/createSplicingMap.html">createSplicingMap</a></span><span class="op">(</span></span>
-<span>    bed_file                     <span class="op">=</span> <span class="va">sample_bed</span>,</span>
+<span>    bed_file                     <span class="op">=</span> <span class="va">K562_bed</span>,</span>
 <span>    SEMATS                       <span class="op">=</span> <span class="va">sample_se.mats</span>,</span>
 <span>    p_valueRetainedAndExclusion  <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>    p_valueControls              <span class="op">=</span> <span class="fl">0.95</span>,</span>
@@ -151,7 +151,7 @@ higher in condition 1</li>
 <p>Adjust how far into exons and introns the analysis extends:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/createSplicingMap.html">createSplicingMap</a></span><span class="op">(</span></span>
-<span>    bed_file        <span class="op">=</span> <span class="va">sample_bed</span>,</span>
+<span>    bed_file        <span class="op">=</span> <span class="va">K562_bed</span>,</span>
 <span>    SEMATS          <span class="op">=</span> <span class="va">sample_se.mats</span>,</span>
 <span>    WidthIntoExon   <span class="op">=</span> <span class="fl">75</span>,</span>
 <span>    WidthIntoIntron <span class="op">=</span> <span class="fl">400</span></span>
@@ -165,10 +165,10 @@ higher in condition 1</li>
 Adjust the window size or disable smoothing:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Wider smoothing window</span></span>
-<span><span class="fu"><a href="../reference/createSplicingMap.html">createSplicingMap</a></span><span class="op">(</span>bed_file <span class="op">=</span> <span class="va">sample_bed</span>, SEMATS <span class="op">=</span> <span class="va">sample_se.mats</span>, moving_average <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/createSplicingMap.html">createSplicingMap</a></span><span class="op">(</span>bed_file <span class="op">=</span> <span class="va">K562_bed</span>, SEMATS <span class="op">=</span> <span class="va">sample_se.mats</span>, moving_average <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># No smoothing</span></span>
-<span><span class="fu"><a href="../reference/createSplicingMap.html">createSplicingMap</a></span><span class="op">(</span>bed_file <span class="op">=</span> <span class="va">sample_bed</span>, SEMATS <span class="op">=</span> <span class="va">sample_se.mats</span>, moving_average <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/createSplicingMap.html">createSplicingMap</a></span><span class="op">(</span>bed_file <span class="op">=</span> <span class="va">K562_bed</span>, SEMATS <span class="op">=</span> <span class="va">sample_se.mats</span>, moving_average <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
 <hr>
 </div>
 <div class="section level2">
@@ -186,7 +186,7 @@ positions are reported as enriched regions and drawn as colored bars
 above the plot.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/createSplicingMap.html">createSplicingMap</a></span><span class="op">(</span></span>
-<span>    bed_file           <span class="op">=</span> <span class="va">sample_bed</span>,</span>
+<span>    bed_file           <span class="op">=</span> <span class="va">K562_bed</span>,</span>
 <span>    SEMATS             <span class="op">=</span> <span class="va">sample_se.mats</span>,</span>
 <span>    control_multiplier <span class="op">=</span> <span class="fl">2.0</span>,</span>
 <span>    control_iterations <span class="op">=</span> <span class="fl">30</span>,</span>
@@ -203,7 +203,7 @@ above the plot.</p>
 </h2>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">freq_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createSplicingMap.html">createSplicingMap</a></span><span class="op">(</span></span>
-<span>    bed_file    <span class="op">=</span> <span class="va">sample_bed</span>,</span>
+<span>    bed_file    <span class="op">=</span> <span class="va">K562_bed</span>,</span>
 <span>    SEMATS      <span class="op">=</span> <span class="va">sample_se.mats</span>,</span>
 <span>    return_data <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
