@@ -98,7 +98,6 @@ reference:
   desc: >
     Curated datasets bundled with the package for testing and demonstration.
   contents:
-  - sample_bed
   - sample_se.mats
   - gtf_human
 

@@ -11,6 +11,7 @@
                                   retained_IncLevelDifference,
                                   exclusion_IncLevelDifference,
                                   Min_Count,
+                                  read_count_cols,
                                   groups,
                                   control_multiplier,
                                   control_iterations,
@@ -76,7 +77,8 @@
     p_valueControls              = p_valueControls,
     retained_IncLevelDifference  = retained_IncLevelDifference,
     exclusion_IncLevelDifference = exclusion_IncLevelDifference,
-    Min_Count                    = Min_Count
+    Min_Count                    = Min_Count,
+    read_count_cols              = read_count_cols
   )
 
   bin_width <- WidthIntoExon + WidthIntoIntron + 1

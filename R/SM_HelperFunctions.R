@@ -5,7 +5,9 @@
 #' @param p_valueControls P-value threshold for controls (default 0.95)
 #' @param retained_IncLevelDifference Threshold for retained events (default 0.1)
 #' @param exclusion_IncLevelDifference Threshold for excluded events (default -0.1)
-#' @param Min_Count Minimum read count threshold (default 50)
+#' @param Min_Count Minimum read count threshold (default 50). Set to 0 or NULL to skip filtering.
+#' @param read_count_cols Character vector of length 4 giving the column names for
+#'   inclusion/skipping junction counts in order: c(IJC_s1, SJC_s1, IJC_s2, SJC_s2).
 #'
 #' @return A list with three data frames: Retained, Excluded, Control
 #' @noRd
@@ -14,24 +16,38 @@ filter_SEMATS_events <- function(SEMATS,
                                   p_valueControls = 0.95,
                                   retained_IncLevelDifference = -0.1,
                                   exclusion_IncLevelDifference = 0.1,
-                                  Min_Count = 50) {
+                                  Min_Count = 50,
+                                  read_count_cols = c("IJC_SAMPLE_1", "SJC_SAMPLE_1",
+                                                      "IJC_SAMPLE_2", "SJC_SAMPLE_2")) {
 
-  # Calculate counts from junction counts
-  SEMATS$IN_Count_1 <- sapply(SEMATS$IJC_SAMPLE_1, function(x) {
-    sum(as.numeric(strsplit(as.character(x), ",")[[1]]))
-  })
-  SEMATS$SK_Count_1 <- sapply(SEMATS$SJC_SAMPLE_1, function(x) {
-    sum(as.numeric(strsplit(as.character(x), ",")[[1]]))
-  })
-  SEMATS$IN_Count_2 <- sapply(SEMATS$IJC_SAMPLE_2, function(x) {
-    sum(as.numeric(strsplit(as.character(x), ",")[[1]]))
-  })
-  SEMATS$SK_Count_2 <- sapply(SEMATS$SJC_SAMPLE_2, function(x) {
-    sum(as.numeric(strsplit(as.character(x), ",")[[1]]))
-  })
+  if (!is.null(Min_Count) && Min_Count > 0) {
+    missing_rc <- setdiff(read_count_cols, colnames(SEMATS))
+    if (length(missing_rc) > 0) {
+      stop(
+        "No read count columns found for Read Count filtering.
+        \nProvide the correct column names via `read_count_cols` or set `Min_Count = 0` to skip filtering."
+      )
+    }
 
-  SEMATS$Total_Count_1 <- SEMATS$IN_Count_1 + SEMATS$SK_Count_1
-  SEMATS$Total_Count_2 <- SEMATS$IN_Count_2 + SEMATS$SK_Count_2
+    SEMATS$IN_Count_1 <- sapply(SEMATS[[read_count_cols[1]]], function(x) {
+      sum(as.numeric(strsplit(as.character(x), ",")[[1]]))
+    })
+    SEMATS$SK_Count_1 <- sapply(SEMATS[[read_count_cols[2]]], function(x) {
+      sum(as.numeric(strsplit(as.character(x), ",")[[1]]))
+    })
+    SEMATS$IN_Count_2 <- sapply(SEMATS[[read_count_cols[3]]], function(x) {
+      sum(as.numeric(strsplit(as.character(x), ",")[[1]]))
+    })
+    SEMATS$SK_Count_2 <- sapply(SEMATS[[read_count_cols[4]]], function(x) {
+      sum(as.numeric(strsplit(as.character(x), ",")[[1]]))
+    })
+
+    SEMATS$Total_Count_1 <- SEMATS$IN_Count_1 + SEMATS$SK_Count_1
+    SEMATS$Total_Count_2 <- SEMATS$IN_Count_2 + SEMATS$SK_Count_2
+
+    SEMATS <- SEMATS[which(SEMATS$Total_Count_1 > Min_Count &
+                             SEMATS$Total_Count_2 > Min_Count), ]
+  }
 
   # Calculate inclusion levels (filter out "NA" strings before conversion)
   SEMATS$Inc_1 <- sapply(SEMATS$IncLevel1, function(x) {
@@ -46,10 +62,6 @@ filter_SEMATS_events <- function(SEMATS,
     if (length(vals) == 0) return(NA_real_)
     mean(as.numeric(vals))
   })
-
-  # Filter by minimum count
-  SEMATS <- SEMATS[which(SEMATS$Total_Count_1 > Min_Count &
-                           SEMATS$Total_Count_2 > Min_Count), ]
 
   # Generate event categories
   Excluded <- SEMATS |>

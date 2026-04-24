@@ -21,7 +21,10 @@
 #'   retained events. Default is 0.1.
 #' @param exclusion_IncLevelDifference Inclusion level difference threshold for
 #'   excluded events. Default is -0.1.
-#' @param Min_Count Minimum read count threshold. Default is 50.
+#' @param Min_Count Minimum read count threshold. Default is 50. Set to 0 or NULL to skip filtering.
+#' @param read_count_cols Column names for junction read counts, in order
+#'   c(IJC_s1, SJC_s1, IJC_s2, SJC_s2). Defaults to the standard rMATS names.
+#'   Only used when \code{Min_Count > 0}.
 #' @param groups Character vector specifying which event groups to process.
 #'   Options are "Retained", "Excluded", and/or "Control". Default is
 #'   c("Retained", "Excluded", "Control") to process all groups.
@@ -101,6 +104,8 @@ createRetainedIntronSplicingMap <- function(bed_file,
                                      retained_IncLevelDifference = 0.1,
                                      exclusion_IncLevelDifference = -0.1,
                                      Min_Count = 50,
+                                     read_count_cols = c("IJC_SAMPLE_1", "SJC_SAMPLE_1",
+                                                         "IJC_SAMPLE_2", "SJC_SAMPLE_2"),
                                      groups = c("Retained", "Excluded", "Control"),
                                      control_multiplier = 2.0,
                                      control_iterations = 20,
@@ -133,8 +138,7 @@ createRetainedIntronSplicingMap <- function(bed_file,
                      "upstreamES", "upstreamEE",
                      "downstreamES", "downstreamEE",
                      "GeneID", "PValue", "FDR", "IncLevelDifference",
-                     "IJC_SAMPLE_1", "SJC_SAMPLE_1",
-                     "IJC_SAMPLE_2", "SJC_SAMPLE_2")
+                     "IncLevel1", "IncLevel2")
   missing_cols <- setdiff(required_cols, colnames(RIMATS))
   if (length(missing_cols) > 0) {
     stop("RIMATS is missing required columns: ", paste(missing_cols, collapse = ", "))
@@ -154,6 +158,7 @@ createRetainedIntronSplicingMap <- function(bed_file,
     retained_IncLevelDifference  = retained_IncLevelDifference,
     exclusion_IncLevelDifference = exclusion_IncLevelDifference,
     Min_Count                    = Min_Count,
+    read_count_cols              = read_count_cols,
     groups                       = groups,
     control_multiplier           = control_multiplier,
     control_iterations           = control_iterations,
