@@ -49,12 +49,8 @@ enabling offline use and faster loading.
 }
 \examples{
 \dontrun{
-  # Load the bundled GTF
   data(gtf_human)
-
-  # Use with PlotGene (no download required)
-  data(sample_bed)
-  PlotGene(bed = sample_bed, geneID = "GAPDH", gtf = gtf_human)
+  PlotGene(bed = your_bed, geneID = "GAPDH", gtf = gtf_human)
 }
 }
 \keyword{datasets}

@@ -1,4 +1,62 @@
 
+#' K562 RBP Binding Peaks
+#'
+#' ENCODE eCLIP peak calls from the K562 (chronic myelogenous leukemia) cell
+#' line, provided for testing and demonstration of RNAPeaks visualization and
+#' analysis functions.
+#'
+#' @format A data frame with the following columns:
+#' \describe{
+#'   \item{chr}{Chromosome identifier (without "chr" prefix, e.g., "1", "X")}
+#'   \item{start}{Peak start coordinate}
+#'   \item{end}{Peak end coordinate}
+#'   \item{tag}{RBP name or peak identifier}
+#'   \item{score}{Peak score or confidence value}
+#'   \item{strand}{Genomic strand ("+" or "-")}
+#' }
+#'
+#' @source ENCODE Project (\url{https://www.encodeproject.org/})
+#'
+#' @examples
+#' data(K562_bed)
+#' head(K562_bed)
+#'
+#' \dontrun{
+#'   data(K562_bed)
+#'   data(gtf_human)
+#'   PlotGene(bed = K562_bed, geneID = "GAPDH", gtf = gtf_human)
+#' }
+"K562_bed"
+
+#' HepG2 RBP Binding Peaks
+#'
+#' ENCODE eCLIP peak calls from the HepG2 (hepatocellular carcinoma) cell
+#' line, provided for testing and demonstration of RNAPeaks visualization and
+#' analysis functions.
+#'
+#' @format A data frame with the following columns:
+#' \describe{
+#'   \item{chr}{Chromosome identifier (without "chr" prefix, e.g., "1", "X")}
+#'   \item{start}{Peak start coordinate}
+#'   \item{end}{Peak end coordinate}
+#'   \item{tag}{RBP name or peak identifier}
+#'   \item{score}{Peak score or confidence value}
+#'   \item{strand}{Genomic strand ("+" or "-")}
+#' }
+#'
+#' @source ENCODE Project (\url{https://www.encodeproject.org/})
+#'
+#' @examples
+#' data(HepG2_bed)
+#' head(HepG2_bed)
+#'
+#' \dontrun{
+#'   data(HepG2_bed)
+#'   data(gtf_human)
+#'   PlotGene(bed = HepG2_bed, geneID = "GAPDH", gtf = gtf_human)
+#' }
+"HepG2_bed"
+
 #' Human GTF Gene Annotation
 #'
 #' Pre-loaded Ensembl GTF annotation for human genes (GRCh38).

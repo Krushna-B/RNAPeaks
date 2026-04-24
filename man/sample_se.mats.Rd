@@ -48,7 +48,7 @@ data(sample_se.mats)
 head(sample_se.mats)
 
 \dontrun{
-  createSplicingMap(bed_file = sample_bed, SEMATS = sample_se.mats)
+  createSplicingMap(bed_file = your_bed, SEMATS = sample_se.mats)
   createSequenceMap(SEMATS = sample_se.mats, sequence = "CCCC")
 }
 }

@@ -231,10 +231,8 @@ The following parameters can be passed via \code{...} to customize the plot appe
   # Load GTF annotation (do this once, takes time on first call)
   gtf <- LoadGTF(species = "Human")
 
-  # ----- Using included sample data -----
-  # sample_bed is included with the package and ready to use
   result <- PlotRegion(
-    bed = sample_bed,
+    bed = your_bed,
     gtf = gtf,
     Chr = "12",
     Start = 56000000,

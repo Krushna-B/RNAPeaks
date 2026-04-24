@@ -111,10 +111,11 @@ my_bed <- read.table("my_peaks.bed", header = FALSE, sep = "\t")
 my_bed <- checkBed(my_bed)
 ```
 
-The package includes a ready-to-use sample dataset:
+The package includes ready-to-use sample datasets from the ENCODE eCLIP project:
 
 ```{r sample-bed}
-head(sample_bed)
+data(K562_bed)
+head(K562_bed)
 ```
 
 ---
@@ -125,7 +126,7 @@ head(sample_bed)
 
 ```{r plot-gene, eval = FALSE}
 result <- PlotGene(
-    bed    = sample_bed,
+    bed    = K562_bed,
     geneID = "GAPDH",
     gtf    = gtf
 )
@@ -154,7 +155,7 @@ specified genomic window.
 
 ```{r plot-region, eval = FALSE}
 result <- PlotRegion(
-    bed    = sample_bed,
+    bed    = K562_bed,
     gtf    = gtf,
     Chr    = "12",
     Start  = 56000000,
@@ -174,7 +175,7 @@ across a four-region window spanning exon-intron junctions of skipped-exon
 
 ```{r splicing-map, eval = FALSE}
 createSplicingMap(
-    bed_file  = sample_bed,
+    bed_file  = K562_bed,
     SEMATS    = sample_se.mats
 )
 ```
@@ -193,7 +194,7 @@ highlighted as significant regions.
 
 ```{r splicing-map-advanced, eval = FALSE}
 createSplicingMap(
-    bed_file           = sample_bed,
+    bed_file           = K562_bed,
     SEMATS             = sample_se.mats,
     control_iterations = 20,          # bootstrap replicates
     show_significance  = TRUE,        # overlay significance bars
@@ -240,7 +241,7 @@ the downstream intron/exon boundary (RI3-DE).
 
 ```{r ri-splicing, eval = FALSE}
 createRetainedIntronSplicingMap(
-    bed_file = sample_bed,
+    bed_file = K562_bed,
     RIMATS   = sample_se.mats
 )
 ```

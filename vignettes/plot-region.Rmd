@@ -38,7 +38,7 @@ data(gtf_human)
 
 ```{r basic, eval = FALSE}
 result <- PlotRegion(
-    bed    = sample_bed,
+    bed    = K562_bed,
     gtf    = gtf_human,
     Chr    = "12",
     Start  = 56000000,
@@ -57,7 +57,7 @@ window for peak filtering:
 
 ```{r single-gene, eval = FALSE}
 PlotRegion(
-    bed    = sample_bed,
+    bed    = K562_bed,
     gtf    = gtf_human,
     Chr    = "12",
     Start  = 56000000,
@@ -73,7 +73,7 @@ PlotRegion(
 
 ```{r save, eval = FALSE}
 result <- PlotRegion(
-    bed                 = sample_bed,
+    bed                 = K562_bed,
     gtf                 = gtf_human,
     Chr                 = "12",
     Start               = 56000000,
@@ -85,7 +85,7 @@ result <- PlotRegion(
 
 # Suppress file output
 PlotRegion(
-    bed                 = sample_bed,
+    bed                 = K562_bed,
     gtf                 = gtf_human,
     Chr                 = "12",
     Start               = 56000000,

@@ -35,7 +35,7 @@ library(RNAPeaks)
 
 ```{r basic, eval = FALSE}
 createSplicingMap(
-    bed_file = sample_bed,
+    bed_file = K562_bed,
     SEMATS   = sample_se.mats
 )
 ```
@@ -55,7 +55,7 @@ Control which events fall into each group:
 
 ```{r thresholds, eval = FALSE}
 createSplicingMap(
-    bed_file                     = sample_bed,
+    bed_file                     = K562_bed,
     SEMATS                       = sample_se.mats,
     p_valueRetainedAndExclusion  = 0.05,
     p_valueControls              = 0.95,
@@ -73,7 +73,7 @@ Adjust how far into exons and introns the analysis extends:
 
 ```{r window, eval = FALSE}
 createSplicingMap(
-    bed_file        = sample_bed,
+    bed_file        = K562_bed,
     SEMATS          = sample_se.mats,
     WidthIntoExon   = 75,
     WidthIntoIntron = 400
@@ -89,10 +89,10 @@ window size or disable smoothing:
 
 ```{r smoothing, eval = FALSE}
 # Wider smoothing window
-createSplicingMap(bed_file = sample_bed, SEMATS = sample_se.mats, moving_average = 100)
+createSplicingMap(bed_file = K562_bed, SEMATS = sample_se.mats, moving_average = 100)
 
 # No smoothing
-createSplicingMap(bed_file = sample_bed, SEMATS = sample_se.mats, moving_average = NULL)
+createSplicingMap(bed_file = K562_bed, SEMATS = sample_se.mats, moving_average = NULL)
 ```
 
 ***
@@ -116,7 +116,7 @@ enriched regions and drawn as colored bars above the plot.
 
 ```{r significance, eval = FALSE}
 createSplicingMap(
-    bed_file           = sample_bed,
+    bed_file           = K562_bed,
     SEMATS             = sample_se.mats,
     control_multiplier = 2.0,
     control_iterations = 30,
@@ -134,7 +134,7 @@ createSplicingMap(
 
 ```{r return-data, eval = FALSE}
 freq_df <- createSplicingMap(
-    bed_file    = sample_bed,
+    bed_file    = K562_bed,
     SEMATS      = sample_se.mats,
     return_data = TRUE
 )
