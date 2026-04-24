@@ -47,20 +47,10 @@ LoadGTF <- function(species = "Human", file = NULL) {
   if (!species %in% c("Human", "Mouse"))
     stop("Species must be 'Human' or 'Mouse'")
 
-  # Skip network calls if cache is already populated in deployment setting
-  cache_exists <- tryCatch({
-    cache_dir <- AnnotationHub::getAnnotationHubOption("CACHE")
-    file.exists(cache_dir) && length(list.files(cache_dir)) > 0
-  }, error = function(e) FALSE)
-
-  ah <- AnnotationHub::AnnotationHub(ask = FALSE, localHub = cache_exists)
-
   if (species == "Human") {
-    # Ensembl Human GTF
-    gtf <- data.frame(ah[["AH110867"]])
+    gtf <- get("gtf_human", envir = asNamespace("RNAPeaks"))
   } else if (species == "Mouse") {
-    # Ensembl Mouse GTF
-    gtf <- data.frame(ah[["AH47076"]])
+    gtf <- get("gtf_mouse", envir = asNamespace("RNAPeaks"))
   }
 
   return(gtf)
