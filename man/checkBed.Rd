@@ -2,46 +2,23 @@
 % Please edit documentation in R/BD_CheckBed.R
 \name{checkBed}
 \alias{checkBed}
-\title{Validate and Normalize a BED-Format Data Frame}
+\title{Validate and normalize BED frame input}
 \usage{
-checkBed(df)
+checkBed(bed, split_col = NULL)
 }
 \arguments{
-\item{df}{A data frame with at least 3 columns representing BED data.
-Columns are mapped by position: 1=chr, 2=start, 3=end, 4=tag, 5=score, 6=strand.
-If fewer than 6 columns are provided, missing columns are filled with defaults:
-tag="peak", score=0.}
+\item{bed}{A data frame or list of data frames with at least 6 columns.
+Columns are mapped by position: 1=chr, 2=start, 3=end, 6=strand.}
+
+\item{split_col}{Optional. Name of column used to group
+rows. Must exist in every bed and cannot be one of the
+canonical columns (\code{chr}, \code{start}, \code{end}, \code{strand}).}
 }
 \value{
-A validated data frame with normalized column names (chr, start, end,
-tag, score, strand) and chromosome names without "chr" prefix.
+A single combined, validated bed data frame
 }
 \description{
-Validates a data frame as BED format and normalizes column names and
-chromosome identifiers. The function expects columns in standard BED order:
-chr, start, end, tag/name, score, strand.
+Checks BED data for required columns and valid coordinates, then combines
+the input into a single data frame with standardized column names.
 }
-\details{
-The function performs the following:
-\itemize{
-\item Requires at least 4 columns (chr, start, end, strand)
-\item Maps columns by position to BED names
-\item Fills missing columns with defaults (tag="peak", score=0)
-\item Validates chromosome is character type
-\item Verifies end >= start for all rows
-\item Validates strand values are "+" or "-"
-\item Removes "chr" prefix from chromosome names
-\item Converts chromosome names to uppercase
-}
-}
-\examples{
-\dontrun{
-  # Standard 6-column BED
-  bed <- read.table("peaks.bed", header = FALSE)
-  bed <- checkBed(bed)
-
-  # 4-column BED (will add defaults for tag, score)
-  bed3 <- data.frame(chr = "chr1", start = 100, end = 200, strand = "+")
-  bed3 <- checkBed(bed3)
-}
-}
+\concept{bed}

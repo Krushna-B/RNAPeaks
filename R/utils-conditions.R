@@ -34,4 +34,15 @@ abort_not_found <- function(message, ..., call = parent.frame()){
   )
 }
 
+#4. Invalid GTF
+abort_invalid_gtf <- function(message, ..., call = parent.frame()){
+  cli::cli_abort(
+    message,
+    ...,
+    class = c("rnapeaks_error_invalid_gtf","rnapeaks_error"),
+    call = call,
+    .envir = call
+  )
+}
+
 
