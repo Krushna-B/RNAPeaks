@@ -45,6 +45,20 @@ abort_invalid_gtf <- function(message, ..., call = parent.frame()){
   )
 }
 
+#5. Cannot determine GTF Species
+abort_species_unknown <- function(..., call = parent.frame()){
+  cli::cli_abort(
+    c("Cannot infer species from {.arg gtf}.",
+      "i" = "Expected gene_id starting with {.val ENSG} (human) or {.val ENSMUSG} (mouse)."),
+    ...,
+    class = c("rnapeaks_error_species_unknown",
+              "rnapeaks_error_invalid_gtf",
+              "rnapeaks_error"),
+    call = call,
+    .envir = call
+  )
+}
+
 
 
 
