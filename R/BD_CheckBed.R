@@ -14,7 +14,7 @@
 #'
 #' @export
 #' @family bed
-checkBed <- function(bed, split_col = NULL) {
+check_Bed <- function(bed, split_col = NULL) {
   #Check if input is a list c(Bed1,...Bedn)
   beds <- if (is.data.frame(bed)) list(bed) else bed
 

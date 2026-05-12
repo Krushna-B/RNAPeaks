@@ -15,7 +15,7 @@
 #' @export
 #' @family gene
 #'
-getGTF <- function(species = "hg38", file = NULL) {
+get_GTF <- function(species = "hg38", file = NULL) {
   if (!is.null(file)) {
     # File arg must be a single, non-NA character path
     if (!is.character(file) || length(file) != 1L || is.na(file) || !nzchar(file)) {
