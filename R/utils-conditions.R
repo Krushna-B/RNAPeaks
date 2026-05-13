@@ -1,4 +1,4 @@
-#'Internal: classed-conditions helpers for RNAPeek's Errors
+#'Internal: classed-conditions helpers for RNAPeak's Errors
 #' @keywords internal
 
 #1. Any BED Related Issue
