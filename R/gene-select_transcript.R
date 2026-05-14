@@ -12,6 +12,7 @@
 #'
 #' @return Data frame of GTF rows for the chosen transcript.
 #' @noRd
+#' @family gene
 select_transcript <- function(gtf, geneID = NULL, TxID = NULL) {
   #Validate Params
   if (!is.data.frame(gtf) || nrow(gtf) == 0L) {

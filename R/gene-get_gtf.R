@@ -14,7 +14,6 @@
 #'   transcript_id}.
 #' @export
 #' @family gene
-#'
 get_GTF <- function(species = "hg38", file = NULL) {
   if (!is.null(file)) {
     # File arg must be a single, non-NA character path
