@@ -14,7 +14,7 @@
 #'
 #' @export
 #' @family bed
-check_Bed <- function(bed, split_col = NULL) {
+check_bed <- function(bed, split_col = NULL) {
   #Check if input is a list c(Bed1,...Bedn)
   beds <- if (is.data.frame(bed)) list(bed) else bed
 
@@ -91,7 +91,7 @@ check_Bed <- function(bed, split_col = NULL) {
   #Adding target column
   if (!is.null(split_col)) {
     beds <- lapply(beds, function(b){ b$target <- b[[split_col]]; return(b) })
-  } else if (length(beds) >= 2L){
+  } else if (length(beds) >= 1L){
     nm <- names(beds)
     if (is.null(nm)){ nm <- rep("", length(beds)) }
       nm[nm == ""] <- paste0("bed", which(nm == ""))

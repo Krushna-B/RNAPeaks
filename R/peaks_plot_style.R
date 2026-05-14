@@ -3,6 +3,8 @@
 #'
 #' @param exon_color,exon_height Exon/CDS rectangles.
 #' @param utr_color,utr_height UTR rectangles.
+#' @param gene_offset Vertical gap (y units) between the top peak track and
+#'   the bottom of the gene structure.
 #' @param intron_color,intron_linewidth,intron_arrow_len_in Intron line and arrow geometry.
 #' @param total_arrows,max_per_intron Density controls for intron arrows.
 #' @param peak_color,peak_height,peak_alpha,peak_border_color,peak_border_linewidth Peak rectangles.
@@ -38,6 +40,7 @@ peaks_plot_style <- function(
   exon_height            = 0.5,
   utr_color              = "lightgray",
   utr_height             = 0.3,
+  gene_offset            = 0.2,
   intron_color           = "gray60",
   intron_linewidth       = 0.9,
   intron_arrow_len_in    = 0.15,
@@ -112,6 +115,7 @@ peaks_plot_style <- function(
   check_scalar_number(exon_height, "exon_height", min = 0)
   check_color(utr_color, "utr_color")
   check_scalar_number(utr_height, "utr_height", min = 0)
+  check_scalar_number(gene_offset, "gene_offset", min = 0)
   check_color(intron_color, "intron_color")
   check_scalar_number(intron_linewidth, "intron_linewidth", min = 0)
   check_scalar_number(intron_arrow_len_in, "intron_arrow_len_in", min = 0)

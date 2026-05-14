@@ -59,17 +59,3 @@ Get_Plot_by_Gene<-function(bed,
 }
 
 
-#--------Helper Functions----------
-#Prepare Background
-Background_Table<-function(df,Start,End){
-  Background<-df[c("y_start","y_end")]
-  Background<-Background[!duplicated(Background),]
-  Background<-Background[order(Background$y_start),]
-  Background$x_start<-Start
-  Background$x_end<-End
-  Background$col<-rep(c("#33333333","#11111111"),length.out = nrow(Background))
-  return(Background)
-}
-
-
-

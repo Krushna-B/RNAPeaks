@@ -27,7 +27,7 @@ draw_plot <- function(region,
                                 "type", "y_start", "y_end"))
   check_data_frame(peaks, "peaks",
                    required = c("start", "end", "y_start", "y_end",
-                                "group_name", "col", "xpos"))
+                                "group_name"))
   if (is_region) {
     check_data_frame(region, "region", required = "gene_id")
   }
@@ -67,10 +67,10 @@ draw_plot <- function(region,
     introns$dir_end   <- ifelse(introns$strand == "+", introns$end,   introns$start)
   }
 
-  arrows <- compute_arrows(introns, style)
+  # arrows <- build_intron_arrows(introns, style)
 
-  # ---- left margin: fit longest protein label, and in region mode also
-  #                   the longest gene/transcript label drawn on the left
+  # left margin: fit longest protein label,
+  # and in region mode also the longest gene/transcript label drawn on the left.
   left_margin <- style$plot_left_margin
   if (is.null(left_margin)) {
     margins <- find_left_margin(peaks$group_name, style$protein_label_size)
@@ -83,10 +83,12 @@ draw_plot <- function(region,
   }
 
   # Protein Label Position Calculation
-  if (flip) {
-    peaks$xpos <- x_max + style$protein_label_x_offset_bp
-  } else if (is_region) {
-    peaks$xpos <- x_min - style$protein_label_x_offset_bp
+  # Flipped view: labels go to the right of the gene (3' end visually on the left).
+  # Default + region: labels go to the left of the gene/region.
+  peaks$xpos <- if (flip) {
+    x_max + style$protein_label_x_offset_bp
+  } else {
+    x_min - style$protein_label_x_offset_bp
   }
 
   # Background Bands for the peaks
@@ -148,16 +150,16 @@ draw_plot <- function(region,
     ) +
 
     # Direction arrows along introns
-    ggplot2::geom_segment(
-      data    = arrows,
-      mapping = ggplot2::aes(x = x, xend = xend, y = y, yend = yend),
-      arrow = grid::arrow(
-        type   = "open",
-        length = grid::unit(style$intron_arrow_len_in, "inches")
-      ),
-      color     = style$intron_color,
-      linewidth = style$intron_linewidth
-    ) +
+    # ggplot2::geom_segment(
+    #   data    = arrows,
+    #   mapping = ggplot2::aes(x = x, xend = xend, y = y, yend = yend),
+    #   arrow = grid::arrow(
+    #     type   = "open",
+    #     length = grid::unit(style$intron_arrow_len_in, "inches")
+    #   ),
+    #   color     = style$intron_color,
+    #   linewidth = style$intron_linewidth
+    # ) +
 
     # Exons
     ggplot2::geom_rect(
@@ -191,7 +193,7 @@ draw_plot <- function(region,
       mapping = ggplot2::aes(xmin = start,   xmax = end,
                              ymin = y_start, ymax = y_end),
       inherit.aes = FALSE,
-      fill        = peaks$col,
+      fill        = style$peak_color,
       alpha       = style$peak_alpha,
       color       = style$peak_border_color,
       linewidth   = style$peak_border_linewidth

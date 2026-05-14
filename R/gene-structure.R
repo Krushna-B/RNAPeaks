@@ -101,6 +101,8 @@ make_strand_labels <- function(transcript,
     ))
   }
 
+  transcript$strand <- as.character(transcript$strand)
+
   gene_min <- min(transcript$start)
   gene_max <- max(transcript$end)
   y_pos    <- min(transcript$y_start)
