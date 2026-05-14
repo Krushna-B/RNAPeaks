@@ -23,8 +23,7 @@
 #'
 #' \dontrun{
 #'   data(K562_bed)
-#'   data(gtf_human)
-#'   PlotGene(bed = K562_bed, geneID = "GAPDH", gtf = gtf_human)
+#'   plot_gene(bed = K562_bed, gene = "GAPDH", gtf = gtf_hg38)
 #' }
 "K562_bed"
 
@@ -51,57 +50,48 @@
 #' head(HepG2_bed)
 #'
 #' \dontrun{
-#'   data(HepG2_bed)
-#'   data(gtf_human)
-#'   PlotGene(bed = HepG2_bed, geneID = "GAPDH", gtf = gtf_human)
+#'   plot_gene(bed = HepG2_bed, gene = "GAPDH", gtf = gtf_hg38)
 #' }
 "HepG2_bed"
 
-#' Human GTF Gene Annotation
+#' Human GTF Gene Annotation (GRCh38 / hg38)
 #'
-#' Pre-loaded Ensembl GTF annotation for human genes (GRCh38).
-#' This bundled dataset eliminates the need to download from AnnotationHub,
-#' enabling offline use and faster loading.
+#' Pre-loaded GENCODE basic annotation for human genes (GRCh38, GENCODE v38).
+#' This bundled dataset eliminates the need to download annotation at runtime.
 #'
-#' @format A data frame containing GTF annotation with the following columns:
-#' \describe{
-#'   \item{seqnames}{Chromosome}
-#'   \item{start}{Feature start position}
-#'   \item{end}{Feature end position}
-#'   \item{width}{Feature width in bp}
-#'   \item{strand}{Strand (+ or -)}
-#'   \item{source}{Annotation source}
-#'   \item{type}{Feature type (gene, transcript, exon, CDS, UTR, etc.)}
-#'   \item{score}{Annotation score}
-#'   \item{phase}{CDS phase (0, 1, or 2)}
-#'   \item{gene_id}{Ensembl gene ID}
-#'   \item{gene_version}{Ensembl gene version}
-#'   \item{gene_name}{Gene symbol}
-#'   \item{gene_source}{Gene annotation source}
-#'   \item{gene_biotype}{Gene biotype (protein_coding, lncRNA, etc.)}
-#'   \item{transcript_id}{Ensembl transcript ID}
-#'   \item{transcript_version}{Ensembl transcript version}
-#'   \item{transcript_name}{Transcript name}
-#'   \item{transcript_source}{Transcript annotation source}
-#'   \item{transcript_biotype}{Transcript biotype}
-#'   \item{transcript_support_level}{Transcript support level (TSL)}
-#'   \item{exon_number}{Exon number within the transcript}
-#'   \item{exon_id}{Ensembl exon ID}
-#'   \item{exon_version}{Ensembl exon version}
-#'   \item{protein_id}{Ensembl protein ID}
-#'   \item{protein_version}{Ensembl protein version}
-#'   \item{ccds_id}{CCDS identifier}
-#'   \item{tag}{Feature tag (e.g., basic, Ensembl_canonical)}
-#' }
-#'
-#' @source Ensembl via AnnotationHub (AH110867)
-#'
+#' @format A data frame of GTF annotation rows with columns including
+#'   `seqnames`, `start`, `end`, `width`, `strand`, `type`, `gene_id`,
+#'   `gene_name`, `gene_biotype`, `transcript_id`, `transcript_name`.
+#' @source GENCODE v38 basic annotation.
 #' @examples
 #' \dontrun{
-#'   data(gtf_human)
-#'   PlotGene(bed = your_bed, geneID = "GAPDH", gtf = gtf_human)
+#'   plot_gene(bed = your_bed, gene = "GAPDH", gtf = gtf_hg38)
 #' }
-"gtf_human"
+"gtf_hg38"
+
+#' Mouse GTF Gene Annotation (GRCm38 / mm10)
+#'
+#' Pre-loaded GENCODE basic annotation for mouse genes (GRCm38 assembly).
+#'
+#' @format See [gtf_hg38] for column layout.
+#' @source GENCODE mouse basic annotation (mm10).
+#' @examples
+#' \dontrun{
+#'   plot_gene(bed = your_bed, gene = "Gapdh", species = "mm10")
+#' }
+"gtf_mm10"
+
+#' Mouse GTF Gene Annotation (GRCm39 / mm39)
+#'
+#' Pre-loaded GENCODE basic annotation for mouse genes (GRCm39 assembly).
+#'
+#' @format See [gtf_hg38] for column layout.
+#' @source GENCODE mouse basic annotation (mm39).
+#' @examples
+#' \dontrun{
+#'   plot_gene(bed = your_bed, gene = "Gapdh", species = "mm39")
+#' }
+"gtf_mm39"
 
 #' Sample SE.MATS Skipped-Exon Splicing Events
 #'

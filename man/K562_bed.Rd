@@ -32,8 +32,7 @@ head(K562_bed)
 
 \dontrun{
   data(K562_bed)
-  data(gtf_human)
-  PlotGene(bed = K562_bed, geneID = "GAPDH", gtf = gtf_human)
+  plot_gene(bed = K562_bed, gene = "GAPDH", gtf = gtf_hg38)
 }
 }
 \keyword{datasets}

@@ -9,7 +9,7 @@
 #' @param gtf Optional GTF data frame, or path to a local GTF file.
 #'   If `NULL`, the bundled annotation for `species` is used.
 #' @param species One of `"hg38"`, `"mm10"`, or `"mm39"`.
-#' @param peaks_options Output of [peaks_options()]: BED filtering / ordering options.
+#' @param peaks_opts Output of [peaks_options()]: BED filtering / ordering options.
 #' @param style Output of [peaks_plot_style()]: visual settings.
 #'
 #' @return A ggplot object.
@@ -20,7 +20,7 @@ plot_gene <- function(bed,
                       transcript    = NULL,
                       gtf           = NULL,
                       species       = "hg38",
-                      peaks_options = peaks_options(),
+                      peaks_opts    = peaks_options(),
                       style         = peaks_plot_style()) {
 
   # 1. Determine annotation source
@@ -34,7 +34,7 @@ plot_gene <- function(bed,
     transcripts   = tx,
     bed           = bed,
     is_region     = FALSE,
-    peaks_options = peaks_options,
+    peaks_opts = peaks_opts,
     style         = style
   )
 }

@@ -67,8 +67,11 @@ get_GTF <- function(species = "hg38", file = NULL) {
     mm10 = "gtf_mm10",
     mm39 = "gtf_mm39"
   )
-  gtf <- tryCatch(
-    get(dataset, envir = asNamespace("RNAPeaks"), inherits = FALSE),
+  gtf <- tryCatch({
+      env <- new.env()
+      utils::data(list = dataset, package = "RNAPeaks", envir = env)
+      env[[dataset]]
+    },
     error = function(e) {
       abort_not_found(c(
         "Bundled annotation {.val {dataset}} could not be loaded.",

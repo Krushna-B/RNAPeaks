@@ -2,11 +2,11 @@
 % Please edit documentation in R/utils-conditions.R
 \name{abort_invalid_bed}
 \alias{abort_invalid_bed}
-\title{Internal: classed-conditions helpers for RNAPeek's Errors}
+\title{Internal: classed-conditions helpers for RNAPeak's Errors}
 \usage{
 abort_invalid_bed(message, ..., call = parent.frame())
 }
 \description{
-Internal: classed-conditions helpers for RNAPeek's Errors
+Internal: classed-conditions helpers for RNAPeak's Errors
 }
 \keyword{internal}
