@@ -11,8 +11,6 @@ TRANSCRIPT_COLS <- c("seqnames", "start", "end", "width", "strand", "type",
 
 
 
-
-
 build_gene_structure <- function(transcript, layout) {
   #Validate transcript df cols
   require_transcript_cols(transcript,

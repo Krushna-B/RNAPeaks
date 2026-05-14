@@ -43,6 +43,9 @@ prepare_bed <- function(bed,
     )
   )
 
+  # No peaks left after filtering return out
+  if (is.null(bed)) return(NULL)
+
   #Create the order of proteins
   if (!is.null(order$in_)) {
     if (!is.character(order$in_) || anyNA(order$in_)) {
@@ -144,11 +147,12 @@ filter_bed <- function(bed, chr, start, end, strand, omit = NULL, collapse) {
   }
 
   if (nrow(bed) == 0L) {
-    abort_not_found(c(
+    cli::cli_alert_info(c(
       "No peaks found in {.field {chr}:{start}-{end}} ({strand}).",
       "i" = if (length(omit) > 0L)
         "After omitting target{?s}: {.field {omit}}." else NULL
     ))
+    return(NULL)
   }
 
   bed_gr <- tryCatch({

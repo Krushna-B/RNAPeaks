@@ -7,6 +7,10 @@
 #'   the bottom of the gene structure.
 #' @param intron_color,intron_linewidth,intron_arrow_len_in Intron line and arrow geometry.
 #' @param total_arrows,max_per_intron Density controls for intron arrows.
+#' @param min_intron_frac Minimum visible fraction of the view an intron must
+#'   occupy to receive any direction arrows (0-1).
+#' @param shaft_frac Arrow shaft length as a fraction of the spacing between
+#'   arrow centers (0-1).
 #' @param peak_color,peak_height,peak_alpha,peak_border_color,peak_border_linewidth Peak rectangles.
 #' @param band_even_fill,band_odd_fill,band_sep_color,band_sep_linewidth
 #'   Alternating background bands behind protein rows.
@@ -46,6 +50,8 @@ peaks_plot_style <- function(
   intron_arrow_len_in    = 0.15,
   total_arrows           = 6,
   max_per_intron         = 2,
+  min_intron_frac        = 0.01,
+  shaft_frac             = 0.4,
 
   # peaks
   peak_color             = "purple",
@@ -121,6 +127,8 @@ peaks_plot_style <- function(
   check_scalar_number(intron_arrow_len_in, "intron_arrow_len_in", min = 0)
   check_scalar_int(total_arrows, "total_arrows", min = 0)
   check_scalar_int(max_per_intron, "max_per_intron", min = 0)
+  check_unit_interval(min_intron_frac, "min_intron_frac")
+  check_unit_interval(shaft_frac, "shaft_frac")
 
   # peaks
   check_color(peak_color, "peak_color")

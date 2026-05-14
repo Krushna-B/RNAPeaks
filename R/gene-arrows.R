@@ -8,8 +8,7 @@ build_intron_arrows <- function(introns,
                                 arrows_per_view = 12,
                                 min_intron_frac = 0.02,
                                 max_per_intron  = 6L,
-                                shaft_frac      = 0.4,
-                                default_strand  = "+") {
+                                shaft_frac      = 0.4) {
   #Validate inputs
   require_intron_df(introns)
   require_xlim(xlim)
@@ -41,8 +40,7 @@ build_intron_arrows <- function(introns,
   y_line <- resolve_intron_y(introns)
 
   #Direction per intron from strand
-  strand <- if ("strand" %in% names(introns)) introns$strand else default_strand
-  dir    <- ifelse(strand == "-", -1, 1)
+  dir <- ifelse(introns$strand == "-", -1, 1)
 
   #Emit segments
   rows <- lapply(seq_len(nrow(introns)), function(i) {

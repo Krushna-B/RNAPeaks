@@ -6,9 +6,10 @@
 #' @param bed A data frame or list of data frames with at least 6 columns.
 #'   Columns are mapped by position: 1=chr, 2=start, 3=end, 6=strand.
 #'
-#' @param split_col Optional. Name of column used to group
-#'   rows. Must exist in every bed and cannot be one of the
-#'   canonical columns (`chr`, `start`, `end`, `strand`).
+#' @param split_col Optional positive integer giving the column index used to
+#'   group rows. Every bed must have at least `split_col` columns, and the
+#'   index cannot point at a canonical position (1=chr, 2=start, 3=end,
+#'   6=strand).
 #'
 #' @return A single combined, validated bed data frame
 #'
@@ -66,24 +67,24 @@ check_bed <- function(bed, split_col = NULL) {
     ))
   }
 
-  #Check if split_col is provided and if it is valid
   if (!is.null(split_col)) {
-    if (!is.character(split_col) || length(split_col) != 1L || is.na(split_col)) {
-      abort_invalid_arg("{.arg split_col} must be a single column name or {.code NULL}.")
+    if (!is.numeric(split_col) || length(split_col) != 1L || is.na(split_col) ||
+        split_col != trunc(split_col) || split_col < 1L) {
+      abort_invalid_arg("{.arg split_col} must be a single positive integer or {.code NULL}.")
     }
-    if (split_col %in% CANONICAL) {
+    split_col <- as.integer(split_col)
+    if (split_col %in% c(1L, 2L, 3L, 6L)) {
       abort_invalid_arg(c(
-        "{.arg split_col} cannot be one of the canonical columns.",
+        "{.arg split_col} cannot point at a canonical column.",
         "x" = "You supplied {.val {split_col}}.",
-        "i" = "Canonical (positional): {.field {CANONICAL}}."
+        "i" = "Canonical positions: 1=chr, 2=start, 3=end, 6=strand."
       ))
     }
-    has_col <- vapply(beds, function(b) split_col %in% colnames(b), logical(1))
-    if (!all(has_col)) {
-      bad <- which(!has_col)
+    if (any(ncols < split_col)) {
+      bad <- which(ncols < split_col)
       abort_invalid_arg(c(
-        "Column {.field {split_col}} not found in bed {bad[1]}.",
-        "i" = "Available: {.field {colnames(beds[[bad[1]]])}}."
+        "{.arg split_col} = {split_col} exceeds available columns.",
+        "x" = "Bed {bad[1]} has {ncols[bad[1]]} column{?s}."
       ))
     }
   }

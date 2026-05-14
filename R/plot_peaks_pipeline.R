@@ -34,6 +34,9 @@ plot_peaks_pipeline <- function(transcripts,
     track_height = style$peak_height
   )
 
+  # No peaks in window
+  if (is.null(peaks_df)) return(invisible(NULL))
+
   # 3. Place gene baseline above the peak stack
   center <- max(peaks_df$y_end) + style$gene_offset + style$exon_height / 2
   layout <- list(

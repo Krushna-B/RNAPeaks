@@ -66,7 +66,14 @@ draw_plot <- function(region,
     introns$dir_end   <- ifelse(introns$strand == "+", introns$end,   introns$start)
   }
 
-  # arrows <- build_intron_arrows(introns, style)
+  arrows <- build_intron_arrows(
+    introns,
+    xlim            = xlim,
+    arrows_per_view = style$total_arrows,
+    min_intron_frac = style$min_intron_frac,
+    max_per_intron  = style$max_per_intron,
+    shaft_frac      = style$shaft_frac
+  )
 
   # left margin: fit longest protein label,
   # and in region mode also the longest gene/transcript label drawn on the left.
@@ -149,16 +156,16 @@ draw_plot <- function(region,
     ) +
 
     # Direction arrows along introns
-    # ggplot2::geom_segment(
-    #   data    = arrows,
-    #   mapping = ggplot2::aes(x = x, xend = xend, y = y, yend = yend),
-    #   arrow = grid::arrow(
-    #     type   = "open",
-    #     length = grid::unit(style$intron_arrow_len_in, "inches")
-    #   ),
-    #   color     = style$intron_color,
-    #   linewidth = style$intron_linewidth
-    # ) +
+    ggplot2::geom_segment(
+      data    = arrows,
+      mapping = ggplot2::aes(x = x, xend = xend, y = y, yend = yend),
+      arrow = grid::arrow(
+        type   = "open",
+        length = grid::unit(style$intron_arrow_len_in, "inches")
+      ),
+      color     = style$intron_color,
+      linewidth = style$intron_linewidth
+    ) +
 
     # Exons
     ggplot2::geom_rect(
