@@ -84,39 +84,23 @@ intron_rows <- function(features, center, exon_height) {
 
 
 # Place 5'/3' tags just outside the gene.
-make_strand_labels <- function(transcript,
-                               offset_frac = 0.05,
-                               offset_min  = 100,
-                               offset_max  = 1000) {
+make_strand_labels <- function(transcript, axis_pad_bp, y_offset = 0) {
   require_transcript_cols(transcript,
                           c("start", "end", "strand", "y_start"))
-  require_positive_scalar(offset_frac, "offset_frac")
-  require_positive_scalar(offset_min,  "offset_min")
-  require_positive_scalar(offset_max,  "offset_max")
-  if (offset_max < offset_min) {
-    abort_invalid_arg(c(
-      "{.arg offset_max} must be >= {.arg offset_min}.",
-      "x" = "Got {.code offset_min} = {.val {offset_min}}, {.code offset_max} = {.val {offset_max}}."
-    ))
-  }
+  require_positive_scalar(axis_pad_bp, "axis_pad_bp")
 
   transcript$strand <- as.character(transcript$strand)
 
   gene_min <- min(transcript$start)
   gene_max <- max(transcript$end)
-  y_pos    <- min(transcript$y_start)
-  offset   <- clamp((gene_max - gene_min + 1) * offset_frac,
-                    offset_min, offset_max)
+  y_pos    <- min(transcript$y_start) + y_offset
 
   labs <- if (identical(transcript$strand[1], "+")) c("5'", "3'") else c("3'", "5'")
   list(
-    left  = data.frame(Label = labs[1], X = gene_min - offset, Y = y_pos),
-    right = data.frame(Label = labs[2], X = gene_max + offset, Y = y_pos)
+    left  = data.frame(Label = labs[1], X = gene_min - axis_pad_bp, Y = y_pos),
+    right = data.frame(Label = labs[2], X = gene_max + axis_pad_bp, Y = y_pos)
   )
 }
-
-#Helper for Strand labels
-clamp <- function(x, lo, hi) min(max(x, lo), hi)
 
 
 

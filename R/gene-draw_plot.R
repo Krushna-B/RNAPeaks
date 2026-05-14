@@ -104,7 +104,7 @@ draw_plot <- function(region,
                     style$band_odd_fill)
 
   # Build 5' and 3' Tags
-  tags <- make_strand_labels(region)
+  tags <- make_strand_labels(region, axis_pad_bp = style$axis_pad_bp, y_offset = style$strand_label_y_offset)
 
   # Build Title
   coord_str <- paste0("Chr ", as.character(region$seqnames[1]),
