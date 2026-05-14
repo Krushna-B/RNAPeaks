@@ -12,7 +12,7 @@
 #'   If `NULL`, the bundled annotation for `species` is used.
 #' @param species One of `"hg38"`, `"mm10"`, or `"mm39"`. Ignored when
 #'   `gtf` is supplied.
-#' @param peaks_options Output of [peaks_options()]: BED filtering / ordering options.
+#' @param peaks_opts Output of [peaks_options()]: BED filtering / ordering options.
 #' @param style Output of [peaks_plot_style()]: visual settings.
 #'
 #' @return A ggplot object.
@@ -25,7 +25,7 @@ plot_region <- function(bed,
                         strand,
                         gtf           = NULL,
                         species       = "hg38",
-                        peaks_options = peaks_options(),
+                        peaks_opts    = peaks_options(),
                         style         = peaks_plot_style()) {
 
   # 1. Resolve annotation source
@@ -40,7 +40,7 @@ plot_region <- function(bed,
     transcripts   = txs,
     bed           = bed,
     is_region     = TRUE,
-    peaks_options = peaks_options,
+    peaks_opts    = peaks_opts,
     style         = style
   )
 }

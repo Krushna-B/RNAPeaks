@@ -57,8 +57,7 @@ draw_plot <- function(region,
 
   # Split Region into different features
   exons   <- region[region$type %in% c("CDS", "exon"), , drop = FALSE]
-  utrs    <- region[region$type %in% c("five_prime_utr",
-                                       "three_prime_utr"), , drop = FALSE]
+  utrs    <- region[region$type == "UTR", , drop = FALSE]
   introns <- region[region$type == "intron", , drop = FALSE]
 
   if (nrow(introns)) {

@@ -61,7 +61,7 @@ peaks_plot_style <- function(
   band_sep_linewidth     = 0.4,
 
   # protein labels
-  protein_label_size        = 5,
+  protein_label_size        = 4,
   protein_label_color       = "black",
   protein_label_x_offset_bp = 100,
   strand_label_size      = 5,

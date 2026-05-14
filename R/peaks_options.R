@@ -16,7 +16,7 @@
 #'
 #' @return A named list of validated peak-processing options.
 #' @export
-peaks_options <- function(split_by     = NULL,
+peaks_options <- function(split_by     = "V4",
                           omit         = NULL,
                           order_by     = "Count",
                           order_in     = NULL,

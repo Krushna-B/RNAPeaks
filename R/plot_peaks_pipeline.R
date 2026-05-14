@@ -10,8 +10,8 @@
 plot_peaks_pipeline <- function(transcripts,
                                 bed,
                                 is_region,
-                                peaks_options = peaks_options(),
-                                style         = peaks_plot_style()) {
+                                peaks_opts = peaks_options(),
+                                style      = peaks_plot_style()) {
 
   # 1. Derive filter window from transcripts
   filter <- list(
@@ -19,18 +19,18 @@ plot_peaks_pipeline <- function(transcripts,
     start    = min(transcripts$start),
     end      = max(transcripts$end),
     strand   = as.character(transcripts$strand[1]),
-    omit     = peaks_options$omit,
-    collapse = peaks_options$collapse
+    omit     = peaks_opts$omit,
+    collapse = peaks_opts$collapse
   )
 
   # 2. Validate BED, then prepare into peaks
-  bed      <- check_bed(bed, split_col = peaks_options$split_by)
+  bed      <- check_bed(bed, split_col = peaks_opts$split_by)
   peaks_df <- prepare_bed(
     bed,
     filter       = filter,
-    order        = list(by           = peaks_options$order_by,
-                        in_          = peaks_options$order_in,
-                        max_proteins = peaks_options$max_proteins),
+    order        = list(by           = peaks_opts$order_by,
+                        in_          = peaks_opts$order_in,
+                        max_proteins = peaks_opts$max_proteins),
     track_height = style$peak_height
   )
 

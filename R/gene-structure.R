@@ -1,5 +1,6 @@
 # Feature types for protein coding transcripts
-UTR_TYPES                    <- c("five_prime_utr", "three_prime_utr")
+#UTR Type after gtf normalization
+UTR_TYPES                    <- "UTR"
 PROTEIN_CODING_FEATURE_TYPES <- c("CDS", UTR_TYPES)
 
 # Columns the transcript df wil carry

@@ -43,6 +43,7 @@ get_GTF <- function(species = "hg38", file = NULL) {
         ))
       }
     )
+    gtf <- normalize_gtf(gtf)
     verify_gtf(gtf)
     cli::cli_alert_success("GTF imported and validated successfully")
     return(gtf)
@@ -80,8 +81,20 @@ get_GTF <- function(species = "hg38", file = NULL) {
       ))
     }
   )
+  gtf <- normalize_gtf(gtf)
   verify_gtf(gtf)
   return(gtf)
+}
+
+# Normalize a GTF to RNAPeaks' canonical shape:
+#    seqnames without the "chr" prefix ("chr19" -> "19")
+#    UTR feature type as a single value "UTR" (Ensembl uses
+#     "five_prime_utr"/"three_prime_utr"; GENCODE already uses "UTR")
+normalize_gtf <- function(gtf) {
+  gtf$seqnames <- sub("^chr", "", as.character(gtf$seqnames))
+  gtf$type     <- as.character(gtf$type)
+  gtf$type[gtf$type %in% c("five_prime_utr", "three_prime_utr")] <- "UTR"
+  gtf
 }
 
 # Verify a GTF data frame has the columns required by downstream functions
