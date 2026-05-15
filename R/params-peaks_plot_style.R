@@ -196,6 +196,7 @@ peaks_plot_style <- function(
   check_scalar_number(bam_track_height, "bam_track_height", min = 0)
 
   # Highlighting Region
+  highlight <- normalize_coord(highlight, "highlight")
   check_range_or_null(highlight, "highlight")
   check_color(highlight_color, "highlight_color")
   check_unit_interval(highlight_opacity, "highlight_opacity")

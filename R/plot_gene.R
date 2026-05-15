@@ -24,6 +24,11 @@ plot_gene <- function(bed,
                       style         = peaks_plot_style()) {
   tryCatch(
     {
+      # 0. Normalize string inputs
+      gene       <- normalize_str(gene)
+      transcript <- normalize_str(transcript)
+      species    <- normalize_str(species)
+
       # 1. Determine annotation source
       gtf <- get_GTF(species = species, file = gtf)
 

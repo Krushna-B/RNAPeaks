@@ -187,6 +187,34 @@ check_range_or_null <- function(x, arg, call = parent.frame()) {
   invisible(x)
 }
 
+# Trim whitespace on a single string input. NULL passes through.
+normalize_str <- function(x) {
+  if (is.null(x)) return(NULL)
+  if (is.character(x) && length(x) == 1L && !is.na(x)) return(trimws(x))
+  x
+}
+
+# Accept numeric, or character with commas / surrounding whitespace
+# (e.g. "43,190,342"), and return numeric. NULL passes through. Aborts with
+# a clear message if a character element cannot be parsed.
+normalize_coord <- function(x, arg = "x") {
+  if (is.null(x)) return(NULL)
+  if (is.character(x)) {
+    cleaned <- trimws(gsub(",", "", x, fixed = TRUE))
+    cleaned[cleaned == ""] <- NA_character_
+    coerced <- suppressWarnings(as.numeric(cleaned))
+    bad <- is.na(coerced) & !is.na(x)
+    if (any(bad)) {
+      abort_invalid_arg(c(
+        "{.arg {arg}} must be numeric or a numeric string (commas allowed).",
+        "x" = "Could not parse: {.val {x[bad]}}."
+      ))
+    }
+    return(coerced)
+  }
+  x
+}
+
 # Non-empty data frame containing every column in `required`.
 check_data_frame <- function(df, arg, required = character(),
                              call = parent.frame()) {

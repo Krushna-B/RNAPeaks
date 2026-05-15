@@ -29,6 +29,13 @@ plot_region <- function(bed,
                         style         = peaks_plot_style()) {
   tryCatch(
     {
+      # 0. Normalize inputs
+      chr     <- normalize_str(chr)
+      strand  <- normalize_str(strand)
+      species <- normalize_str(species)
+      start   <- normalize_coord(start, "start")
+      end     <- normalize_coord(end,   "end")
+
       # 1. Resolve annotation source
       gtf <- get_GTF(species = species, file = gtf)
 
