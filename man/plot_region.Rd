@@ -12,7 +12,8 @@ plot_region(
   strand,
   gtf = NULL,
   species = "hg38",
-  peaks_options = peaks_options(),
+  bam_files = NULL,
+  peaks_opts = peaks_options(),
   style = peaks_plot_style()
 )
 }
@@ -31,7 +32,12 @@ If \code{NULL}, the bundled annotation for \code{species} is used.}
 \item{species}{One of \code{"hg38"}, \code{"mm10"}, or \code{"mm39"}. Ignored when
 \code{gtf} is supplied.}
 
-\item{peaks_options}{Output of \code{\link[=peaks_options]{peaks_options()}}: BED filtering / ordering options.}
+\item{bam_files}{Optional named character vector of BAM file paths drawn as
+coverage tracks above the gene structure. Names become track labels; if
+unnamed, the filename (without extension) is used. Each BAM must be
+sorted and have a \code{.bai} index next to it.}
+
+\item{peaks_opts}{Output of \code{\link[=peaks_options]{peaks_options()}}: BED filtering / ordering options.}
 
 \item{style}{Output of \code{\link[=peaks_plot_style]{peaks_plot_style()}}: visual settings.}
 }

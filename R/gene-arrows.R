@@ -3,6 +3,23 @@ ARROW_COLS <- c("x", "xend", "y", "yend")
 
 
 
+#' Place direction arrows along introns to indicate transcription orientation.
+#'
+#' @param introns Data frame of intron rows with `start`, `end`, `strand`,
+#'   `mid_y`, `dir_start`, `dir_end`.
+#' @param xlim Numeric length-2 vector giving the visible x range.
+#' @param arrows_per_view Target total arrow count across the view.
+#' @param min_intron_frac Minimum fraction of the view an intron must span
+#'   to receive any arrows (0-1).
+#' @param min_intron_bp Minimum visible width (bp) an intron must have to
+#'   receive any arrows.
+#' @param max_per_intron Cap on arrows drawn in a single intron.
+#' @param shaft_frac Arrow shaft length as a fraction of spacing between
+#'   adjacent arrow centers (0-1).
+#' @return Data frame with columns `x`, `xend`, `y`, `yend`; empty if no
+#'   arrows are placed.
+#' @noRd
+#' @family gene
 build_intron_arrows <- function(introns,
                                 xlim,
                                 arrows_per_view = 12,

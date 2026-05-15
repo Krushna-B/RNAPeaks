@@ -2,6 +2,7 @@
 #' @keywords internal
 
 #1. Any BED Related Issue
+#' @noRd
 abort_invalid_bed <- function(message, ..., call = parent.frame()){
   cli::cli_abort(
     message,

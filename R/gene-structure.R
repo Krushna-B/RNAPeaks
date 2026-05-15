@@ -11,6 +11,15 @@ TRANSCRIPT_COLS <- c("seqnames", "start", "end", "width", "strand", "type",
 
 
 
+#' Build a single-transcript structure data frame.
+#'
+#' @param transcript GTF rows for one transcript with `seqnames`, `start`,
+#'   `end`, `strand`, `type`, and (for protein coding) `gene_biotype`.
+#' @param layout Named list with `center`, `exon_height`, `utr_height`.
+#' @return Data frame of exon/UTR/intron rows with `y_start` and `y_end`
+#'   coordinates, or `NULL` if no plottable features are present.
+#' @noRd
+#' @family gene
 build_gene_structure <- function(transcript, layout) {
   #Validate transcript df cols
   require_transcript_cols(transcript,

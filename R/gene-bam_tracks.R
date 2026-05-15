@@ -1,4 +1,6 @@
-# Per-base coverage for a BAM file over a genomic region.
+#' Per-base coverage for a BAM file over a genomic region.
+#' @family gene
+#' @noRd
 compute_bam_coverage <- function(bam_path, chr, start, end) {
   bam_chroms <- GenomeInfoDb::seqnames(
     Rsamtools::seqinfo(Rsamtools::BamFile(bam_path))
@@ -34,7 +36,9 @@ compute_bam_coverage <- function(bam_path, chr, start, end) {
 }
 
 
-# Build BAM ribbon / label / scale data frames for draw_plot().]
+#' Build BAM ribbon / label / scale data frames for draw_plot().]
+#' @family gene
+#' @noRd
 prepare_bam_tracks <- function(bam_files, chr, start, end, base_y, style) {
   if (is.null(bam_files) || !length(bam_files)) return(NULL)
   bam_files <- resolve_bam_names(bam_files)

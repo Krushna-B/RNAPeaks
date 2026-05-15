@@ -12,7 +12,7 @@
 #' @return A data frame containing GTF annotation with at least the columns
 #'   \code{seqnames, start, end, strand, type, gene_id, gene_name,
 #'   transcript_id}.
-#' @export
+#' @noRd
 #' @family gene
 get_GTF <- function(species = "hg38", file = NULL) {
   if (!is.null(file)) {

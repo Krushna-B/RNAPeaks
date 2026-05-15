@@ -7,72 +7,49 @@
 \title{RNAPeaks: Visualize RNA-Binding Protein Peaks on Gene Structures}
 \description{
 RNAPeaks creates publication-quality visualizations of RNA-binding protein
-(RBP) peaks overlaid on gene structures. It supports single-gene plots,
-multi-gene genomic region plots, splicing maps, and sequence motif analysis
-around splice junctions. Integrates with GTF annotations from Ensembl via
-AnnotationHub.
+(RBP) peaks overlaid on gene structures. It supports single-gene and
+multi-gene region plots, optional BAM coverage tracks, splicing maps, and
+sequence motif analysis around splice junctions.
 }
-\section{Main Functions}{
-
-The primary functions for generating plots are:
+\section{Plotting}{
 
 \describe{
-\item{\code{\link{PlotGene}}}{Plot RBP peaks on a single gene structure.
-Use this when you want to visualize peaks on one specific gene.}
-\item{\code{\link{PlotRegion}}}{Plot RBP peaks across a genomic region
-containing multiple genes. Use this for broader regional views.}
-\item{\code{\link{createSplicingMap}}}{Analyze protein binding frequency
-around splice junctions. Shows where RBPs bind relative to exon/intron
-boundaries in retained vs excluded splicing events.}
-\item{\code{\link{createSequenceMap}}}{Analyze sequence motif frequency
-around splice junctions. Identifies position-specific enrichment of
-motifs in different splicing event categories.}
-\item{\code{\link{createRetainedIntronSequenceMap}}}{Analyze sequence motif frequency
-around retained intron splice junctions. Identifies position-specific enrichment of
-motifs in different splicing event categories.}
-\item{\code{\link{createRetainedIntronSplicingMap}}}{Analyze protein binding frequency
-around retained intron splice junctions. Shows where RBPs bind relative to exon/intron
-boundaries in retained vs excluded splicing events.}
+\item{\code{\link[=plot_gene]{plot_gene()}}}{RBP peaks over a single transcript.}
+\item{\code{\link[=plot_region]{plot_region()}}}{RBP peaks across every gene overlapping a
+genomic window.}
+\item{\code{\link[=peaks_options]{peaks_options()}}}{BED filtering / ordering options.}
+\item{\code{\link[=peaks_plot_style]{peaks_plot_style()}}}{Visual settings (colors, sizes, BAM track
+layout, highlight band, junction lines).}
 }
 }
 
-\section{Included Data}{
-
-The package includes sample data for testing:
-\describe{
-\item{\code{\link{sample_se.mats}}}{Sample SE.MATS output for splicing analysis}
-}
-}
-
-\section{Workflow}{
-
-A typical workflow involves:
-\enumerate{
-\item Load your own BED file and validate it with \code{\link{checkBed}}
-\item Load GTF annotation once with \code{\link{LoadGTF}} and store locally
-(e.g., \code{gtf <- LoadGTF("Human")}; save with \code{saveRDS(gtf, "gtf.rds")}
-for future sessions), or use the gtf_human that is pre-loaded
-\item Call \code{\link{PlotGene}} or \code{\link{PlotRegion}}, passing the
-stored \code{gtf} object
-}
-
-For splicing analysis:
-\enumerate{
-\item Prepare SE.MATS file or use \code{sample_se.mats}
-\item Call \code{\link{createSplicingMap}} with BED and SE.MATS data to analyze protein binding
-\item Call \code{\link{createSequenceMap}} to analyze sequence motifs
-\item Call \code{\link{createRetainedIntronSplicingMap}} with BED and SE.MATS data to analyze protein binding for retained introns
-\item Call \code{\link{createRetainedIntronSequenceMap}} to analyze sequence motifs for retained introns
-}
-}
-
-\section{Helper Functions}{
+\section{Splicing analysis}{
 
 \describe{
-\item{\code{\link{checkBed}}}{Validate and standardize BED file format}
-\item{\code{\link{LoadGTF}}}{Load GTF annotation from AnnotationHub. Call once
-and store the result in a local variable or save to disk with
-\code{saveRDS()} to avoid repeated downloads.}
+\item{\code{\link[=createSplicingMap]{createSplicingMap()}}}{RBP binding frequency around skipped-exon
+splice junctions with bootstrap significance testing.}
+\item{\code{\link[=createSequenceMap]{createSequenceMap()}}}{Position-specific motif enrichment around
+skipped-exon splice junctions.}
+\item{\code{\link[=createRetainedIntronSplicingMap]{createRetainedIntronSplicingMap()}}}{Binding frequency around
+retained-intron junctions.}
+\item{\code{\link[=createRetainedIntronSequenceMap]{createRetainedIntronSequenceMap()}}}{Motif enrichment around
+retained-intron junctions.}
+}
+}
+
+\section{Helpers}{
+
+\describe{
+\item{\code{\link[=check_bed]{check_bed()}}}{Validate and normalize a BED data frame.}
+}
+}
+
+\section{Bundled data}{
+
+\describe{
+\item{\link{gtf_hg38}, \link{gtf_mm10}, \link{gtf_mm39}}{GENCODE basic annotations.}
+\item{\link{K562_bed}, \link{HepG2_bed}}{ENCODE eCLIP peak calls for testing.}
+\item{\link{sample_se.mats}}{rMATS skipped-exon events for splicing analysis.}
 }
 }
 
@@ -80,50 +57,33 @@ and store the result in a local variable or save to disk with
 \dontrun{
 library(RNAPeaks)
 
-# Load GTF once and store locally (do this once per session)
-gtf <- LoadGTF(species = "Human")
+# Single-gene plot using bundled annotation + bundled peaks
+plot_gene(bed = K562_bed, gene = "GAPDH", species = "hg38")
 
-# Optionally save for future sessions to avoid re-downloading
-saveRDS(gtf, "human_gtf.rds")
-# In future sessions: gtf <- readRDS("human_gtf.rds")
-
-# ----- Gene-level visualization -----
-result <- PlotGene(
-  bed = your_bed,
-  geneID = "GAPDH",
-  gtf = gtf
-)
-result$plot
-
-# ----- Region-level visualization -----
-PlotRegion(
-  bed = your_bed,
-  Chr = "12",
-  Start = 56000000,
-  End = 56050000,
-  Strand = "+",
-  gtf = gtf
+# Multi-gene region plot
+plot_region(
+  bed    = K562_bed,
+  chr    = "12", start = 56000000, end = 56050000, strand = "+",
+  gtf    = gtf_hg38
 )
 
-# ----- Splicing map analysis -----
-createSplicingMap(
-  bed_file = your_bed,
-  SEMATS = sample_se.mats
+# With BAM coverage tracks above the gene
+plot_gene(
+  bed       = K562_bed,
+  gene      = "GAPDH",
+  gtf       = gtf_hg38,
+  bam_files = c("Control" = "ctrl.bam", "Treated" = "treat.bam")
 )
 
-# ----- Sequence motif analysis -----
-library(BSgenome.Hsapiens.UCSC.hg38)
-createSequenceMap(
-  SEMATS = sample_se.mats,
-  sequence = "CCCC"
-)
+# Splicing + sequence analysis
+createSplicingMap(bed_file = K562_bed, SEMATS = sample_se.mats)
+createSequenceMap(SEMATS = sample_se.mats, sequence = "CCCC")
 }
 
 }
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://krushna-b.github.io/RNAPeaks/}
   \item \url{https://github.com/Krushna-B/RNAPeaks}
   \item Report bugs at \url{https://github.com/Krushna-B/RNAPeaks/issues}
 }

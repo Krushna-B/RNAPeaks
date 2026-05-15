@@ -10,13 +10,14 @@ Authors@R: c(
            email = "Ggiri@unc.edu",
            role = c("aut")))
 Description: Creates publication-quality visualizations of RNA-binding protein
-    (RBP) peaks overlaid on gene structures derived from Ensembl GTF annotations.
-    Key features include single-gene visualization with PlotGene(), multi-gene
-    genomic region plots with PlotRegion(), splicing maps that quantify RBP
-    binding frequency around exon-intron boundaries with createSplicingMap(),
-    position-specific sequence motif frequency analysis via createSequenceMap(), 
-    splicing analysis around retained intron events via createRetainedIntronSplicingMap(),
-    and motif analysis around retained intron events via createRetainedIntronSequenceMap().
+    (RBP) peaks overlaid on gene structures derived from GENCODE GTF annotations.
+    Key features include single-gene visualization with plot_gene(), multi-gene
+    genomic region plots with plot_region(), optional BAM coverage tracks,
+    splicing maps that quantify RBP binding frequency around exon-intron
+    boundaries with createSplicingMap(), position-specific sequence motif
+    frequency analysis via createSequenceMap(), splicing analysis around
+    retained intron events via createRetainedIntronSplicingMap(), and motif
+    analysis around retained intron events via createRetainedIntronSequenceMap().
 URL: https://github.com/Krushna-B/RNAPeaks
 BugReports: https://github.com/Krushna-B/RNAPeaks/issues
 Encoding: UTF-8

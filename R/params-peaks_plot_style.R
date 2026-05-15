@@ -1,5 +1,7 @@
 #' Default styling for Peak Plots
-#' Returns a named list of every visual setting used by [draw_plot()].
+#'
+#' Returns a named list of every visual setting used when rendering
+#' [plot_gene()] and [plot_region()] outputs.
 #'
 #' @param exon_color,exon_height Exon/CDS rectangles.
 #' @param utr_color,utr_height UTR rectangles.
