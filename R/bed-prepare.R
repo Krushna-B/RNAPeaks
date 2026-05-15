@@ -134,7 +134,7 @@ filter_bed <- function(bed, chr, start, end, strand, omit = NULL, collapse) {
   }
 
   # Normalize chr (strip "chr" prefix, uppercase)
-  chr <- sub("^CHR", "", toupper(as.character(chr)))
+  chr <- normalize_chr(chr)
 
   keep <- as.character(bed$chr) == chr &
     bed$start  >= start &
@@ -163,10 +163,12 @@ filter_bed <- function(bed, chr, start, end, strand, omit = NULL, collapse) {
     )
     GenomicRanges::reduce(gr, min.gapwidth = collapse)
   }, error = function(e) {
-    cli::cli_abort(c(
+    cli::cli_abort(
       "Failed to merge peaks via {.pkg GenomicRanges}.",
-      "x" = "{conditionMessage(e)}"
-    ))
+      parent = e,
+      class  = c("rnapeaks_prepare_merge_peaks", "rnapeaks_error"),
+      call   = NULL
+    )
   })
 
   cli::cli_alert_success("BED filtered successfully")

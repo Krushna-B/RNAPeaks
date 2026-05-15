@@ -87,11 +87,12 @@ get_GTF <- function(species = "hg38", file = NULL) {
 }
 
 # Normalize a GTF to RNAPeaks' canonical shape:
-#    seqnames without the "chr" prefix ("chr19" -> "19")
+#    seqnames stripped of any "chr" prefix and uppercased ("chr19" -> "19",
+#      "chrx" -> "X") so it matches the BED-side canonical form
 #    UTR feature type as a single value "UTR" (Ensembl uses
 #     "five_prime_utr"/"three_prime_utr"; GENCODE already uses "UTR")
 normalize_gtf <- function(gtf) {
-  gtf$seqnames <- sub("^chr", "", as.character(gtf$seqnames))
+  gtf$seqnames <- normalize_chr(gtf$seqnames)
   gtf$type     <- as.character(gtf$type)
   gtf$type[gtf$type %in% c("five_prime_utr", "three_prime_utr")] <- "UTR"
   gtf

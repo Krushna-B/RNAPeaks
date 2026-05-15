@@ -30,7 +30,7 @@ plot_region <- function(bed,
   tryCatch(
     {
       # 0. Normalize inputs
-      chr     <- normalize_str(chr)
+      chr     <- normalize_chr(chr)
       strand  <- normalize_str(strand)
       species <- normalize_str(species)
       start   <- normalize_coord(start, "start")
@@ -39,11 +39,10 @@ plot_region <- function(bed,
       # 1. Resolve annotation source
       gtf <- get_GTF(species = species, file = gtf)
 
-      # 2. Select all transcripts overlapping the window (one per gene)
-      #    TODO: implement select_region() in R/gene-select_transcript.R
+      # 2. Select all transcripts overlapping the window one per gene
       txs <- select_region(gtf, chr = chr, start = start, end = end, strand = strand)
 
-      # 3. Hand off to shared pipeline (computes center, builds structure, renders)
+      # 3. Start Peaks Plotting Pipeline
       plot_peaks_pipeline(
         transcripts = txs,
         bed         = bed,

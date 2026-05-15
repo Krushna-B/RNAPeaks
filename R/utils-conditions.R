@@ -194,6 +194,15 @@ normalize_str <- function(x) {
   x
 }
 
+# Canonicalise a chromosome name: trim, uppercase, strip a leading "CHR".
+# So "chr19", "Chr19", " CHR19" all become "19"; "chrX" -> "X". NULL passes
+# through. The same canonical form is used by the BED and GTF normalizers,
+# so values from any source compare directly.
+normalize_chr <- function(x) {
+  if (is.null(x)) return(NULL)
+  sub("^CHR", "", toupper(trimws(as.character(x))))
+}
+
 # Accept numeric, or character with commas / surrounding whitespace
 # (e.g. "43,190,342"), and return numeric. NULL passes through. Aborts with
 # a clear message if a character element cannot be parsed.

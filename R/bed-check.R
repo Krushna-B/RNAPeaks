@@ -101,7 +101,7 @@ check_bed <- function(bed, split_col = NULL) {
 
   #Combine into one bed and normalize
   combined <- do.call(rbind, beds)
-  combined$chr <- sub("^CHR", "", toupper(as.character(combined$chr))) #All upper case, '1', 'X', 'Y'
+  combined$chr <- normalize_chr(combined$chr) #All upper case, '1', 'X', 'Y'
   combined$start <- suppressWarnings(as.numeric(combined$start))
   combined$end   <- suppressWarnings(as.numeric(combined$end))    #may produce NA which will be ignored
   combined$strand <- as.character(combined$strand)
