@@ -12,6 +12,10 @@
 #'   If `NULL`, the bundled annotation for `species` is used.
 #' @param species One of `"hg38"`, `"mm10"`, or `"mm39"`. Ignored when
 #'   `gtf` is supplied.
+#' @param bam_files Optional named character vector of BAM file paths drawn as
+#'   coverage tracks above the gene structure. Names become track labels; if
+#'   unnamed, the filename (without extension) is used. Each BAM must be
+#'   sorted and have a `.bai` index next to it.
 #' @param peaks_opts Output of [peaks_options()]: BED filtering / ordering options.
 #' @param style Output of [peaks_plot_style()]: visual settings.
 #'
@@ -25,6 +29,7 @@ plot_region <- function(bed,
                         strand,
                         gtf           = NULL,
                         species       = "hg38",
+                        bam_files     = NULL,
                         peaks_opts    = peaks_options(),
                         style         = peaks_plot_style()) {
   tryCatch(
@@ -48,6 +53,7 @@ plot_region <- function(bed,
         bed         = bed,
         is_region   = TRUE,
         window      = list(start = start, end = end),
+        bam_files   = bam_files,
         peaks_opts  = peaks_opts,
         style       = style
       )

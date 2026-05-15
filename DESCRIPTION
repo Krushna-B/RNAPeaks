@@ -1,7 +1,7 @@
 Package: RNAPeaks
 Type: Package
 Title: RNA-Binding Protein Peak Visualization and Analysis  
-Version: 1.2.0
+Version: 1.3.0
 Authors@R: c(
     person("Krushna", "Bhanushali",
            email = "Krushna.Bhanushali@unc.edu",
@@ -17,7 +17,7 @@ Description: Creates publication-quality visualizations of RNA-binding protein
     position-specific sequence motif frequency analysis via createSequenceMap(), 
     splicing analysis around retained intron events via createRetainedIntronSplicingMap(),
     and motif analysis around retained intron events via createRetainedIntronSequenceMap().
-URL: https://krushna-b.github.io/RNAPeaks/, https://github.com/Krushna-B/RNAPeaks
+URL: https://github.com/Krushna-B/RNAPeaks
 BugReports: https://github.com/Krushna-B/RNAPeaks/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

@@ -19,8 +19,9 @@
 #' @family gene
 draw_plot <- function(region,
                       peaks,
-                      is_region = FALSE,
-                      style     = peaks_plot_style()) {
+                      bam_tracks = NULL,
+                      is_region  = FALSE,
+                      style      = peaks_plot_style()) {
   # Validate Params
   check_data_frame(region, "region",
                    required = c("start", "end", "strand", "seqnames",
@@ -91,6 +92,11 @@ draw_plot <- function(region,
       margins <- c(margins,
                    find_left_margin(unique(gene_label_text(region)),
                                     style$gene_label_size))
+    }
+    if (!is.null(bam_tracks)) {
+      margins <- c(margins,
+                   find_left_margin(bam_tracks$labels$track,
+                                    style$bam_label_size))
     }
     left_margin <- max(margins)
   }
@@ -242,6 +248,39 @@ draw_plot <- function(region,
 
     ggplot2::ggtitle(plot_title, subtitle = plot_sub) +
     plot_theme(style, left_margin)
+
+  # BAM coverage tracks above the gene
+  if (!is.null(bam_tracks)) {
+    bam_label_x <- if (flip) {
+      x_max + style$protein_label_x_offset_bp
+    } else {
+      x_min - style$protein_label_x_offset_bp
+    }
+    g <- g +
+      ggplot2::geom_ribbon(
+        data    = bam_tracks$ribbons,
+        mapping = ggplot2::aes(x = pos, ymin = y_bot, ymax = y_top, group = track),
+        fill    = style$bam_fill_color,
+        alpha   = style$bam_fill_alpha,
+        color   = NA
+      ) +
+      ggplot2::geom_text(
+        data        = bam_tracks$labels,
+        mapping     = ggplot2::aes(x = bam_label_x, y = y, label = track),
+        inherit.aes = FALSE,
+        hjust       = 1,
+        size        = style$bam_label_size,
+        color       = style$protein_label_color
+      ) +
+      ggplot2::geom_text(
+        data        = bam_tracks$scales,
+        mapping     = ggplot2::aes(x = bam_label_x, y = y, label = text),
+        inherit.aes = FALSE,
+        hjust       = 1,
+        size        = style$bam_axis_text_size,
+        color       = style$protein_label_color
+      )
+  }
 
   # Region Plot: Transcript labels on side
   if (is_region) g <- g + region_gene_labels(region, xlim, style, flip = flip)

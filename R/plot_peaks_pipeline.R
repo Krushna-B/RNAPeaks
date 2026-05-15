@@ -9,10 +9,12 @@
 #   4. renders (draw_plot validates the region/peaks contracts itself)
 #
 #' @noRd
+#' @family plot
 plot_peaks_pipeline <- function(transcripts,
                                 bed,
                                 is_region,
                                 window     = NULL,
+                                bam_files  = NULL,
                                 peaks_opts = peaks_options(),
                                 style      = peaks_plot_style()) {
 
@@ -62,7 +64,17 @@ plot_peaks_pipeline <- function(transcripts,
     build_gene_structure(transcripts, layout)
   }
 
-  # 5. Render (draw_plot validates the region + peaks contracts)
-  draw_plot(region = region, peaks = peaks_df,
+  # 5. BAM coverage tracks stack above the gene structure
+  bam_tracks <- prepare_bam_tracks(
+    bam_files = bam_files,
+    chr       = filter$chr,
+    start     = window$start,
+    end       = window$end,
+    base_y    = max(region$y_end) + style$bam_gap,
+    style     = style
+  )
+
+  # 6. Render
+  draw_plot(region = region, peaks = peaks_df, bam_tracks = bam_tracks,
             is_region = is_region, style = style)
 }

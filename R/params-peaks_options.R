@@ -15,6 +15,7 @@
 #' @param max_proteins Cap on the number of peak tracks displayed.
 #'
 #' @return A named list of validated peak-processing options.
+#' @family params
 #' @export
 peaks_options <- function(split_by     = 4,
                           omit         = NULL,

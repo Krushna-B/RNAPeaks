@@ -38,16 +38,20 @@
 #'   Plot margins in points; `plot_left_margin = NULL` auto-fits to the
 #'   longest protein label.
 #' @param bam_fill_color,bam_fill_alpha BAM coverage track fill.
-#' @param bam_label_size,bam_axis_text_size BAM track label and y-axis text.
+#' @param bam_label_size,bam_axis_text_size BAM track label and scale-tick
+#'   text size (mm, same units as `protein_label_size`).
 #' @param bam_ylim Optional `c(min, max)` shared by all BAM tracks; `NULL`
 #'   derives a common scale from the maximum coverage across tracks.
-#' @param bam_track_height Relative height of each BAM panel (gene panel = 4).
+#' @param bam_track_height Height (y-units) of each BAM band.
+#' @param bam_gap Vertical gap (y-units) between the top of the gene structure
+#'   and the bottom of the first BAM band.
 #' @param highlight Optional `c(start, stop)` for an overlay band.
 #' @param highlight_color,highlight_opacity Highlight band appearance.
 #' @param show_junctions,junction_color,junction_linetype,junction_linewidth,junction_alpha
 #'   Optional dashed vertical lines at exon/UTR boundaries.
 #'
 #' @return A named list of styling parameters.
+#' @family params
 #' @export
 peaks_plot_style <- function(
   # region features
@@ -114,10 +118,11 @@ peaks_plot_style <- function(
   # BAM Coverage Tracks
   bam_fill_color         = "navy",
   bam_fill_alpha         = 0.75,
-  bam_label_size         = 9,
-  bam_axis_text_size     = 8,
+  bam_label_size         = 4,
+  bam_axis_text_size     = 2.8,
   bam_ylim               = NULL,
-  bam_track_height       = 1,
+  bam_track_height       = 0.7,
+  bam_gap                = 0.3,
 
   # Highlighting Region
   highlight              = NULL,
@@ -205,6 +210,7 @@ peaks_plot_style <- function(
   check_scalar_number(bam_axis_text_size, "bam_axis_text_size", min = 0)
   check_range_or_null(bam_ylim, "bam_ylim")
   check_scalar_number(bam_track_height, "bam_track_height", min = 0)
+  check_scalar_number(bam_gap, "bam_gap", min = 0)
 
   # Highlighting Region
   highlight <- normalize_coord(highlight, "highlight")
