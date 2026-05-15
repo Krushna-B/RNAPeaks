@@ -244,7 +244,7 @@ draw_plot <- function(region,
     plot_theme(style, left_margin)
 
   # Region Plot: Transcript labels on side
-  if (is_region) g <- g + region_gene_labels(region, xlim, style)
+  if (is_region) g <- g + region_gene_labels(region, xlim, style, flip = flip)
 
   # Highlighting Region
   g <- add_highlight_band(g, c(x_lo, x_hi), style)
@@ -327,7 +327,7 @@ gene_label_text <- function(region) {
 }
 
 # Per-transcript labels for a region plot
-region_gene_labels <- function(region, xlim, style) {
+region_gene_labels <- function(region, xlim, style, flip = FALSE) {
   agg <- stats::aggregate(y_start ~ gene_id, region, mean)
 
   lab_map <- unique(data.frame(
@@ -336,7 +336,11 @@ region_gene_labels <- function(region, xlim, style) {
     stringsAsFactors = FALSE
   ))
   df <- merge(agg, lab_map, by = "gene_id", all.x = TRUE)
-  df$x <- xlim[1] - style$axis_pad_bp * style$gene_label_x_offset
+
+  # Anchor on the visual-left edge of the plot in both scale directions.
+  # Unflipped: visual left = data x_min; flipped: visual left = data x_max.
+  off  <- style$axis_pad_bp * style$gene_label_x_offset
+  df$x <- if (flip) xlim[2] + off else xlim[1] - off
 
   ggplot2::geom_text(
     data    = df,
