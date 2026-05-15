@@ -5,6 +5,9 @@
 #' @param utr_color,utr_height UTR rectangles.
 #' @param gene_offset Vertical gap (y units) between the top peak track and
 #'   the bottom of the gene structure.
+#' @param gene_lane_height Vertical spacing (y units) between stacked gene
+#'   lanes in region plots. Clamped to `exon_height` if smaller, to prevent
+#'   adjacent gene exons from overlapping. Ignored by single-gene plots.
 #' @param intron_color,intron_linewidth,intron_arrow_len_in Intron line and arrow geometry.
 #' @param total_arrows,max_per_intron Density controls for intron arrows.
 #' @param min_intron_frac Minimum visible fraction of the view an intron must
@@ -53,6 +56,7 @@ peaks_plot_style <- function(
   utr_color              = "lightgray",
   utr_height             = 0.3,
   gene_offset            = 0.2,
+  gene_lane_height       = 0.7,
   intron_color           = "gray60",
   intron_linewidth       = 0.9,
   intron_arrow_len_in    = 0.15,
@@ -133,6 +137,13 @@ peaks_plot_style <- function(
   check_color(utr_color, "utr_color")
   check_scalar_number(utr_height, "utr_height", min = 0)
   check_scalar_number(gene_offset, "gene_offset", min = 0)
+  check_scalar_number(gene_lane_height, "gene_lane_height", min = 0)
+  if (gene_lane_height < exon_height) {
+    cli::cli_warn(c(
+      "{.arg gene_lane_height} ({gene_lane_height}) is less than {.arg exon_height} ({exon_height}); clamping to {.arg exon_height} so stacked gene exons do not overlap."
+    ))
+    gene_lane_height <- exon_height
+  }
   check_color(intron_color, "intron_color")
   check_scalar_number(intron_linewidth, "intron_linewidth", min = 0)
   check_scalar_number(intron_arrow_len_in, "intron_arrow_len_in", min = 0)

@@ -60,10 +60,16 @@ draw_plot <- function(region,
   utrs    <- region[region$type == "UTR", , drop = FALSE]
   introns <- region[region$type == "intron", , drop = FALSE]
 
+  # Compute aesthetic columns for the intron geoms; create empty columns if
+  # no introns are visible so geom_segment still finds dir_start / dir_end.
   if (nrow(introns)) {
     introns$mid_y     <- (introns$y_start + introns$y_end) / 2
     introns$dir_start <- ifelse(introns$strand == "+", introns$start, introns$end)
     introns$dir_end   <- ifelse(introns$strand == "+", introns$end,   introns$start)
+  } else {
+    introns$mid_y     <- numeric(0)
+    introns$dir_start <- numeric(0)
+    introns$dir_end   <- numeric(0)
   }
 
   arrows <- build_intron_arrows(

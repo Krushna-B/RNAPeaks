@@ -48,6 +48,93 @@ build_gene_structure <- function(transcript, layout) {
 }
 
 
+#Build a multi-transcript region structure stacked vertically
+#  - One lane per transcript_id
+build_region_structure <- function(transcripts, layout, window) {
+  require_transcript_cols(transcripts,
+                          c("seqnames", "start", "end", "strand", "type",
+                            "gene_id", "transcript_id"))
+  require_layout(layout)
+  require_window(window)
+  if (is.null(layout$gene_lane_height)) {
+    abort_invalid_arg("{.code layout$gene_lane_height} is required for region structures.")
+  }
+
+  # Order lanes left-to-right by each transcript's leftmost feature start
+  transcript_ids <- unique(stats::na.omit(transcripts$transcript_id))
+  if (!length(transcript_ids)) {
+    abort_invalid_arg("{.arg transcripts} has no usable {.field transcript_id} values.")
+  }
+  tx_starts <- vapply(transcript_ids, function(t) {
+    min(transcripts$start[transcripts$transcript_id == t])
+  }, numeric(1))
+  transcript_ids <- transcript_ids[order(tx_starts)]
+
+  # Build each transcript at its stacked center; lane i sits at
+  # center + i*lane_height
+  lane_height <- layout$gene_lane_height
+  parts <- lapply(seq_along(transcript_ids), function(i) {
+    rows <- transcripts[!is.na(transcripts$transcript_id) &
+                        transcripts$transcript_id == transcript_ids[i],
+                        , drop = FALSE]
+    per_layout <- layout
+    per_layout$center <- layout$center + (i - 1L) * lane_height
+    build_gene_structure(rows, per_layout)
+  })
+  parts <- Filter(Negate(is.null), parts)
+  if (!length(parts)) return(transcripts[0, , drop = FALSE])
+
+  region <- do.call(rbind, parts)
+
+  # Clip features to the user window so the plot shows exactly what was asked
+  clip_to_window(region, window$start, window$end)
+}
+
+
+# Trim feature start/end to [start, end] and drop rows that fall fully outside.
+# Width is recomputed.
+clip_to_window <- function(df, start, end) {
+  if (!nrow(df)) return(df)
+  df$start <- pmax(df$start, start)
+  df$end   <- pmin(df$end,   end)
+  df <- df[df$end >= df$start, , drop = FALSE]
+  if ("width" %in% names(df)) df$width <- df$end - df$start + 1L
+  df
+}
+
+
+# Validate window list passed to build_region_structure()
+require_window <- function(window) {
+  if (!is.list(window)) {
+    abort_invalid_arg(c(
+      "{.arg window} must be a list with {.field start} and {.field end}.",
+      "x" = "Got {.cls {class(window)[1]}}."
+    ))
+  }
+  missing <- setdiff(c("start", "end"), names(window))
+  if (length(missing)) {
+    abort_invalid_arg(c(
+      "{.arg window} is missing required field{?s}: {.field {missing}}."
+    ))
+  }
+  for (k in c("start", "end")) {
+    v <- window[[k]]
+    if (!is.numeric(v) || length(v) != 1L || is.na(v)) {
+      abort_invalid_arg(c(
+        "{.code window${k}} must be a single non-NA numeric value.",
+        "x" = "Got {.cls {class(v)[1]}} of length {length(v)}."
+      ))
+    }
+  }
+  if (window$start > window$end) {
+    abort_invalid_arg(c(
+      "{.code window$start} must be <= {.code window$end}.",
+      "x" = "Got start = {.val {window$start}}, end = {.val {window$end}}."
+    ))
+  }
+}
+
+
 #Compute intron positions between exon and utr features
 intron_rows <- function(features, center, exon_height) {
   #Return out if only 1 feature

@@ -1,23 +1,32 @@
 # Shared internal pipeline for plot_gene() and plot_region().
 #
 # Both public functions resolve a GTF and select transcript(s), then call the pipeline
-#   1. derives the filter window from `transcripts`
+#   1. resolves the filter / clip window (caller-supplied for region; derived
+#      from transcripts for gene)
 #   2. validates and prepares the BED into per-track peaks
-#   3. builds the gene or region structure
+#   3. builds the gene or region structure (region structure is clipped to
+#      the window so the plot matches what the user requested)
 #   4. renders (draw_plot validates the region/peaks contracts itself)
 #
 #' @noRd
 plot_peaks_pipeline <- function(transcripts,
                                 bed,
                                 is_region,
+                                window     = NULL,
                                 peaks_opts = peaks_options(),
                                 style      = peaks_plot_style()) {
 
-  # 1. Derive filter window from transcripts
+  # 1. Resolve the active window. Gene mode window is found through transcript
+  # Region mode window is passed from input params
+  if (is.null(window)) {
+    window <- list(start = min(transcripts$start),
+                   end   = max(transcripts$end))
+  }
+
   filter <- list(
     chr      = as.character(transcripts$seqnames[1]),
-    start    = min(transcripts$start),
-    end      = max(transcripts$end),
+    start    = window$start,
+    end      = window$end,
     strand   = as.character(transcripts$strand[1]),
     omit     = peaks_opts$omit,
     collapse = peaks_opts$collapse
@@ -40,14 +49,15 @@ plot_peaks_pipeline <- function(transcripts,
   # 3. Place gene baseline above the peak stack
   center <- max(peaks_df$y_end) + style$gene_offset + style$exon_height / 2
   layout <- list(
-    center      = center,
-    exon_height = style$exon_height,
-    utr_height  = style$utr_height
+    center           = center,
+    exon_height      = style$exon_height,
+    utr_height       = style$utr_height,
+    gene_lane_height = style$gene_lane_height
   )
 
   # 4. Build the gene or region structure
   region <- if (is_region) {
-    build_region_structure(transcripts, layout)
+    build_region_structure(transcripts, layout, window = window)
   } else {
     build_gene_structure(transcripts, layout)
   }

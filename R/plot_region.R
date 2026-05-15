@@ -47,6 +47,7 @@ plot_region <- function(bed,
         transcripts = txs,
         bed         = bed,
         is_region   = TRUE,
+        window      = list(start = start, end = end),
         peaks_opts  = peaks_opts,
         style       = style
       )
