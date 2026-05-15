@@ -7,6 +7,7 @@ build_intron_arrows <- function(introns,
                                 xlim,
                                 arrows_per_view = 12,
                                 min_intron_frac = 0.02,
+                                min_intron_bp   = 0,
                                 max_per_intron  = 6L,
                                 shaft_frac      = 0.4) {
   #Validate inputs
@@ -14,6 +15,7 @@ build_intron_arrows <- function(introns,
   require_xlim(xlim)
   require_positive_scalar(arrows_per_view, "arrows_per_view")
   require_unit_fraction(min_intron_frac,   "min_intron_frac")
+  require_positive_scalar(min_intron_bp,   "min_intron_bp")
   require_positive_scalar(max_per_intron,  "max_per_intron")
   require_unit_fraction(shaft_frac,        "shaft_frac")
 
@@ -29,7 +31,8 @@ build_intron_arrows <- function(introns,
   vis_frac  <- vis_len / view_span
 
   #Arrows per intron: density proportional to visible fraction
-  n <- ifelse(vis_frac < min_intron_frac,
+  #Length smaller than min are ignored
+  n <- ifelse(vis_frac < min_intron_frac | vis_len < min_intron_bp,
               0L,
               pmin(max_per_intron,
                    pmax(1L, as.integer(round(vis_frac * arrows_per_view)))))

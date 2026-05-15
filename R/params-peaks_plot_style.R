@@ -9,6 +9,9 @@
 #' @param total_arrows,max_per_intron Density controls for intron arrows.
 #' @param min_intron_frac Minimum visible fraction of the view an intron must
 #'   occupy to receive any direction arrows (0-1).
+#' @param min_intron_bp Minimum visible width (bp) an intron must have to
+#'   receive any direction arrows. Suppresses arrowhead spillover onto
+#'   adjacent exons/UTRs in narrow introns.
 #' @param shaft_frac Arrow shaft length as a fraction of the spacing between
 #'   arrow centers (0-1).
 #' @param peak_color,peak_height,peak_alpha,peak_border_color,peak_border_linewidth Peak rectangles.
@@ -56,6 +59,7 @@ peaks_plot_style <- function(
   total_arrows           = 6,
   max_per_intron         = 2,
   min_intron_frac        = 0.01,
+  min_intron_bp          = 1000,
   shaft_frac             = 0.4,
 
   # peaks
@@ -135,6 +139,7 @@ peaks_plot_style <- function(
   check_scalar_int(total_arrows, "total_arrows", min = 0)
   check_scalar_int(max_per_intron, "max_per_intron", min = 0)
   check_unit_interval(min_intron_frac, "min_intron_frac")
+  check_scalar_number(min_intron_bp, "min_intron_bp", min = 0)
   check_unit_interval(shaft_frac, "shaft_frac")
 
   # peaks

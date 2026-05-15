@@ -71,6 +71,7 @@ draw_plot <- function(region,
     xlim            = xlim,
     arrows_per_view = style$total_arrows,
     min_intron_frac = style$min_intron_frac,
+    min_intron_bp   = style$min_intron_bp,
     max_per_intron  = style$max_per_intron,
     shaft_frac      = style$shaft_frac
   )
@@ -218,16 +219,19 @@ draw_plot <- function(region,
       color       = style$protein_label_color
     ) +
 
-    # 5'/3' tags
+    # 5'/3' tags. Swap hjust under flip so labels extend OUTWARD (away from
+    # the gene) in visual space when scale_x_reverse mirrors the panel.
     ggplot2::geom_text(
       data    = tags$left,
       mapping = ggplot2::aes(label = Label, x = X, y = Y),
-      hjust = 1, size = style$strand_label_size, color = style$strand_label_color
+      hjust = if (flip) 0 else 1,
+      size = style$strand_label_size, color = style$strand_label_color
     ) +
     ggplot2::geom_text(
       data    = tags$right,
       mapping = ggplot2::aes(label = Label, x = X, y = Y),
-      hjust = 0, size = style$strand_label_size, color = style$strand_label_color
+      hjust = if (flip) 1 else 0,
+      size = style$strand_label_size, color = style$strand_label_color
     ) +
 
     ggplot2::ggtitle(plot_title, subtitle = plot_sub) +
