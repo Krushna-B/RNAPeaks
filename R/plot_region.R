@@ -27,20 +27,34 @@ plot_region <- function(bed,
                         species       = "hg38",
                         peaks_opts    = peaks_options(),
                         style         = peaks_plot_style()) {
+  tryCatch(
+    {
+      # 1. Resolve annotation source
+      gtf <- get_GTF(species = species, file = gtf)
 
-  # 1. Resolve annotation source
-  gtf <- get_GTF(species = species, file = gtf)
+      # 2. Select all transcripts overlapping the window (one per gene)
+      #    TODO: implement select_region() in R/gene-select_transcript.R
+      txs <- select_region(gtf, chr = chr, start = start, end = end, strand = strand)
 
-  # 2. Select all transcripts overlapping the window (one per gene)
-  #    TODO: implement select_region() in R/gene-select_transcript.R
-  txs <- select_region(gtf, chr = chr, start = start, end = end, strand = strand)
-
-  # 3. Hand off to shared pipeline (computes center, builds structure, renders)
-  plot_peaks_pipeline(
-    transcripts   = txs,
-    bed           = bed,
-    is_region     = TRUE,
-    peaks_opts    = peaks_opts,
-    style         = style
+      # 3. Hand off to shared pipeline (computes center, builds structure, renders)
+      plot_peaks_pipeline(
+        transcripts = txs,
+        bed         = bed,
+        is_region   = TRUE,
+        peaks_opts  = peaks_opts,
+        style       = style
+      )
+    },
+    error = function(cnd) {
+      if (inherits(cnd, "rnapeaks_error")) {
+        cli::cli_abort("Failed to generate plot.", parent = cnd)
+      } else {
+        cli::cli_abort(
+          c("Failed to generate plot.",
+            "x" = "An unexpected error occurred."),
+          parent = cnd
+        )
+      }
+    }
   )
 }

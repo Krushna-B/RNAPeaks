@@ -22,19 +22,33 @@ plot_gene <- function(bed,
                       species       = "hg38",
                       peaks_opts    = peaks_options(),
                       style         = peaks_plot_style()) {
+  tryCatch(
+    {
+      # 1. Determine annotation source
+      gtf <- get_GTF(species = species, file = gtf)
 
-  # 1. Determine annotation source
-  gtf <- get_GTF(species = species, file = gtf)
+      # 2. Select a single transcript
+      tx <- select_transcript(gtf, geneID = gene, TxID = transcript)
 
-  # 2. Select a single transcript
-  tx <- select_transcript(gtf, geneID = gene, TxID = transcript)
-
-  # 3. Start Peaks Plotting Pipeline
-  plot_peaks_pipeline(
-    transcripts   = tx,
-    bed           = bed,
-    is_region     = FALSE,
-    peaks_opts = peaks_opts,
-    style         = style
+      # 3. Start Peaks Plotting Pipeline
+      plot_peaks_pipeline(
+        transcripts = tx,
+        bed         = bed,
+        is_region   = FALSE,
+        peaks_opts  = peaks_opts,
+        style       = style
+      )
+    },
+    error = function(cnd) {
+      if (inherits(cnd, "rnapeaks_error")) {
+        cli::cli_abort("Failed to generate plot.", parent = cnd)
+      } else {
+        cli::cli_abort(
+          c("Failed to generate plot.",
+            "x" = "An unexpected error occurred."),
+          parent = cnd
+        )
+      }
+    }
   )
 }
