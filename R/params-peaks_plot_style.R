@@ -16,6 +16,9 @@
 #'   Alternating background bands behind protein rows.
 #' @param protein_label_size,protein_label_color,protein_label_x_offset_bp Protein label appearance.
 #' @param strand_label_size,strand_label_color 5'/3' tag appearance.
+#' @param strand_label_x_offset Horizontal distance (bp) from the gene start/end
+#'   at which the 5'/3' tags are placed. Capped at `axis_pad_bp` so labels stay
+#'   inside the padded panel.
 #' @param strand_label_y_offset Vertical shift (y units) applied to the
 #'   5'/3' tags. Positive values move the labels upward.
 #' @param gene_label_size,gene_label_color,gene_label_x_offset
@@ -74,6 +77,7 @@ peaks_plot_style <- function(
   protein_label_x_offset_bp = 100,
   strand_label_size      = 5,
   strand_label_color     = "black",
+  strand_label_x_offset  = 100,
   strand_label_y_offset  = 0,
   gene_label_size        = 5,
   gene_label_color       = "black",
@@ -152,6 +156,7 @@ peaks_plot_style <- function(
   check_scalar_number(protein_label_x_offset_bp, "protein_label_x_offset_bp", min = 0)
   check_scalar_number(strand_label_size, "strand_label_size", min = 0)
   check_color(strand_label_color, "strand_label_color")
+  check_scalar_number(strand_label_x_offset, "strand_label_x_offset", min = 0)
   check_scalar_number(strand_label_y_offset, "strand_label_y_offset")
   check_scalar_number(gene_label_size, "gene_label_size", min = 0)
   check_color(gene_label_color, "gene_label_color")

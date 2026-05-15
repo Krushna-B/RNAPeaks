@@ -83,22 +83,25 @@ intron_rows <- function(features, center, exon_height) {
 
 
 
-# Place 5'/3' tags just outside the gene.
-make_strand_labels <- function(transcript, axis_pad_bp, y_offset = 0) {
+# Place 5'/3' tags just outside the gene. x_offset is measured from the gene
+# ends and capped at axis_pad_bp so labels stay inside the padded panel.
+make_strand_labels <- function(transcript, axis_pad_bp, x_offset = axis_pad_bp, y_offset = 0) {
   require_transcript_cols(transcript,
                           c("start", "end", "strand", "y_start"))
   require_positive_scalar(axis_pad_bp, "axis_pad_bp")
+  require_positive_scalar(x_offset, "x_offset")
 
   transcript$strand <- as.character(transcript$strand)
 
   gene_min <- min(transcript$start)
   gene_max <- max(transcript$end)
   y_pos    <- min(transcript$y_start) + y_offset
+  off      <- min(x_offset, axis_pad_bp)
 
   labs <- if (identical(transcript$strand[1], "+")) c("5'", "3'") else c("3'", "5'")
   list(
-    left  = data.frame(Label = labs[1], X = gene_min - axis_pad_bp, Y = y_pos),
-    right = data.frame(Label = labs[2], X = gene_max + axis_pad_bp, Y = y_pos)
+    left  = data.frame(Label = labs[1], X = gene_min - off, Y = y_pos),
+    right = data.frame(Label = labs[2], X = gene_max + off, Y = y_pos)
   )
 }
 
