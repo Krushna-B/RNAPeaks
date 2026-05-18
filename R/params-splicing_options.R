@@ -6,10 +6,10 @@
 #'
 #' @param width_exon Integer. Bp to extend into exons from each junction.
 #' @param width_intron Integer. Bp to extend into introns from each junction.
-#' @param pval_event P-value threshold for Positive / Negative events (rMATS
-#'   `PValue` column).
-#' @param pval_control Minimum p-value for events eligible to enter the
-#'   Control pool.
+#' @param event_fdr Maximum value of the rMATS `FDR` column for an event to
+#'   be eligible as Positive or Negative.
+#' @param control_pval Minimum value of the rMATS `PValue` column for an
+#'   event to be eligible as a Control.
 #' @param psi_cutoff Length-2 numeric `c(neg, pos)` giving the
 #'   `IncLevelDifference` thresholds. Events with `ΔΨ <= neg` are Negative,
 #'   `ΔΨ >= pos` are Positive.
@@ -42,8 +42,8 @@ splicing_options <- function(
   width_intron        = 300,
 
   # Event filtering
-  pval_event          = 0.05,
-  pval_control        = 0.95,
+  event_fdr           = 0.05,
+  control_pval        = 0.95,
   psi_cutoff          = c(-0.1, 0.1),
   psi_control_max     = 0.005,
 
@@ -71,8 +71,8 @@ splicing_options <- function(
   check_scalar_int(width_intron, "width_intron", min = 1)
 
   # Event filtering
-  check_unit_interval(pval_event,   "pval_event")
-  check_unit_interval(pval_control, "pval_control")
+  check_unit_interval(event_fdr,    "event_fdr")
+  check_unit_interval(control_pval, "control_pval")
 
   if (!is.numeric(psi_cutoff) || length(psi_cutoff) != 2L || anyNA(psi_cutoff)) {
     abort_invalid_arg(c(
