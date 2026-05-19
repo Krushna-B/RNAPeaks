@@ -2,16 +2,10 @@
 #'
 #' Computes per-position motif frequency around the four splice boundaries of
 #' skipped-exon events and renders the standard four-region sequence map.
-#' Events are filtered into Negative / Positive / Control groups by
-#' `opts$psi_cutoff`, scored against the supplied motif(s), and the Control
-#' distribution is bootstrapped for the SD ribbon. Negative and Positive
-#' groups are tested per-position against Control.
 #'
-#' @param events Data frame of rMATS SE.MATS events. Required columns are
-#'   listed by [event_schema_se].
+#' @param events Data frame of rMATS SE.MATS events.
 #' @param sequence Character vector of motifs (IUPAC ambiguity codes
-#'   supported). U is converted to T automatically. Multiple motifs are
-#'   combined into a single hit set (a position counts if any motif matches).
+#'   supported).
 #' @param genome `NULL` (hg38 default), one of `"hg38"` / `"mm10"` / `"mm39"`,
 #'   or a `BSgenome` instance.
 #' @param opts Result of [splicing_options()].
@@ -28,18 +22,22 @@ skipped_exon_sequence_map <- function(events, sequence,
                                        opts   = splicing_options(),
                                        style  = splicing_style(),
                                        title  = "") {
-  motifs <- .normalize_motifs(sequence)
-  bsg    <- .resolve_genome(genome)
-  scorer <- function(regions_gr, n_events, n_regions, region_width) {
-    motif_scorer(regions_gr, bsg, motifs, n_events, n_regions, region_width)
-  }
-  event_map_pipeline(
-    events  = events,
-    schema  = event_schema_se,
-    scorer  = scorer,
-    opts    = opts,
-    style   = style,
-    plot_fn = plot_event_map,
-    title   = title
-  )
+  .run_sm_entry("skipped exon sequence map", {
+    .assert_sm_entry_args(title)
+
+    motifs <- .normalize_motifs(sequence)
+    bsg    <- .resolve_genome(genome)
+    scorer <- function(regions_gr, n_events, n_regions, region_width) {
+      motif_scorer(regions_gr, bsg, motifs, n_events, n_regions, region_width)
+    }
+    event_map_pipeline(
+      events  = events,
+      schema  = event_schema_se,
+      scorer  = scorer,
+      opts    = opts,
+      style   = style,
+      plot_fn = plot_event_map,
+      title   = title
+    )
+  })
 }

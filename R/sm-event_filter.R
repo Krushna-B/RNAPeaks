@@ -17,8 +17,8 @@ filter_events <- function(events, schema, opts) {
     return(list(Single = events))
   }
 
-  # Neg/Pos require BOTH PValue and FDR below `event_fdr`.
-  # Control requires BOTH PValue and FDR above `control_pval`.
+  # Neg/Pos require both PValue and FDR filter
+  # Control requires both PValue and FDR filter
   event_fdr       <- opts$event_fdr
   control_pval    <- opts$control_pval
   psi_cutoff      <- opts$psi_cutoff

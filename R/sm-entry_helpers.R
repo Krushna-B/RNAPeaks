@@ -48,6 +48,50 @@
 }
 
 
+#Entry-level shape checks for splicing/sequence map functions.
+#
+#Only validates arguments whose downstream check would surface with a
+#different name (`bed_file` -> "bed" in check_bed) or that aren't validated
+#downstream at all (`title`). Everything else (events, sequence, genome,
+#opts, style) already aborts with the right arg name from its own validator,
+#so re-checking here would just be duplication.
+.assert_sm_entry_args <- function(title, bed_file = NULL, has_bed = FALSE) {
+  check_string(title, "title")
+
+  if (has_bed) {
+    ok_bed <- is.character(bed_file) || is.data.frame(bed_file) ||
+              (is.list(bed_file) && length(bed_file) > 0L &&
+               all(vapply(bed_file, is.data.frame, logical(1))))
+    if (!ok_bed) {
+      abort_invalid_arg(c(
+        "{.arg bed_file} must be a file path, BED data frame, or list of BED data frames.",
+        "x" = "Got {.cls {class(bed_file)[1]}}.",
+        "i" = "Did the argument order get mixed up?"
+      ))
+    }
+  }
+}
+
+
+#Error wrapper for the splicing/sequence map entry points.
+.run_sm_entry <- function(map_name, body) {
+  tryCatch(
+    body,
+    error = function(cnd) {
+      msg <- paste0("Failed to generate ", map_name, ".")
+      if (inherits(cnd, "rnapeaks_error")) {
+        cli::cli_abort(msg, parent = cnd)
+      } else {
+        cli::cli_abort(
+          c(msg, "x" = "An unexpected error occurred."),
+          parent = cnd
+        )
+      }
+    }
+  )
+}
+
+
 #Normalize motifs: trim, uppercase, U to T
 .normalize_motifs <- function(sequence) {
   if (!is.character(sequence) || length(sequence) == 0L ||

@@ -2,10 +2,7 @@
 #'
 #' Computes per-position peak binding frequency around the two splice
 #' boundaries of retained-intron events and renders the two-region splicing
-#' map. Events are filtered into Negative / Positive / Control groups by
-#' `opts$psi_cutoff`, scored against the supplied peaks, and the Control
-#' distribution is bootstrapped for the SD ribbon. Negative and Positive
-#' groups are tested per-position against Control.
+#' map.
 #'
 #' @param events Data frame of rMATS RI.MATS events. Required columns are
 #'   listed by [event_schema_ri].
@@ -24,17 +21,21 @@ retained_intron_splicing_map <- function(events, bed_file,
                                           opts  = splicing_options(),
                                           style = splicing_style(),
                                           title = "") {
-  bed_gr <- .peaks_to_granges(bed_file)
-  scorer <- function(regions_gr, n_events, n_regions, region_width) {
-    peaks_scorer(regions_gr, bed_gr, n_events, n_regions, region_width)
-  }
-  event_map_pipeline(
-    events  = events,
-    schema  = event_schema_ri,
-    scorer  = scorer,
-    opts    = opts,
-    style   = style,
-    plot_fn = plot_event_map,
-    title   = title
-  )
+  .run_sm_entry("retained intron splicing map", {
+    .assert_sm_entry_args(title, bed_file = bed_file, has_bed = TRUE)
+
+    bed_gr <- .peaks_to_granges(bed_file)
+    scorer <- function(regions_gr, n_events, n_regions, region_width) {
+      peaks_scorer(regions_gr, bed_gr, n_events, n_regions, region_width)
+    }
+    event_map_pipeline(
+      events  = events,
+      schema  = event_schema_ri,
+      scorer  = scorer,
+      opts    = opts,
+      style   = style,
+      plot_fn = plot_event_map,
+      title   = title
+    )
+  })
 }

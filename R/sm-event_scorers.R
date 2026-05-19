@@ -8,14 +8,6 @@
 #' @name event_scorers
 
 # Place per-bp hits into the score matrix.
-#
-# `position_in_region` is always 1-based within its region. `position_in_transcript_order`
-# tells us which orientation it's in:
-#   FALSE (default): genomic order, e.g. from findOverlaps. Minus-strand positions
-#     need to be mirrored within the region to land in plot/transcript order.
-#   TRUE: already transcript order, e.g. motif starts from vmatchPattern on
-#     getSeq output (getSeq already reverse-complemented minus-strand regions).
-#     No within-region flip needed; only the region index is flipped.
 .fill_score_matrix <- function(M, n_regions, region_width,
                                event_ids, region_indices,
                                strands, position_in_region,
