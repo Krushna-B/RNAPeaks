@@ -105,7 +105,7 @@ utils::globalVariables(c(
   "Inc_1", "ribbon_fill", "start_pos", "end_pos", "max_y",
   "schematic_start", "schematic_end", "bar_y", "overlap_count", "match_count",
   "position_in_bin", "position_in_region", "region_idx", "frequency_sd",
-  "n_events", "pvalue_adj", "significant",
+  "n_events", "pvalue_adj", "significant", "plot_group",
   # Other
   "bed_df", "MASTER_FILE"
 ))

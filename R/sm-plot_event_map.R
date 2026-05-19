@@ -25,7 +25,7 @@ plot_event_map <- function(data, schema, style, opts,
       x     = schematic_position,
       y     = moving_avg,
       color = group,
-      group = interaction(region_idx, group)
+      group = plot_group
     )
   ) +
     .ribbon_layer(data, style) +
@@ -47,13 +47,14 @@ plot_event_map <- function(data, schema, style, opts,
 
 #Helpers
 
-#Add per-row x position.
+#Add per-row x position and the (region x group) plotting group key.
 .add_schematic_position <- function(data, schema, layout, opts) {
   data$schematic_position <-
     layout$region_starts[data$region_idx] + data$position_in_region
 
   present <- intersect(c("Negative", "Positive", "Control"), unique(data$group))
-  data$group <- factor(data$group, levels = present)
+  data$group      <- factor(data$group, levels = present)
+  data$plot_group <- paste(data$region_idx, data$group, sep = ":")
   data
 }
 
@@ -85,7 +86,7 @@ plot_event_map <- function(data, schema, style, opts,
     data    = ribbon,
     mapping = ggplot2::aes(x = schematic_position,
                             ymin = ymin, ymax = ymax,
-                            group = interaction(region_idx, group),
+                            group = plot_group,
                             fill  = ribbon_fill),
     alpha = style$ribbon_alpha, color = NA, inherit.aes = FALSE
   )

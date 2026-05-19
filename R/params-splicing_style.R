@@ -31,7 +31,7 @@ splicing_style <- function(
 
   # Line / ribbon
   line_width        = 0.8,
-  line_alpha        = 0.7,
+  line_alpha        = 1,
   ribbon_alpha      = 0.3,
 
   # Significance bars

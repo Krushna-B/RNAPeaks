@@ -39,7 +39,7 @@
 splicing_options <- function(
   #Region geometry
   width_exon          = 50,
-  width_intron        = 300,
+  width_intron        = 250,
 
   # Event filtering
   event_fdr           = 0.05,

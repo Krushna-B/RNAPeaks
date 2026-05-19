@@ -14,7 +14,7 @@
 filter_SEMATS_events <- function(SEMATS,
                                   p_valueRetainedAndExclusion = 0.05,
                                   p_valueControls = 0.95,
-                                  retained_IncLevelDifference = -0.1,
+                                  retained_IncLevelDifference =  -0.1,
                                   exclusion_IncLevelDifference = 0.1,
                                   Min_Count = 50,
                                   read_count_cols = c("IJC_SAMPLE_1", "SJC_SAMPLE_1",

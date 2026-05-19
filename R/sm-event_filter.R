@@ -17,8 +17,8 @@ filter_events <- function(events, schema, opts) {
     return(list(Single = events))
   }
 
-  # Neg/Pos filter on rMATS FDR column
-  # Control filters on rMATS PValue column
+  # Neg/Pos require BOTH PValue and FDR below `event_fdr`.
+  # Control requires BOTH PValue and FDR above `control_pval`.
   event_fdr       <- opts$event_fdr
   control_pval    <- opts$control_pval
   psi_cutoff      <- opts$psi_cutoff
@@ -28,8 +28,8 @@ filter_events <- function(events, schema, opts) {
   pv <- events$PValue
   dp <- events$IncLevelDifference
 
-  sig_mask     <- fd < event_fdr
-  control_mask <- pv > control_pval
+  sig_mask     <- fd < event_fdr    & pv < event_fdr
+  control_mask <- pv > control_pval & fd > control_pval
 
   #filter
   groups_all <- list(

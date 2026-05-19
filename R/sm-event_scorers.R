@@ -11,11 +11,18 @@
 .fill_score_matrix <- function(M, n_regions, region_width,
                                event_ids, region_indices,
                                strands, position_in_region) {
+  is_minus <- strands == "-"
 
-  plot_region_idx <- ifelse(strands == "+",
-                            region_indices,
-                            n_regions - region_indices + 1L)
-  col_idx <- (plot_region_idx - 1L) * region_width + position_in_region
+  plot_region_idx <- ifelse(is_minus,
+                            n_regions - region_indices + 1L,
+                            region_indices)
+  plot_position_in_region <- ifelse(
+    is_minus,
+    region_width - position_in_region + 1L,
+    position_in_region
+  )
+
+  col_idx <- (plot_region_idx - 1L) * region_width + plot_position_in_region
 
   in_bounds <- !is.na(col_idx)   & !is.na(event_ids) &
                col_idx   >= 1L   & col_idx   <= ncol(M) &

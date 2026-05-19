@@ -81,7 +81,7 @@ event_map_pipeline <- function(events, schema, scorer, opts, style,
     score_matrices, control_stats, n_regions, region_width
   )
 
-  #Moving average for display only — does not feed stats
+  #Moving average for display only
   freq_df$moving_avg    <- .smooth_by_group(
     freq_df$frequency,    freq_df$group, opts$moving_average,
     n_regions, region_width
