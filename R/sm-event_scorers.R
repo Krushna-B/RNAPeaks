@@ -8,19 +8,30 @@
 #' @name event_scorers
 
 # Place per-bp hits into the score matrix.
+#
+# `position_in_region` is always 1-based within its region. `position_in_transcript_order`
+# tells us which orientation it's in:
+#   FALSE (default): genomic order, e.g. from findOverlaps. Minus-strand positions
+#     need to be mirrored within the region to land in plot/transcript order.
+#   TRUE: already transcript order, e.g. motif starts from vmatchPattern on
+#     getSeq output (getSeq already reverse-complemented minus-strand regions).
+#     No within-region flip needed; only the region index is flipped.
 .fill_score_matrix <- function(M, n_regions, region_width,
                                event_ids, region_indices,
-                               strands, position_in_region) {
+                               strands, position_in_region,
+                               position_in_transcript_order = FALSE) {
   is_minus <- strands == "-"
 
   plot_region_idx <- ifelse(is_minus,
                             n_regions - region_indices + 1L,
                             region_indices)
-  plot_position_in_region <- ifelse(
-    is_minus,
-    region_width - position_in_region + 1L,
+  plot_position_in_region <- if (position_in_transcript_order) {
     position_in_region
-  )
+  } else {
+    ifelse(is_minus,
+           region_width - position_in_region + 1L,
+           position_in_region)
+  }
 
   col_idx <- (plot_region_idx - 1L) * region_width + plot_position_in_region
 
@@ -128,10 +139,11 @@ motif_scorer <- function(regions_gr, genome, motifs,
 
     M <- .fill_score_matrix(
       M, n_regions, region_width,
-      event_ids          = region_events[region_of_hit],
-      region_indices     = region_idxs[region_of_hit],
-      strands            = region_strands[region_of_hit],
-      position_in_region = starts
+      event_ids                    = region_events[region_of_hit],
+      region_indices               = region_idxs[region_of_hit],
+      strands                      = region_strands[region_of_hit],
+      position_in_region           = starts,
+      position_in_transcript_order = TRUE
     )
   }
   M

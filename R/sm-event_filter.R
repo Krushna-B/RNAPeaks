@@ -33,9 +33,9 @@ filter_events <- function(events, schema, opts) {
 
   #filter
   groups_all <- list(
-    Negative = events[sig_mask     & dp <= psi_cutoff[1],        , drop = FALSE],
-    Positive = events[sig_mask     & dp >= psi_cutoff[2],        , drop = FALSE],
-    Control  = events[control_mask & abs(dp) <  psi_control_max, , drop = FALSE]
+    Negative = events[sig_mask     & dp < psi_cutoff[1],        , drop = FALSE],
+    Positive = events[sig_mask     & dp > psi_cutoff[2],        , drop = FALSE],
+    Control  = events[control_mask & abs(dp) < psi_control_max, , drop = FALSE]
   )
 
   requested <- intersect(c("Negative", "Positive", "Control"), opts$groups)
