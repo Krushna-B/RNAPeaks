@@ -95,7 +95,65 @@ event_schema_se <- list(
 
   schematic     = "se",
 
-  group_set     = c("Negative", "Positive", "Control")
+  group_set     = c("Negative", "Positive", "Control"),
+
+  # x-axis layout for the plotter.
+  plot_layout = function(width_exon, width_intron) {
+    bin_width <- as.integer(width_exon + width_intron)
+    gap       <- 80L
+    region_starts <- c(
+      0L,
+      bin_width + gap,
+      2L * bin_width + gap,
+      3L * bin_width + 2L * gap
+    )
+    list(
+      region_starts    = region_starts,
+      bin_width        = bin_width,
+      gap              = gap,
+      boundary_offsets = c(width_exon, width_intron, width_exon, width_intron),
+      x_max            = region_starts[4L] + bin_width
+    )
+  },
+
+  # Schematic layers for the splicing event
+  build_schematic_layers = function(layout, style, y_min, exon_height) {
+    bs <- layout$region_starts + layout$boundary_offsets
+    exon_df <- data.frame(
+      xmin = c(layout$region_starts[1L], bs[2L], bs[4L]),
+      xmax = c(bs[1L], bs[3L], layout$region_starts[4L] + layout$bin_width),
+      ymin = rep(y_min - exon_height, 3L),
+      ymax = rep(y_min, 3L),
+      fill = c("white", style$exon_col, "white"),
+      stringsAsFactors = FALSE
+    )
+    intron_y <- y_min - exon_height / 2
+    intron_df <- data.frame(
+      x    = c(bs[1L], bs[3L]),
+      xend = c(bs[2L], bs[4L]),
+      y    = rep(intron_y, 2L),
+      yend = rep(intron_y, 2L)
+    )
+    break_x <- c(
+      layout$bin_width + layout$gap / 2,
+      3L * layout$bin_width + layout$gap + layout$gap / 2
+    )
+    list(
+      ggplot2::geom_rect(
+        data = exon_df,
+        ggplot2::aes(xmin = xmin, xmax = xmax,
+                     ymin = ymin, ymax = ymax, fill = fill),
+        color = "black", linewidth = 0.5, inherit.aes = FALSE
+      ),
+      ggplot2::geom_segment(
+        data = intron_df,
+        ggplot2::aes(x = x, xend = xend, y = y, yend = yend),
+        color = "black", linewidth = 1.5, inherit.aes = FALSE
+      ),
+      ggplot2::annotate("text", x = break_x, y = y_min,
+                        label = "//", size = 8, fontface = "bold", vjust = 1)
+    )
+  }
 )
 
 
@@ -152,5 +210,52 @@ event_schema_ri <- list(
 
   schematic     = "ri",
 
-  group_set     = c("Negative", "Positive", "Control")
+  group_set     = c("Negative", "Positive", "Control"),
+
+  # x-axis layout for the plotter.
+  plot_layout = function(width_exon, width_intron) {
+    bin_width <- as.integer(width_exon + width_intron)
+    gap       <- 80L
+    region_starts <- c(0L, bin_width + gap)
+    list(
+      region_starts    = region_starts,
+      bin_width        = bin_width,
+      gap              = gap,
+      boundary_offsets = c(width_exon, width_intron),
+      x_max            = region_starts[2L] + bin_width
+    )
+  },
+
+  # Schematic layers for the splicing event
+  build_schematic_layers = function(layout, style, y_min, exon_height) {
+    bs <- layout$region_starts + layout$boundary_offsets
+    exon_df <- data.frame(
+      xmin = c(layout$region_starts[1L], bs[2L]),
+      xmax = c(bs[1L], layout$region_starts[2L] + layout$bin_width),
+      ymin = rep(y_min - exon_height, 2L),
+      ymax = rep(y_min, 2L),
+      fill = c("white", "white"),
+      stringsAsFactors = FALSE
+    )
+    intron_y <- y_min - exon_height / 2
+    intron_df <- data.frame(
+      x    = bs[1L],
+      xend = bs[2L],
+      y    = intron_y,
+      yend = intron_y
+    )
+    list(
+      ggplot2::geom_rect(
+        data = exon_df,
+        ggplot2::aes(xmin = xmin, xmax = xmax,
+                     ymin = ymin, ymax = ymax, fill = fill),
+        color = "black", linewidth = 0.5, inherit.aes = FALSE
+      ),
+      ggplot2::geom_segment(
+        data = intron_df,
+        ggplot2::aes(x = x, xend = xend, y = y, yend = yend),
+        color = "black", linewidth = 1.5, inherit.aes = FALSE
+      )
+    )
+  }
 )

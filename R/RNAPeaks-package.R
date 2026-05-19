@@ -104,7 +104,8 @@ utils::globalVariables(c(
   "moving_avg_sd", "control_sd", "grp_freq", "control_mean", "z_score", "p_adjusted",
   "Inc_1", "ribbon_fill", "start_pos", "end_pos", "max_y",
   "schematic_start", "schematic_end", "bar_y", "overlap_count", "match_count",
-  "position_in_bin",
+  "position_in_bin", "position_in_region", "region_idx", "frequency_sd",
+  "n_events", "pvalue_adj", "significant",
   # Other
   "bed_df", "MASTER_FILE"
 ))

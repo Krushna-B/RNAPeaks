@@ -16,7 +16,7 @@
 #'   returning an `[n_events x (n_regions * region_width)]` 0/1 matrix.
 #' @param opts Result of [splicing_options()].
 #' @param style Result of [splicing_style()].
-#' @param plot_fn `function(data, schema, style, significance, title)`
+#' @param plot_fn `function(data, schema, style, opts, significance, title)`
 #'   returning a ggplot.
 #' @param title Plot title.
 #'
@@ -96,6 +96,7 @@ event_map_pipeline <- function(events, schema, scorer, opts, style,
     data         = freq_df,
     schema       = schema,
     style        = style,
+    opts         = opts,
     significance = sig_df,
     title        = title
   )
