@@ -15,6 +15,12 @@
 #'   `ΔΨ > pos` are Positive.
 #' @param psi_control_max Maximum `abs(IncLevelDifference)` allowed for an
 #'   event to enter the Control pool.
+#' @param min_count Minimum junction-read coverage required for an event to
+#'   enter the analysis. Each rMATS sample must have
+#'   `IJC + SJC > min_count`, where per-replicate counts inside each cell
+#'   (comma-separated) are summed before comparison. `0` or `NULL` disables
+#'   the filter. When enabled, `events` must contain
+#'   `IJC_SAMPLE_1`, `SJC_SAMPLE_1`, `IJC_SAMPLE_2`, `SJC_SAMPLE_2`.
 #' @param groups Character subset of `c("Negative", "Positive", "Control")`
 #'   specifying which event groups to compute.
 #' @param control_multiplier Numeric multiplier for control sample size.
@@ -46,6 +52,7 @@ splicing_options <- function(
   control_pval        = 0.95,
   psi_cutoff          = c(-0.1, 0.1),
   psi_control_max     = 0.005,
+  min_count           = 50,
 
   # Groups
   groups              = c("Negative", "Positive", "Control"),
@@ -101,6 +108,12 @@ splicing_options <- function(
       "i" = "Otherwise the Control pool would overlap with Positive / Negative."
     ))
   }
+
+  # Coverage filter: NULL or non-negative int (0 disables)
+  if (is.null(min_count)) {
+    min_count <- 0L
+  }
+  check_scalar_int(min_count, "min_count", min = 0)
 
   # Groups
   valid_groups <- c("Negative", "Positive", "Control")

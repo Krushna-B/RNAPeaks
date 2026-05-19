@@ -10,6 +10,7 @@ filter_events <- function(events, schema, opts) {
 
   check_data_frame(events, "events", required = schema$required_cols)
   events$chr <- normalize_chr(events$chr)
+  events     <- .apply_count_filter(events, opts)
 
   # Single-distribution event types (e.g. UTR).
   if (identical(schema$group_set, "Single")) {
@@ -54,4 +55,39 @@ filter_events <- function(events, schema, opts) {
   }
 
   out
+}
+
+
+# Drop events with low junction-read coverage.
+.apply_count_filter <- function(events, opts) {
+  if (!isTRUE(opts$min_count > 0L)) return(events)
+
+  count_cols <- c("IJC_SAMPLE_1", "SJC_SAMPLE_1",
+                  "IJC_SAMPLE_2", "SJC_SAMPLE_2")
+  missing_cc <- setdiff(count_cols, colnames(events))
+  if (length(missing_cc) > 0L) {
+    abort_invalid_arg(c(
+      "{.arg events} is missing junction-count column{?s}: {.field {missing_cc}}.",
+      "i" = "Set {.arg min_count = 0} in {.fn splicing_options} to skip count filtering."
+    ))
+  }
+
+  parse_count <- function(x) {
+    vapply(strsplit(as.character(x), ",", fixed = TRUE), function(v) {
+      sum(suppressWarnings(as.numeric(v)), na.rm = TRUE)
+    }, numeric(1L))
+  }
+  in_1 <- parse_count(events[["IJC_SAMPLE_1"]])
+  sk_1 <- parse_count(events[["SJC_SAMPLE_1"]])
+  in_2 <- parse_count(events[["IJC_SAMPLE_2"]])
+  sk_2 <- parse_count(events[["SJC_SAMPLE_2"]])
+  keep <- (in_1 + sk_1) > opts$min_count &
+          (in_2 + sk_2) > opts$min_count
+
+  if (isTRUE(opts$verbose)) {
+    cli::cli_inform(
+      "min_count = {opts$min_count}: kept {sum(keep)}/{length(keep)} event{?s}."
+    )
+  }
+  events[keep, , drop = FALSE]
 }
