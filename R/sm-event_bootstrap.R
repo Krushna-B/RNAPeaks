@@ -72,6 +72,7 @@ bootstrap_control <- function(control_score_matrix, n_pos, n_neg, opts) {
     sd_per_position <- rep(0, total_positions)
   }
 
+  #Return means and std
   list(
     mean_per_position = mean_per_position,
     sd_per_position   = sd_per_position
