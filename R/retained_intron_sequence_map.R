@@ -42,6 +42,7 @@ retained_intron_sequence_map <- function(events, sequence,
     #Build Preparation (Filter out events, build regions into GRanges, Extract Sequences for those Regions)
     prep   <- .prepare_sequence_map_prep(events, event_schema_ri, opts, bsg, motifs)
 
+    #Finish rest of pipeline (Finding hits, calculating significance, and plotting)
     .run_sequence_map(motifs, motif_mode, prep,
                       event_schema_ri, opts, style, title)
   })

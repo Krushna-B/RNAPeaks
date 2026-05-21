@@ -51,6 +51,7 @@ event_schema_se <- list(
     as.integer(width_exon + width_intron + 1L)
   },
 
+  #How to make regions for specific schema
   build_regions = function(events, width_exon, width_intron) {
     n <- nrow(events)
     if (n == 0L) {
@@ -86,10 +87,11 @@ event_schema_se <- list(
     )
   },
 
+  #Labels for each region
   region_labels = c(
     "Upstream exon | intron",
-    "Intron | cassette exon",
-    "Cassette exon | intron",
+    "Intron | Skipped exon",
+    "Skipped exon | intron",
     "Intron | downstream exon"
   ),
 
@@ -116,7 +118,7 @@ event_schema_se <- list(
     )
   },
 
-  # Schematic layers for the splicing event
+  # Schematic layers for the splicing event plot
   build_schematic_layers = function(layout, style, y_min, exon_height) {
     bs <- layout$region_starts + layout$boundary_offsets
     exon_df <- data.frame(
@@ -174,6 +176,7 @@ event_schema_ri <- list(
     as.integer(width_exon + width_intron + 1L)
   },
 
+  #How to make regions for specific schema
   build_regions = function(events, width_exon, width_intron) {
     n <- nrow(events)
     if (n == 0L) {
@@ -203,6 +206,7 @@ event_schema_ri <- list(
     )
   },
 
+  #Regions Labels
   region_labels = c(
     "Upstream exon | intron",
     "Intron | downstream exon"
@@ -226,7 +230,7 @@ event_schema_ri <- list(
     )
   },
 
-  # Schematic layers for the splicing event
+  # Schematic layers for the splicing event plot
   build_schematic_layers = function(layout, style, y_min, exon_height) {
     bs <- layout$region_starts + layout$boundary_offsets
     exon_df <- data.frame(

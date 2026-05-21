@@ -19,7 +19,7 @@
 #' @noRd
 test_per_position <- function(group_counts, n_group,
                               control_counts, n_control, opts) {
-
+  #Choose which significance test
   pvalues <- switch(
     opts$stat_test,
     fisher   = .fisher_per_position(group_counts, n_group,
@@ -31,6 +31,7 @@ test_per_position <- function(group_counts, n_group,
     )
   )
 
+  #Adjust P value (FDR Correction)
   pvalue_adj <- if (isTRUE(opts$use_fdr)) {
     stats::p.adjust(pvalues, method = "BH")
   } else {
@@ -46,7 +47,7 @@ test_per_position <- function(group_counts, n_group,
   )
 }
 
-
+#Fisher Test
 .fisher_per_position <- function(group_hits, n_group, control_hits, n_control) {
   total_hits   <- group_hits + control_hits
   total_misses <- (n_group + n_control) - total_hits
@@ -59,7 +60,7 @@ test_per_position <- function(group_counts, n_group,
   )
 }
 
-
+#Binomial Test
 .binomial_per_position <- function(group_hits, n_group, control_hits, n_control) {
   control_rate <- control_hits / n_control
   control_rate[!is.finite(control_rate)] <- 0
