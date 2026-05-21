@@ -155,6 +155,5 @@ check_bed <- function(bed, split_col = NULL) {
     ))
   }
 
-  cli::cli_alert_success("BED files validated successfully")
   return(combined)
 }

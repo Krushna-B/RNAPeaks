@@ -42,10 +42,13 @@ plot_region <- function(bed,
       end     <- normalize_coord(end,   "end")
 
       # 1. Resolve annotation source
+      cli::cli_progress_step("Loading GTF")
       gtf <- get_GTF(species = species, file = gtf)
 
       # 2. Select all transcripts overlapping the window one per gene
+      cli::cli_progress_step("Selecting region {.field {chr}:{start}-{end}} ({strand})")
       txs <- select_region(gtf, chr = chr, start = start, end = end, strand = strand)
+      cli::cli_progress_done()
 
       # 3. Start Peaks Plotting Pipeline
       plot_peaks_pipeline(

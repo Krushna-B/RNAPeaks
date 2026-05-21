@@ -45,7 +45,6 @@ get_GTF <- function(species = "hg38", file = NULL) {
     )
     gtf <- normalize_gtf(gtf)
     verify_gtf(gtf)
-    cli::cli_alert_success("GTF imported and validated successfully")
     return(gtf)
   }
 

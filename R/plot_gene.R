@@ -35,10 +35,13 @@ plot_gene <- function(bed,
       species    <- normalize_str(species)
 
       # 1. Determine annotation source
+      cli::cli_progress_step("Loading GTF")
       gtf <- get_GTF(species = species, file = gtf)
 
       # 2. Select a single transcript
+      cli::cli_progress_step("Selecting transcript {.val {gene}}")
       tx <- select_transcript(gtf, geneID = gene, TxID = transcript)
+      cli::cli_progress_done()
 
       # 3. Start Peaks Plotting Pipeline
       plot_peaks_pipeline(

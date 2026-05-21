@@ -35,7 +35,9 @@ plot_peaks_pipeline <- function(transcripts,
   )
 
   # 2. Validate BED, then prepare into peaks
+  cli::cli_progress_step("Validating BED")
   bed      <- check_bed(bed, split_col = peaks_opts$split_by)
+  cli::cli_progress_step("Filtering peaks ({nrow(bed)} rows)")
   peaks_df <- prepare_bed(
     bed,
     filter       = filter,
@@ -46,7 +48,10 @@ plot_peaks_pipeline <- function(transcripts,
   )
 
   # No peaks in window
-  if (is.null(peaks_df)) return(invisible(NULL))
+  if (is.null(peaks_df)) {
+    cli::cli_progress_done()
+    return(invisible(NULL))
+  }
 
   # 3. Place gene baseline above the peak stack
   center <- max(peaks_df$y_end) + style$gene_offset + style$exon_height / 2
@@ -65,6 +70,11 @@ plot_peaks_pipeline <- function(transcripts,
   }
 
   # 5. BAM coverage tracks stack above the gene structure
+  if (length(bam_files) > 0L) {
+    cli::cli_progress_step(
+      "Loading BAM coverage ({length(bam_files)} track{?s})"
+    )
+  }
   bam_tracks <- prepare_bam_tracks(
     bam_files = bam_files,
     chr       = filter$chr,
@@ -75,6 +85,9 @@ plot_peaks_pipeline <- function(transcripts,
   )
 
   # 6. Render
-  draw_plot(region = region, peaks = peaks_df, bam_tracks = bam_tracks,
-            is_region = is_region, style = style)
+  cli::cli_progress_step("Rendering plot")
+  out <- draw_plot(region = region, peaks = peaks_df, bam_tracks = bam_tracks,
+                    is_region = is_region, style = style)
+  cli::cli_progress_done()
+  out
 }

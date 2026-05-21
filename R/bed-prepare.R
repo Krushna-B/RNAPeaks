@@ -171,6 +171,5 @@ filter_bed <- function(bed, chr, start, end, strand, omit = NULL, collapse) {
     )
   })
 
-  cli::cli_alert_success("BED filtered successfully")
   return (as.data.frame(bed_gr))
 }
