@@ -20,7 +20,7 @@
 #' @param plot_fn `function(data, schema, style, opts, significance, title)`
 #'   returning a ggplot.
 #' @param title Plot title.
-#' @param prep Optional precomputed result of [prepare_event_map()]. When
+#' @param prep Optional precomputed result of `prepare_event_map()`. When
 #'   supplied, `events` is not used.
 #'
 #' @return `list(plot, data)` with `data = list(frequency, significance)`.

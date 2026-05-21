@@ -48,8 +48,8 @@ data(sample_se.mats)
 head(sample_se.mats)
 
 \dontrun{
-  createSplicingMap(bed_file = your_bed, SEMATS = sample_se.mats)
-  createSequenceMap(SEMATS = sample_se.mats, sequence = "CCCC")
+  skipped_exon_splicing_map(events = sample_se.mats, bed_file = your_bed)
+  skipped_exon_sequence_map(events = sample_se.mats, sequence = "CCCC")
 }
 }
 \keyword{datasets}

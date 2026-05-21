@@ -26,14 +26,17 @@ layout, highlight band, junction lines).}
 \section{Splicing analysis}{
 
 \describe{
-\item{\code{\link[=createSplicingMap]{createSplicingMap()}}}{RBP binding frequency around skipped-exon
-splice junctions with bootstrap significance testing.}
-\item{\code{\link[=createSequenceMap]{createSequenceMap()}}}{Position-specific motif enrichment around
-skipped-exon splice junctions.}
-\item{\code{\link[=createRetainedIntronSplicingMap]{createRetainedIntronSplicingMap()}}}{Binding frequency around
+\item{\code{\link[=skipped_exon_splicing_map]{skipped_exon_splicing_map()}}}{RBP binding frequency around
+skipped-exon splice junctions with bootstrap significance testing.}
+\item{\code{\link[=skipped_exon_sequence_map]{skipped_exon_sequence_map()}}}{Position-specific motif enrichment
+around skipped-exon splice junctions.}
+\item{\code{\link[=retained_intron_splicing_map]{retained_intron_splicing_map()}}}{Binding frequency around
 retained-intron junctions.}
-\item{\code{\link[=createRetainedIntronSequenceMap]{createRetainedIntronSequenceMap()}}}{Motif enrichment around
+\item{\code{\link[=retained_intron_sequence_map]{retained_intron_sequence_map()}}}{Motif enrichment around
 retained-intron junctions.}
+\item{\code{\link[=splicing_options]{splicing_options()}}}{Event filtering, bootstrap, and significance
+options.}
+\item{\code{\link[=splicing_style]{splicing_style()}}}{Visual settings for splicing / sequence maps.}
 }
 }
 
@@ -76,8 +79,8 @@ plot_gene(
 )
 
 # Splicing + sequence analysis
-createSplicingMap(bed_file = K562_bed, SEMATS = sample_se.mats)
-createSequenceMap(SEMATS = sample_se.mats, sequence = "CCCC")
+skipped_exon_splicing_map(events = sample_se.mats, bed_file = K562_bed)
+skipped_exon_sequence_map(events = sample_se.mats, sequence = "CCCC")
 }
 
 }

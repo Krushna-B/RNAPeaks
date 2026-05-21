@@ -150,6 +150,8 @@ Returns a named list of every visual setting used when rendering
 }
 \seealso{
 Other params: 
-\code{\link{peaks_options}()}
+\code{\link{peaks_options}()},
+\code{\link{splicing_options}()},
+\code{\link{splicing_style}()}
 }
 \concept{params}

@@ -17,14 +17,17 @@
 #'
 #' @section Splicing analysis:
 #' \describe{
-#'   \item{[createSplicingMap()]}{RBP binding frequency around skipped-exon
-#'     splice junctions with bootstrap significance testing.}
-#'   \item{[createSequenceMap()]}{Position-specific motif enrichment around
-#'     skipped-exon splice junctions.}
-#'   \item{[createRetainedIntronSplicingMap()]}{Binding frequency around
+#'   \item{[skipped_exon_splicing_map()]}{RBP binding frequency around
+#'     skipped-exon splice junctions with bootstrap significance testing.}
+#'   \item{[skipped_exon_sequence_map()]}{Position-specific motif enrichment
+#'     around skipped-exon splice junctions.}
+#'   \item{[retained_intron_splicing_map()]}{Binding frequency around
 #'     retained-intron junctions.}
-#'   \item{[createRetainedIntronSequenceMap()]}{Motif enrichment around
+#'   \item{[retained_intron_sequence_map()]}{Motif enrichment around
 #'     retained-intron junctions.}
+#'   \item{[splicing_options()]}{Event filtering, bootstrap, and significance
+#'     options.}
+#'   \item{[splicing_style()]}{Visual settings for splicing / sequence maps.}
 #' }
 #'
 #' @section Helpers:
@@ -62,8 +65,8 @@
 #' )
 #'
 #' # Splicing + sequence analysis
-#' createSplicingMap(bed_file = K562_bed, SEMATS = sample_se.mats)
-#' createSequenceMap(SEMATS = sample_se.mats, sequence = "CCCC")
+#' skipped_exon_splicing_map(events = sample_se.mats, bed_file = K562_bed)
+#' skipped_exon_sequence_map(events = sample_se.mats, sequence = "CCCC")
 #' }
 #'
 "_PACKAGE"

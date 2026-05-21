@@ -1,5 +1,5 @@
 #' Internal: event-type schemas
-
+#'
 #' Schema slots:
 #' \describe{
 #'   \item{name}{Human-readable label.}
@@ -12,7 +12,7 @@
 #'   \item{build_regions}{`function(events, width_exon, width_intron)`
 #'     returning a `GRanges` of `nrow(events) * n_regions` ranges in
 #'     event-then-region order, carrying `event_id` and `region_idx` in
-#'     `mcols`.
+#'     `mcols`.}
 #'   \item{region_labels}{Length `n_regions` character vector of facet labels
 #'     (transcript order, 5' -> 3').}
 #'   \item{schematic}{String key for the plotter's bottom-strip
