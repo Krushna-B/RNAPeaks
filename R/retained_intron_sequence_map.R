@@ -3,8 +3,7 @@
 #' Computes per-position motif frequency around the two splice boundaries of
 #' retained-intron events and renders the two-region sequence map.
 #'
-#' @param events Data frame of rMATS RI.MATS events. Required columns are
-#'   listed by [event_schema_ri].
+#' @param events Data frame of rMATS RI.MATS events.
 #' @param sequence Character vector of motifs (IUPAC ambiguity codes
 #'   supported).
 #' @param genome `NULL` (hg38 default), one of `"hg38"` / `"mm10"` / `"mm39"`,
@@ -28,13 +27,19 @@ retained_intron_sequence_map <- function(events, sequence,
                                           style      = splicing_style(),
                                           title      = "",
                                           motif_mode = "combined") {
+  #Wraps Error's thrown
   wrap_sm_errors("retained intron sequence map", {
+    #Validate Input Params
     validate_sm_inputs(events, opts, style, title,
                        sequence = sequence, genome = genome,
                        motif_mode = motif_mode)
-
+    #Normalize all motifs and switch U to T
     motifs <- .normalize_motifs(sequence)
+
+    #Select Genome based on user genome input (Default is "hg38" if user doesn't provide)
     bsg    <- .resolve_genome(genome)
+
+    #Build Preparation (Filter out events, build regions into GRanges, Extract Sequences for those Regions)
     prep   <- .prepare_sequence_map_prep(events, event_schema_ri, opts, bsg, motifs)
 
     .run_sequence_map(motifs, motif_mode, prep,

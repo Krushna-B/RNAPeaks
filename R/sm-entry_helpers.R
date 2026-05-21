@@ -3,7 +3,6 @@
 #' @keywords internal
 #' @name sm_entry_helpers
 
-
 #Read, validate, and turn a BED into a reduced GRanges of peaks.
 .peaks_to_granges <- function(bed_file) {
   if (is.character(bed_file)) {
@@ -30,19 +29,22 @@
 }
 
 
-#Resolve `genome` to a BSgenome object. Shape (NULL, string, or BSgenome) is
-#already validated by validate_sm_inputs() upstream; we only check that a
-#string value is one of the supported genome keys.
+#Resolve `genome` to a BSgenome object.
+#check that a string value is one of the supported genome keys.
 .resolve_genome <- function(genome) {
+  #Default return
   if (is.null(genome))                 genome <- "hg38"
+  #If already a valid BSgenome then return
   if (methods::is(genome, "BSgenome")) return(genome)
 
+  #Select Genome
   pkg <- switch(genome,
     hg38 = "BSgenome.Hsapiens.UCSC.hg38",
     mm10 = "BSgenome.Mmusculus.UCSC.mm10",
     mm39 = "BSgenome.Mmusculus.UCSC.mm39",
     NULL
   )
+  #Validate
   if (is.null(pkg)) {
     abort_invalid_arg(c(
       "{.arg genome} must be one of {.or {.val hg38} {.val mm10} {.val mm39}}, or a BSgenome object.",
@@ -59,11 +61,8 @@
 }
 
 
-#Shape-check every argument supplied to a splicing / sequence map entry
-#point. Optional args (`bed_file`, `sequence`, `genome`) are validated only
-#when supplied at the call site. Every failure ends with a "Did the
-#argument order get mixed up?" hint so misordered calls (e.g. forgetting
-#`genome =` and having `opts` interpreted as the genome) surface clearly.
+#Validate Input params on, title string, rmats data frame, options list, style list,
+#bed file,sequence string, genome, and motif mode.
 validate_sm_inputs <- function(events, opts, style, title,
                                 bed_file, sequence, genome, motif_mode) {
   check_string(title, "title")
@@ -142,12 +141,9 @@ validate_sm_inputs <- function(events, opts, style, title,
 }
 
 
-#Wrap an entry-point body with unified error context, mirroring the pattern
-#in plot_gene() / plot_region(): classed rnapeaks_error conditions are
+#Wrap an entry-point body with unified error context, classed rnapeaks_error conditions are
 #re-raised with just the context line, everything else gets an extra
-#"unexpected error" note. `call` defaults to the entry function's frame so
-#the outer "Error in `<fn>()`" line names the public API instead of this
-#helper.
+#"unexpected error" note.s
 wrap_sm_errors <- function(map_name, body, call = parent.frame()) {
   tryCatch(
     body,
@@ -164,19 +160,22 @@ wrap_sm_errors <- function(map_name, body, call = parent.frame()) {
 }
 
 
-#Align regions to the genome's seqlevels and extract sequences once.
-#`extension` adds bp at the transcript 3' end of each region so motifs can
-#start in the last (motif_len - 1) positions. Returned `regions` keep their
-#original widths.
+#Extract sequences for all regions.
+#`extension` adds bp at the end of each region so motifs can
+#start in the last (motif_len - 1) positions. Returned `regions` with
+#their original width
 .extract_region_seqs <- function(regions_gr, genome, extension = 0L) {
+  #Create list with regions (GRanges) and seqs for GRanges (DNAstringSet)
   empty <- list(regions = GenomicRanges::GRanges(),
                 seqs    = Biostrings::DNAStringSet())
   if (length(regions_gr) == 0L) return(empty)
 
+  #Normalizes chr naming and so no issue with alignment
   aligned <- .align_seqnames_to_genome(regions_gr, genome)
   if (length(aligned) == 0L) return(empty)
 
   to_extract <- aligned
+  #Extended regions
   if (extension > 0L) {
     is_minus <- as.character(GenomicRanges::strand(aligned)) == "-"
     seqlens  <- GenomeInfoDb::seqlengths(genome)
@@ -191,6 +190,7 @@ wrap_sm_errors <- function(map_name, body, call = parent.frame()) {
     )
   }
 
+  #Extract Seqs for regiosn
   seqs <- tryCatch(
     BSgenome::getSeq(genome, to_extract),
     error = function(e) {
@@ -206,14 +206,20 @@ wrap_sm_errors <- function(map_name, body, call = parent.frame()) {
   list(regions = aligned, seqs = seqs)
 }
 
-
+#Run preparation pipeline and add extension and sequences.
 .prepare_sequence_map_prep <- function(events, schema, opts, genome, motifs) {
+  #Largest motif present
   extension <- max(nchar(motifs)) - 1L
+  #Run preparation pipeline step
   prep <- prepare_event_map(events, schema, opts)
   prep$genome <- genome
 
+  #Build list for each group (Positive, negative, control)
   seqs_by_group <- vector("list", length(prep$groups_idx))
   names(seqs_by_group) <- names(prep$groups_idx)
+
+  #Every group get sequences for every binned region (extends out last n bp base
+  #on max motif)
   for (g in names(prep$groups_idx)) {
     rs <- .extract_region_seqs(prep$regions_by_group[[g]], genome,
                                 extension = extension)
@@ -245,10 +251,13 @@ wrap_sm_errors <- function(map_name, body, call = parent.frame()) {
     )
   }
 
+  #Combined mode is just one run with all motifs
   if (motif_mode == "combined") {
     return(one_run(motifs, title))
   }
 
+  #Individual Mode is separate run for each indivudal motif (Keeping Same prep)
+  #Return Named list off the motif inputted
   results <- lapply(motifs, function(m) {
     sub_title <- if (nzchar(title)) paste0(title, " - ", m) else m
     one_run(m, sub_title)
@@ -258,11 +267,8 @@ wrap_sm_errors <- function(map_name, body, call = parent.frame()) {
 }
 
 
-#Uppercase, trim, convert U->T, then check every motif consists only of
-#IUPAC nucleotide codes. Shape (non-empty character, no NAs, no blanks) is
-#already validated by validate_sm_inputs() upstream; this guards against
-#characters that would otherwise blow up inside Biostrings with messages
-#like "key 70 (char 'F') not in lookup table".
+#Uppercase, trim, convert U to T, then check every motif consists only of
+#IUPAC nucleotide codes.
 .normalize_motifs <- function(sequence) {
   sequence <- toupper(trimws(sequence))
 
