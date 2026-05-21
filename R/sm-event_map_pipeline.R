@@ -59,6 +59,7 @@ event_map_pipeline <- function(events = NULL, schema, scorer, opts, style,
       per_group[[g]] <- list(counts = integer(n_positions), n = 0L, hits = NULL)
       next
     }
+    cli::cli_progress_step("Scoring {.val {g}} ({n_g} events)")
     #Pass inputs to specific scorer for hits
     regions_g <- regions_by_group[[g]]
     hits_g    <- scorer(regions_g, n_regions, region_width, group_name = g)
@@ -73,6 +74,7 @@ event_map_pipeline <- function(events = NULL, schema, scorer, opts, style,
       hits   = if (identical(g, "Control")) hits_g else NULL
     )
   }
+  cli::cli_progress_done()
 
   #Bootstrap Controls
   control_stats <- if ("Control" %in% names(per_group)) {
@@ -89,9 +91,11 @@ event_map_pipeline <- function(events = NULL, schema, scorer, opts, style,
   } else NULL
 
   #Build significance df
+  cli::cli_progress_step("Computing significance")
   sig_df <- .significance_table(per_group, opts, style)
 
-  #Build frequency df
+  #Build frequency df + smoothing
+  cli::cli_progress_step("Assembling frequency table")
   freq_df <- .assemble_frequency_frame(per_group, control_stats,
                                         n_regions, region_width)
 
@@ -106,6 +110,7 @@ event_map_pipeline <- function(events = NULL, schema, scorer, opts, style,
   )
 
   #Return plot + data
+  cli::cli_progress_step("Rendering plot")
   plot <- plot_fn(
     data         = freq_df,
     schema       = schema,
@@ -114,6 +119,7 @@ event_map_pipeline <- function(events = NULL, schema, scorer, opts, style,
     significance = sig_df,
     title        = title
   )
+  cli::cli_progress_done()
 
   list(plot = plot, data = list(frequency = freq_df, significance = sig_df))
 }
@@ -125,6 +131,7 @@ event_map_pipeline <- function(events = NULL, schema, scorer, opts, style,
 #' into group index sets, and pre-builds per-group region `GRanges`.
 #' @noRd
 prepare_event_map <- function(events, schema, opts) {
+  cli::cli_progress_step("Preparing events ({nrow(events)} rows)")
   #Validate events frame based on scheme type
   check_data_frame(events, "events", required = schema$required_cols)
   #Validate columns types
@@ -149,6 +156,7 @@ prepare_event_map <- function(events, schema, opts) {
                          opts$width_exon, opts$width_intron)
   })
 
+  cli::cli_progress_done()
   list(
     groups_idx       = groups_idx,
     events           = events,

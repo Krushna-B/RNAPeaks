@@ -221,11 +221,18 @@ wrap_sm_errors <- function(map_name, body, call = parent.frame()) {
   #Every group get sequences for every binned region (extends out last n bp base
   #on max motif)
   for (g in names(prep$groups_idx)) {
+    n_regions_g <- length(prep$regions_by_group[[g]])
+    if (n_regions_g > 0L) {
+      cli::cli_progress_step(
+        "Extracting sequences for {.val {g}} ({n_regions_g} regions)"
+      )
+    }
     rs <- .extract_region_seqs(prep$regions_by_group[[g]], genome,
                                 extension = extension)
     prep$regions_by_group[[g]] <- rs$regions
     seqs_by_group[[g]]         <- rs$seqs
   }
+  cli::cli_progress_done()
   prep$seqs_by_group <- seqs_by_group
   prep
 }

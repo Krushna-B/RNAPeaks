@@ -70,7 +70,7 @@ splicing_options <- function(
   fdr_threshold       = 0.05,
 
   # Diagnostics
-  verbose             = TRUE
+  verbose             = FALSE
 ) {
 
   # Region geometry

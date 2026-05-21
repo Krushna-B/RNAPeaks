@@ -16,6 +16,7 @@
 #' @noRd
 bootstrap_control <- function(ctrl_hits, n_control, n_positions,
                               n_pos, n_neg, opts) {
+  #Validation
   if (!is.numeric(n_pos) || length(n_pos) != 1L ||
       is.na(n_pos) || n_pos < 0) {
     abort_invalid_arg("{.arg n_pos} must be a single non-negative number.")
@@ -25,11 +26,13 @@ bootstrap_control <- function(ctrl_hits, n_control, n_positions,
     abort_invalid_arg("{.arg n_neg} must be a single non-negative number.")
   }
 
+  #Build empty mean and st dev list
   zeros <- list(
     mean_per_position = rep(0, n_positions),
     sd_per_position   = rep(0, n_positions)
   )
 
+  #Exit on empty controls
   if (n_control == 0L) {
     cli::cli_warn(c(
       "No Control events available; SD ribbon will be flat at zero.",
@@ -39,15 +42,18 @@ bootstrap_control <- function(ctrl_hits, n_control, n_positions,
   }
   if (n_positions == 0L) return(zeros)
 
+  #Pull sample size and n_interations values
   sample_size  <- as.integer(round((n_pos + n_neg) * opts$control_multiplier))
   n_iterations <- as.integer(opts$control_iterations)
 
+  #Per position hit count for controls
   ctrl_counts <- if (!is.null(ctrl_hits) && length(ctrl_hits$col_idx) > 0L) {
     tabulate(ctrl_hits$col_idx, nbins = n_positions)
   } else {
     integer(n_positions)
   }
 
+  #Return mean if bootstrapping sample size is 0
   if (sample_size < 1L) {
     cli::cli_warn(
       "Bootstrap sample size is zero ({.code (n_pos + n_neg) * control_multiplier}); using raw Control mean with zero SD."
@@ -58,10 +64,16 @@ bootstrap_control <- function(ctrl_hits, n_control, n_positions,
     ))
   }
 
+  #Return on 0 controls hits
   if (is.null(ctrl_hits) || length(ctrl_hits$col_idx) == 0L) {
     return(zeros)
   }
 
+  cli::cli_progress_step(
+    "Bootstrapping Control ({n_iterations} iterations, {sample_size} draws each)"
+  )
+
+  #Build sparse matrix
   M <- Matrix::sparseMatrix(
     i = ctrl_hits$event_id,
     j = ctrl_hits$col_idx,
@@ -69,8 +81,10 @@ bootstrap_control <- function(ctrl_hits, n_control, n_positions,
     dims = c(n_control, n_positions)
   )
 
+  #Cols to sample
   sampled <- sample.int(n_control, sample_size * n_iterations, replace = TRUE)
   iter_id <- rep(seq_len(n_iterations), each = sample_size)
+  #Build Samplign Matrix
   S <- Matrix::sparseMatrix(
     i = sampled,
     j = iter_id,
@@ -78,8 +92,10 @@ bootstrap_control <- function(ctrl_hits, n_control, n_positions,
     dims = c(n_control, n_iterations)
   )
 
+  #Matrix Multiplication to find the bootstrapping values
   iter_means <- as.matrix(Matrix::crossprod(S, M)) / sample_size
 
+  #Frequency per col for freq per position
   mean_per_position <- colMeans(iter_means)
   if (n_iterations > 1L) {
     centered_sq     <- sweep(iter_means, 2, mean_per_position, FUN = "-")^2
@@ -88,6 +104,7 @@ bootstrap_control <- function(ctrl_hits, n_control, n_positions,
     sd_per_position <- rep(0, n_positions)
   }
 
+  cli::cli_progress_done()
   list(
     mean_per_position = mean_per_position,
     sd_per_position   = sd_per_position
