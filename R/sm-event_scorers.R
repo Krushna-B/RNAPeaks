@@ -8,7 +8,7 @@
 #' @keywords internal
 #' @name event_scorers
 
-
+#Corrects for global position based on strand and based on whether splicing or sequence map
 .hits_to_col_idx <- function(region_indices, strands, position_in_region,
                              n_regions, region_width,
                              position_in_transcript_order = FALSE) {
@@ -26,7 +26,8 @@
   (plot_region_idx - 1L) * region_width + plot_position_in_region
 }
 
-
+#Input is 2 parallel vectors of event ids and columns
+#Ouptut is a unique (event,column)
 .dedupe_hits <- function(event_id, col_idx, n_positions) {
   if (length(event_id) == 0L) {
     return(list(event_id = integer(0), col_idx = integer(0)))
@@ -51,6 +52,7 @@ peaks_scorer <- function(regions_gr, bed_gr, n_regions, region_width) {
   empty <- list(event_id = integer(0), col_idx = integer(0))
   if (length(regions_gr) == 0L || length(bed_gr) == 0L) return(empty)
 
+  #Find Overlaps
   overlaps <- GenomicRanges::findOverlaps(regions_gr, bed_gr,
                                           ignore.strand = FALSE)
   if (length(overlaps) == 0L) return(empty)
@@ -58,15 +60,12 @@ peaks_scorer <- function(regions_gr, bed_gr, n_regions, region_width) {
   region_of_overlap <- S4Vectors::queryHits(overlaps)
   peak_of_overlap   <- S4Vectors::subjectHits(overlaps)
 
+  #Determine intersection of the overlap parts
   intersections <- IRanges::pintersect(regions_gr[region_of_overlap],
                                        bed_gr[peak_of_overlap])
   widths <- IRanges::width(intersections)
-  keep   <- widths > 0L
-  if (!any(keep)) return(empty)
-  region_of_overlap <- region_of_overlap[keep]
-  intersections     <- intersections[keep]
-  widths            <- widths[keep]
 
+  #Expand 1bp positions of the overlaps
   intersection_of_bp <- rep(seq_along(intersections), widths)
   bp_genomic_pos     <- IRanges::start(intersections)[intersection_of_bp] +
                         sequence(widths) - 1L
@@ -141,7 +140,7 @@ motif_scorer <- function(regions_gr, region_seqs, motifs,
                n_regions * region_width)
 }
 
-
+#Ensure genome chr names line up with internal chr naming
 .align_seqnames_to_genome <- function(regions_gr, genome) {
   genome_chrs <- GenomeInfoDb::seqnames(GenomeInfoDb::seqinfo(genome))
   levs        <- GenomeInfoDb::seqlevels(regions_gr)
