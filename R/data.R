@@ -93,47 +93,115 @@
 #' }
 "gtf_mm39"
 
-#' Sample SE.MATS Skipped-Exon Splicing Events
+#' Skipped-Exon Splicing Events (rMATS SE.MATS.JC)
 #'
-#' A dataset of skipped exon (SE) alternative splicing event provided for testing and demonstration of the splicing map and
-#' sequence motif analysis functions in RNAPeaks.
+#' rMATS junction-count (JC) output for skipped-exon (SE) alternative splicing
+#' events. Bundled for testing and demonstration of the splicing-map and
+#' sequence-motif analysis functions.
 #'
-#' @format A data frame with 87,736 observations and 23 variables:
+#' @format A data frame with 40,136 rows and 27 columns:
 #' \describe{
 #'   \item{ID}{Event ID}
 #'   \item{GeneID}{Ensembl gene ID}
 #'   \item{geneSymbol}{Gene symbol}
 #'   \item{chr}{Chromosome}
-#'   \item{strand}{Strand (+ or -)}
-#'   \item{exonStart_0base}{Skipped exon start position (0-based)}
-#'   \item{exonEnd}{Skipped exon end position}
-#'   \item{upstreamES}{Upstream exon start position}
-#'   \item{upstreamEE}{Upstream exon end position}
-#'   \item{downstreamES}{Downstream exon start position}
-#'   \item{downstreamEE}{Downstream exon end position}
-#'   \item{ID.1}{Duplicate ID column}
-#'   \item{IJC_SAMPLE_1}{Inclusion junction counts for sample 1}
-#'   \item{SJC_SAMPLE_1}{Skipping junction counts for sample 1}
-#'   \item{IJC_SAMPLE_2}{Inclusion junction counts for sample 2}
-#'   \item{SJC_SAMPLE_2}{Skipping junction counts for sample 2}
-#'   \item{IncFormLen}{Inclusion form length}
-#'   \item{SkipFormLen}{Skipping form length}
-#'   \item{PValue}{P-value for differential splicing}
-#'   \item{FDR}{False discovery rate adjusted p-value}
-#'   \item{IncLevel1}{Inclusion levels for sample 1}
-#'   \item{IncLevel2}{Inclusion levels for sample 2}
-#'   \item{IncLevelDifference}{Difference in inclusion levels between samples
-#'     (positive = more inclusion in sample 1; negative = more skipping)}
+#'   \item{strand}{Strand (`+` or `-`)}
+#'   \item{exonStart_0base}{Skipped exon start (0-based)}
+#'   \item{exonEnd}{Skipped exon end}
+#'   \item{upstreamES, upstreamEE}{Upstream exon start / end}
+#'   \item{downstreamES, downstreamEE}{Downstream exon start / end}
+#'   \item{ID.1}{Duplicate ID column emitted by rMATS}
+#'   \item{IJC_SAMPLE_1, SJC_SAMPLE_1}{Inclusion / skipping junction counts,
+#'     sample 1}
+#'   \item{IJC_SAMPLE_2, SJC_SAMPLE_2}{Inclusion / skipping junction counts,
+#'     sample 2}
+#'   \item{IncFormLen, SkipFormLen}{Effective inclusion / skipping form length}
+#'   \item{PValue, FDR}{Differential-splicing p-value and BH-adjusted FDR}
+#'   \item{IncLevel1, IncLevel2}{Per-replicate inclusion levels (PSI),
+#'     comma-separated}
+#'   \item{IncLevelDifference}{Mean ΔΨ (sample 1 − sample 2)}
+#'   \item{upstream_to_target_count, target_to_downstream_count, target_count,
+#'     upstream_to_downstream_count}{rMATS JC-specific junction counts}
 #' }
 #'
-#' @source Generated with
+#' @source rMATS turbo (\url{https://github.com/Xinglab/rmats-turbo}).
 #'
 #' @examples
-#' data(sample_se.mats)
-#' head(sample_se.mats)
+#' data(se_mats_jc)
+#' head(se_mats_jc)
 #'
 #' \dontrun{
-#'   skipped_exon_splicing_map(events = sample_se.mats, bed_file = your_bed)
-#'   skipped_exon_sequence_map(events = sample_se.mats, sequence = "CCCC")
+#'   skipped_exon_splicing_map(events = se_mats_jc, bed_file = your_bed)
+#'   skipped_exon_sequence_map(events = se_mats_jc, sequence = "CCCC")
 #' }
-"sample_se.mats"
+"se_mats_jc"
+
+#' Alternative 3' Splice-Site Events (rMATS A3SS.MATS.JC)
+#'
+#' rMATS junction-count (JC) output for alternative 3' splice-site (A3SS)
+#' events.
+#'
+#' @format A data frame with 6,365 rows and 27 columns. Shares the universal
+#'   rMATS columns described in [se_mats_jc] (`ID`, `GeneID`, `geneSymbol`,
+#'   `chr`, `strand`, `IJC_*`, `SJC_*`, `IncFormLen`, `SkipFormLen`, `PValue`,
+#'   `FDR`, `IncLevel1`, `IncLevel2`, `IncLevelDifference`). A3SS-specific
+#'   coordinate columns:
+#' \describe{
+#'   \item{longExonStart_0base, longExonEnd}{Long exon form start / end (0-based start)}
+#'   \item{shortES, shortEE}{Short exon form start / end}
+#'   \item{flankingES, flankingEE}{Flanking exon start / end}
+#'   \item{across_short_boundary_count, long_to_flanking_count,
+#'     exclusive_to_long_count, short_to_flanking_count}{rMATS JC-specific
+#'     junction counts}
+#' }
+#'
+#' @source rMATS turbo (\url{https://github.com/Xinglab/rmats-turbo}).
+#'
+#' @examples
+#' data(a3ss_mats_jc)
+#' head(a3ss_mats_jc)
+"a3ss_mats_jc"
+
+#' Alternative 5' Splice-Site Events (rMATS A5SS.MATS.JC)
+#'
+#' rMATS junction-count (JC) output for alternative 5' splice-site (A5SS)
+#' events.
+#'
+#' @format A data frame with 4,282 rows and 27 columns. Same column layout as
+#'   [a3ss_mats_jc] (universal rMATS columns plus `longExonStart_0base`,
+#'   `longExonEnd`, `shortES`, `shortEE`, `flankingES`, `flankingEE`, and the
+#'   four JC-specific junction count columns).
+#'
+#' @source rMATS turbo (\url{https://github.com/Xinglab/rmats-turbo}).
+#'
+#' @examples
+#' data(a5ss_mats_jc)
+#' head(a5ss_mats_jc)
+"a5ss_mats_jc"
+
+#' Retained-Intron Events (rMATS RI.MATS.JC)
+#'
+#' rMATS junction-count (JC) output for retained-intron (RI) events.
+#'
+#' @format A data frame with 5,283 rows and 27 columns. Shares the universal
+#'   rMATS columns described in [se_mats_jc]. RI-specific coordinate columns:
+#' \describe{
+#'   \item{riExonStart_0base, riExonEnd}{Retained-intron-containing exon start
+#'     / end (0-based start)}
+#'   \item{upstreamES, upstreamEE}{Upstream exon start / end}
+#'   \item{downstreamES, downstreamEE}{Downstream exon start / end}
+#'   \item{upstream_to_intron_count, intron_to_downstream_count, intron_count,
+#'     upstream_to_downstream_count}{rMATS JC-specific junction counts}
+#' }
+#'
+#' @source rMATS turbo (\url{https://github.com/Xinglab/rmats-turbo}).
+#'
+#' @examples
+#' data(ri_mats_jc)
+#' head(ri_mats_jc)
+#'
+#' \dontrun{
+#'   retained_intron_splicing_map(events = ri_mats_jc, bed_file = your_bed)
+#'   retained_intron_sequence_map(events = ri_mats_jc, sequence = "CCCC")
+#' }
+"ri_mats_jc"

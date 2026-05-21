@@ -52,7 +52,9 @@ options.}
 \describe{
 \item{\link{gtf_hg38}, \link{gtf_mm10}, \link{gtf_mm39}}{GENCODE basic annotations.}
 \item{\link{K562_bed}, \link{HepG2_bed}}{ENCODE eCLIP peak calls for testing.}
-\item{\link{sample_se.mats}}{rMATS skipped-exon events for splicing analysis.}
+\item{\link{se_mats_jc}, \link{a3ss_mats_jc}, \link{a5ss_mats_jc}, \link{ri_mats_jc}}{rMATS
+junction-count outputs for skipped-exon, alternative 3'/5' splice-site,
+and retained-intron events.}
 }
 }
 
@@ -79,8 +81,8 @@ plot_gene(
 )
 
 # Splicing + sequence analysis
-skipped_exon_splicing_map(events = sample_se.mats, bed_file = K562_bed)
-skipped_exon_sequence_map(events = sample_se.mats, sequence = "CCCC")
+skipped_exon_splicing_map(events = se_mats_jc, bed_file = K562_bed)
+skipped_exon_sequence_map(events = se_mats_jc, sequence = "CCCC")
 }
 
 }

@@ -12,7 +12,6 @@
 #'   6=strand).
 #'
 #' @return A single combined, validated bed data frame
-#'
 #' @export
 #' @family bed
 check_bed <- function(bed, split_col = NULL) {
