@@ -1,25 +1,18 @@
-#' Internal: split events table into analysis groups
+#' Internal: split events into analysis-group row indices
 #'
-#' @param events Data frame of events.
-#' @param schema One of the `event_schema_*` lists from `R/event_schema.R`.
+#' @param events Data frame of events, already chr-normalized and
+#'   count-filtered by [prepare_event_map()].
+#' @param schema One of the `event_schema_*` lists.
 #' @param opts Result of [splicing_options()].
-#' @return Named list of data frames, one per requested group.
+#' @return Named list of integer index vectors, one per requested group.
 #' @keywords internal
 #' @noRd
 filter_events <- function(events, schema, opts) {
 
-  check_data_frame(events, "events", required = schema$required_cols)
-  events$chr <- normalize_chr(events$chr)
-  events     <- .apply_count_filter(events, opts)
-
-  # Single-distribution event types (e.g. UTR).
   if (identical(schema$group_set, "Single")) {
-    events$group <- "Single"
-    return(list(Single = events))
+    return(list(Single = seq_len(nrow(events))))
   }
 
-  # Neg/Pos require both PValue and FDR filter
-  # Control requires both PValue and FDR filter
   event_fdr       <- opts$event_fdr
   control_pval    <- opts$control_pval
   psi_cutoff      <- opts$psi_cutoff
@@ -32,25 +25,21 @@ filter_events <- function(events, schema, opts) {
   sig_mask     <- fd < event_fdr    & pv < event_fdr
   control_mask <- pv > control_pval & fd > control_pval
 
-  #filter
   groups_all <- list(
-    Negative = events[sig_mask     & dp < psi_cutoff[1],        , drop = FALSE],
-    Positive = events[sig_mask     & dp > psi_cutoff[2],        , drop = FALSE],
-    Control  = events[control_mask & abs(dp) < psi_control_max, , drop = FALSE]
+    Negative = which(sig_mask     & dp < psi_cutoff[1]),
+    Positive = which(sig_mask     & dp > psi_cutoff[2]),
+    Control  = which(control_mask & abs(dp) < psi_control_max)
   )
 
   requested <- intersect(c("Negative", "Positive", "Control"), opts$groups)
   out       <- groups_all[requested]
 
-  #Check groups aren't empty
   for (g in requested) {
-    if (nrow(out[[g]]) == 0L) {
+    if (length(out[[g]]) == 0L) {
       cli::cli_warn(c(
         "{.val {g}} group has no events after filtering.",
         "i" = "Check {.arg event_fdr} / {.arg control_pval} / {.arg psi_cutoff} / {.arg psi_control_max}."
       ))
-    } else {
-      out[[g]]$group <- g
     }
   }
 
@@ -58,7 +47,6 @@ filter_events <- function(events, schema, opts) {
 }
 
 
-# Drop events with low junction-read coverage.
 .apply_count_filter <- function(events, opts) {
   if (!isTRUE(opts$min_count > 0L)) return(events)
 
@@ -72,17 +60,31 @@ filter_events <- function(events, schema, opts) {
     ))
   }
 
-  parse_count <- function(x) {
-    vapply(strsplit(as.character(x), ",", fixed = TRUE), function(v) {
-      sum(suppressWarnings(as.numeric(v)), na.rm = TRUE)
-    }, numeric(1L))
+  # Sum comma-separated per-replicate counts (e.g. "12,7,9") to one total per
+  # row, vectorised across the whole column in a single rowsum() pass.
+  sum_replicate_counts <- function(column) {
+    replicates_per_row <- strsplit(as.character(column), ",", fixed = TRUE)
+    counts_per_row     <- lengths(replicates_per_row)
+    all_replicate_counts <- suppressWarnings(
+      as.numeric(unlist(replicates_per_row, use.names = FALSE))
+    )
+    all_replicate_counts[is.na(all_replicate_counts)] <- 0
+    row_of_each_replicate <- rep.int(seq_along(replicates_per_row),
+                                     counts_per_row)
+    row_totals <- rowsum(all_replicate_counts, row_of_each_replicate,
+                          reorder = FALSE)
+    totals_per_row <- numeric(length(replicates_per_row))
+    totals_per_row[as.integer(rownames(row_totals))] <- row_totals[, 1L]
+    totals_per_row
   }
-  in_1 <- parse_count(events[["IJC_SAMPLE_1"]])
-  sk_1 <- parse_count(events[["SJC_SAMPLE_1"]])
-  in_2 <- parse_count(events[["IJC_SAMPLE_2"]])
-  sk_2 <- parse_count(events[["SJC_SAMPLE_2"]])
-  keep <- (in_1 + sk_1) > opts$min_count &
-          (in_2 + sk_2) > opts$min_count
+
+  inclusion_sample_1 <- sum_replicate_counts(events[["IJC_SAMPLE_1"]])
+  skipping_sample_1  <- sum_replicate_counts(events[["SJC_SAMPLE_1"]])
+  inclusion_sample_2 <- sum_replicate_counts(events[["IJC_SAMPLE_2"]])
+  skipping_sample_2  <- sum_replicate_counts(events[["SJC_SAMPLE_2"]])
+
+  keep <- (inclusion_sample_1 + skipping_sample_1) > opts$min_count &
+          (inclusion_sample_2 + skipping_sample_2) > opts$min_count
 
   if (isTRUE(opts$verbose)) {
     cli::cli_inform(

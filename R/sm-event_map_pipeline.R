@@ -1,87 +1,88 @@
 #' Internal: splicing / sequence map pipeline
 #'
 #' Stages:
-#'   1. filter events into groups.
-#'   2. score each group via `scorer` -> 0/1 matrix of
-#'      `[n_events x (n_regions * region_width)]`.
-#'   3. bootstrap Control mean + SD on the raw matrix.
-#'   4. per-position significance (Negative / Positive vs. Control).
-#'   5. assemble frequency frame.
-#'   6. apply moving-average smoothing.
-#'   7. render via `plot_fn`.
+#'   1. partition events into group index sets.
+#'   2. score each non-empty group via `scorer` -> hit list.
+#'   3. tabulate per-position counts per group.
+#'   4. bootstrap Control mean + SD from a sparse hit matrix.
+#'   5. per-position significance (Negative / Positive vs. Control).
+#'   6. assemble frequency frame.
+#'   7. moving-average smoothing.
+#'   8. render via `plot_fn`.
 #'
-#' @param events Data frame with `schema$required_cols`.
+#' @param events Data frame with `schema$required_cols`. Ignored if `prep`
+#'   is supplied.
 #' @param schema Event-type schema list.
-#' @param scorer `function(regions_gr, n_events, n_regions, region_width)`
-#'   returning an `[n_events x (n_regions * region_width)]` 0/1 matrix.
+#' @param scorer `function(regions_gr, n_regions, region_width, group_name)`
+#'   returning `list(event_id, col_idx)` for hits in that group.
 #' @param opts Result of [splicing_options()].
 #' @param style Result of [splicing_style()].
 #' @param plot_fn `function(data, schema, style, opts, significance, title)`
 #'   returning a ggplot.
 #' @param title Plot title.
+#' @param prep Optional precomputed result of [prepare_event_map()]. When
+#'   supplied, `events` is not used.
 #'
 #' @return `list(plot, data)` with `data = list(frequency, significance)`.
-#'   `frequency` carries raw `frequency` / `frequency_sd` plus smoothed
-#'   `moving_avg` / `moving_avg_sd` columns.
 #'
 #' @keywords internal
 #' @noRd
-event_map_pipeline <- function(events, schema, scorer, opts, style,
-                                plot_fn, title = "") {
-  #Validate Params
+event_map_pipeline <- function(events = NULL, schema, scorer, opts, style,
+                                plot_fn, title = "", prep = NULL) {
   .validate_pipeline_inputs(schema, scorer, opts, style, plot_fn)
 
-  #Pull options from style and opts constructors
-  region_width    <- schema$region_width(opts$width_exon, opts$width_intron)
-  n_regions       <- schema$n_regions
-  total_positions <- as.integer(n_regions * region_width)
-
-  #Filter groups
-  groups         <- filter_events(events, schema, opts)
-  .report_group_sizes(groups, opts) #Print for verbose
-
-  #Score all events in one pass, then slice rows back by group.
-  non_empty <- groups[vapply(groups, nrow, 0L) > 0L]
-  if (length(non_empty) == 0L) {
-    score_matrices <- lapply(groups, function(.) matrix(0L, 0L, total_positions))
-  } else {
-    all_events <- do.call(rbind, non_empty)
-    regions_gr <- schema$build_regions(all_events, opts$width_exon, opts$width_intron)
-    M_all      <- scorer(
-      regions_gr,
-      n_events     = nrow(all_events),
-      n_regions    = n_regions,
-      region_width = region_width
-    )
-    .check_score_matrix_shape(M_all, nrow(all_events), total_positions) #Validate shape
-
-    score_matrices <- lapply(names(groups), function(g) {
-      if (g %in% names(non_empty)) M_all[all_events$group == g, , drop = FALSE]
-      else                         matrix(0L, 0L, total_positions)
-    })
-    names(score_matrices) <- names(groups)
+  if (is.null(prep)) {
+    if (is.null(events)) {
+      abort_invalid_arg("Either {.arg events} or {.arg prep} must be supplied.")
+    }
+    prep <- prepare_event_map(events, schema, opts)
   }
 
+  groups_idx       <- prep$groups_idx
+  regions_by_group <- prep$regions_by_group
+  n_regions        <- prep$n_regions
+  region_width     <- prep$region_width
+  n_positions      <- prep$total_positions
 
-  #Bootstrap Control mean + SD (skip if Control wasn't requested)
-  control_stats <- if ("Control" %in% names(score_matrices)) {
+  .report_group_sizes(groups_idx, opts)
+
+  per_group <- vector("list", length(groups_idx))
+  names(per_group) <- names(groups_idx)
+  for (g in names(groups_idx)) {
+    n_g <- length(groups_idx[[g]])
+    if (n_g == 0L) {
+      per_group[[g]] <- list(counts = integer(n_positions), n = 0L, hits = NULL)
+      next
+    }
+    regions_g <- regions_by_group[[g]]
+    hits_g    <- scorer(regions_g, n_regions, region_width, group_name = g)
+    .check_hits_shape(hits_g, n_positions)
+    counts_g  <- tabulate(hits_g$col_idx, nbins = n_positions)
+    per_group[[g]] <- list(
+      counts = counts_g,
+      n      = n_g,
+      hits   = if (identical(g, "Control")) hits_g else NULL
+    )
+  }
+
+  control_stats <- if ("Control" %in% names(per_group)) {
+    n_pos <- if (!is.null(per_group$Positive)) per_group$Positive$n else 0L
+    n_neg <- if (!is.null(per_group$Negative)) per_group$Negative$n else 0L
     bootstrap_control(
-      control_score_matrix = score_matrices$Control,
-      n_pos                = NROW(groups$Positive),
-      n_neg                = NROW(groups$Negative),
-      opts                 = opts
+      ctrl_hits   = per_group$Control$hits,
+      n_control   = per_group$Control$n,
+      n_positions = n_positions,
+      n_pos       = n_pos,
+      n_neg       = n_neg,
+      opts        = opts
     )
   } else NULL
 
-  #Per-position significance (Negative / Positive vs. Control)
-  sig_df <- .significance_table(score_matrices, opts, style)
+  sig_df <- .significance_table(per_group, opts, style)
 
-  #Build Frequency Frame
-  freq_df <- .assemble_frequency_frame(
-    score_matrices, control_stats, n_regions, region_width
-  )
+  freq_df <- .assemble_frequency_frame(per_group, control_stats,
+                                        n_regions, region_width)
 
-  #Moving average for display only
   freq_df$moving_avg    <- .smooth_by_group(
     freq_df$frequency,    freq_df$group, opts$moving_average,
     n_regions, region_width
@@ -91,7 +92,6 @@ event_map_pipeline <- function(events, schema, scorer, opts, style,
     n_regions, region_width
   )
 
-  #Create Plot
   plot <- plot_fn(
     data         = freq_df,
     schema       = schema,
@@ -101,14 +101,66 @@ event_map_pipeline <- function(events, schema, scorer, opts, style,
     title        = title
   )
 
-  #Return plot, and data
   list(plot = plot, data = list(frequency = freq_df, significance = sig_df))
 }
 
 
-#Helpers
+#' Internal: prepare shared event-map inputs
+#'
+#' Normalizes chromosomes, applies the read-count filter, partitions events
+#' into group index sets, and pre-builds per-group region `GRanges`.
+#' @noRd
+prepare_event_map <- function(events, schema, opts) {
+  check_data_frame(events, "events", required = schema$required_cols)
+  .check_event_column_types(events, schema)
+  events$chr <- normalize_chr(events$chr)
+  events     <- .apply_count_filter(events, opts)
 
-#Input Validation
+  region_width    <- schema$region_width(opts$width_exon, opts$width_intron)
+  n_regions       <- schema$n_regions
+  total_positions <- as.integer(n_regions * region_width)
+
+  groups_idx <- filter_events(events, schema, opts)
+
+  regions_by_group <- lapply(groups_idx, function(idx) {
+    if (length(idx) == 0L) return(GenomicRanges::GRanges())
+    schema$build_regions(events[idx, , drop = FALSE],
+                         opts$width_exon, opts$width_intron)
+  })
+
+  list(
+    groups_idx       = groups_idx,
+    events           = events,
+    regions_by_group = regions_by_group,
+    n_regions        = n_regions,
+    region_width     = region_width,
+    total_positions  = total_positions
+  )
+}
+
+
+#Every required event column except the text ones (chr, strand, GeneID)
+#must be numeric: coordinates feed pmax/pmin/IRanges, statistics feed
+#numeric comparisons. Catching wrong types here yields a clear
+#"non-numeric column: FDR" instead of a downstream cryptic
+#"non-numeric argument to binary operator" or, worse, lexicographic
+#comparisons that silently corrupt group assignment.
+.check_event_column_types <- function(events, schema) {
+  text_cols    <- c("chr", "strand", "GeneID")
+  numeric_cols <- setdiff(schema$required_cols, text_cols)
+  is_num       <- vapply(numeric_cols,
+                          function(col) is.numeric(events[[col]]),
+                          logical(1L))
+  not_numeric  <- numeric_cols[!is_num]
+  if (length(not_numeric) > 0L) {
+    abort_invalid_arg(c(
+      "{.arg events} has non-numeric column{?s}: {.field {not_numeric}}.",
+      "i" = "Coordinates and statistics must be numeric. Did your reader (e.g. {.fn read.csv} with default {.code stringsAsFactors}) keep them as character?"
+    ))
+  }
+}
+
+
 .validate_pipeline_inputs <- function(schema, scorer, opts, style, plot_fn) {
   if (!is.list(schema)) {
     abort_invalid_arg("{.arg schema} must be a list.")
@@ -117,10 +169,9 @@ event_map_pipeline <- function(events, schema, scorer, opts, style,
                        "build_regions", "group_set")
   missing_fields  <- setdiff(required_fields, names(schema))
   if (length(missing_fields) > 0L) {
-    abort_invalid_arg(c(
-      "{.arg schema} is missing required field{?s}.",
-      "x" = "Missing: {.val {missing_fields}}."
-    ))
+    abort_invalid_arg(
+      "{.arg schema} is missing required field{?s}: {.val {missing_fields}}."
+    )
   }
   if (!is.function(schema$region_width) || !is.function(schema$build_regions)) {
     abort_invalid_arg(
@@ -144,47 +195,57 @@ event_map_pipeline <- function(events, schema, scorer, opts, style,
   }
 }
 
-#CLI information for verbose
-.report_group_sizes <- function(groups, opts) {
+
+.report_group_sizes <- function(groups_idx, opts) {
   if (!isTRUE(opts$verbose)) return(invisible())
-  sizes <- vapply(groups, nrow, 0L)
+  sizes <- vapply(groups_idx, length, 0L)
   cli::cli_inform(
     "Group sizes: {paste(names(sizes), sizes, sep = '=', collapse = ', ')}"
   )
 }
 
-#Matrix shape validation
-.check_score_matrix_shape <- function(M, expected_rows, expected_cols) {
-  if (!is.matrix(M)) {
+
+.check_hits_shape <- function(h, n_positions) {
+  if (!is.list(h) || is.null(h$event_id) || is.null(h$col_idx)) {
     abort_invalid_arg(c(
-      "{.arg scorer} must return a matrix.",
-      "x" = "Got {.cls {class(M)[1]}}."
+      "{.arg scorer} must return a list with {.field event_id} and {.field col_idx}.",
+      "x" = "Got {.cls {class(h)[1]}}."
     ))
   }
-  if (nrow(M) != expected_rows || ncol(M) != expected_cols) {
+  if (length(h$event_id) != length(h$col_idx)) {
     abort_invalid_arg(c(
-      "{.arg scorer} returned the wrong shape.",
-      "i" = "Expected {.val {expected_rows}}x{.val {expected_cols}}.",
-      "x" = "Got {nrow(M)}x{ncol(M)}."
+      "{.arg scorer} returned mismatched {.field event_id} / {.field col_idx} lengths.",
+      "x" = "{length(h$event_id)} vs {length(h$col_idx)}."
+    ))
+  }
+  if (length(h$col_idx) > 0L &&
+      (min(h$col_idx) < 1L || max(h$col_idx) > n_positions)) {
+    abort_invalid_arg(c(
+      "{.arg scorer} returned {.field col_idx} outside {.val 1..{n_positions}}.",
+      "x" = "Range: {.val {range(h$col_idx)}}."
     ))
   }
 }
 
 
-#Per-position significance vs. Control
-.significance_table <- function(score_matrices, opts, style) {
-  if (!isTRUE(style$show_significance))       return(NULL)
-  if (!"Control" %in% names(score_matrices))  return(NULL)
-  if (nrow(score_matrices$Control) == 0L) {
+.significance_table <- function(per_group, opts, style) {
+  if (!isTRUE(style$show_significance))      return(NULL)
+  if (!"Control" %in% names(per_group))      return(NULL)
+  if (per_group$Control$n == 0L) {
     cli::cli_warn("Skipping significance: Control group has no events.")
     return(NULL)
   }
 
   rows <- list()
-  for (g in intersect(c("Negative", "Positive"), names(score_matrices))) {
-    M <- score_matrices[[g]]
-    if (nrow(M) == 0L) next
-    out       <- test_per_position(M, score_matrices$Control, opts)
+  for (g in intersect(c("Negative", "Positive"), names(per_group))) {
+    if (per_group[[g]]$n == 0L) next
+    out <- test_per_position(
+      group_counts   = per_group[[g]]$counts,
+      n_group        = per_group[[g]]$n,
+      control_counts = per_group$Control$counts,
+      n_control      = per_group$Control$n,
+      opts           = opts
+    )
     out$group <- g
     rows[[g]] <- out
   }
@@ -195,22 +256,27 @@ event_map_pipeline <- function(events, schema, scorer, opts, style,
   out
 }
 
-#frequency frame, one row per group x position
-.assemble_frequency_frame <- function(score_matrices, control_stats,
+
+.assemble_frequency_frame <- function(per_group, control_stats,
                                        n_regions, region_width) {
   total_positions <- as.integer(n_regions * region_width)
-  group_names     <- names(score_matrices)
+  group_names     <- names(per_group)
   n_groups        <- length(group_names)
 
-  freqs <- lapply(score_matrices, function(M) {
-    if (nrow(M) > 0L) colMeans(M) else rep(0, total_positions)
-  })
-  sds <- rep(list(rep(0, total_positions)), n_groups)
-  names(sds) <- group_names
+  freqs <- vector("list", n_groups); names(freqs) <- group_names
+  sds   <- vector("list", n_groups); names(sds)   <- group_names
+  for (g in group_names) {
+    n_g <- per_group[[g]]$n
+    freqs[[g]] <- if (n_g > 0L) per_group[[g]]$counts / n_g
+                  else          rep(0, total_positions)
+    sds[[g]]   <- rep(0, total_positions)
+  }
   if (!is.null(control_stats)) {
     freqs$Control <- control_stats$mean_per_position
     sds$Control   <- control_stats$sd_per_position
   }
+
+  n_by_group <- vapply(per_group, `[[`, integer(1L), "n")
 
   data.frame(
     global_position    = rep(seq_len(total_positions), times = n_groups),
@@ -219,12 +285,12 @@ event_map_pipeline <- function(events, schema, scorer, opts, style,
     frequency          = unlist(freqs, use.names = FALSE),
     frequency_sd       = unlist(sds,   use.names = FALSE),
     group              = rep(group_names, each = total_positions),
-    n_events           = rep(vapply(score_matrices, nrow, 0L), each = total_positions),
+    n_events           = rep(n_by_group, each = total_positions),
     stringsAsFactors   = FALSE
   )
 }
 
-#Per-group moving average
+
 .smooth_by_group <- function(values, groups, window, n_regions, region_width) {
   out <- values
   for (g in unique(groups)) {

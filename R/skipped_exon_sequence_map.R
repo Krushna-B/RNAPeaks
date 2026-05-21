@@ -11,33 +11,32 @@
 #' @param opts Result of [splicing_options()].
 #' @param style Result of [splicing_style()].
 #' @param title Plot title.
+#' @param motif_mode One of `"combined"` (default all motifs pooled into
+#'   a single map) or `"individual"` (one map per motif).
 #'
-#' @return A list with `plot` (ggplot) and `data` (list of `frequency` and
-#'   `significance` tables).
+#' @return For `motif_mode = "combined"`: a list with `plot` (ggplot) and
+#'   `data` (list of `frequency` and `significance` tables). For
+#'   `motif_mode = "individual"`: a named list of those results, one entry
+#'   per motif.
 #'
 #' @family sequence_maps
 #' @export
 skipped_exon_sequence_map <- function(events, sequence,
-                                       genome = NULL,
-                                       opts   = splicing_options(),
-                                       style  = splicing_style(),
-                                       title  = "") {
-  .run_sm_entry("skipped exon sequence map", {
-    .assert_sm_entry_args(title)
+                                       genome     = NULL,
+                                       opts       = splicing_options(),
+                                       style      = splicing_style(),
+                                       title      = "",
+                                       motif_mode = "combined") {
+  wrap_sm_errors("skipped exon sequence map", {
+    validate_sm_inputs(events, opts, style, title,
+                       sequence = sequence, genome = genome,
+                       motif_mode = motif_mode)
 
     motifs <- .normalize_motifs(sequence)
     bsg    <- .resolve_genome(genome)
-    scorer <- function(regions_gr, n_events, n_regions, region_width) {
-      motif_scorer(regions_gr, bsg, motifs, n_events, n_regions, region_width)
-    }
-    event_map_pipeline(
-      events  = events,
-      schema  = event_schema_se,
-      scorer  = scorer,
-      opts    = opts,
-      style   = style,
-      plot_fn = plot_event_map,
-      title   = title
-    )
+    prep   <- .prepare_sequence_map_prep(events, event_schema_se, opts, bsg, motifs)
+
+    .run_sequence_map(motifs, motif_mode, prep,
+                      event_schema_se, opts, style, title)
   })
 }

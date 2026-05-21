@@ -21,12 +21,12 @@ retained_intron_splicing_map <- function(events, bed_file,
                                           opts  = splicing_options(),
                                           style = splicing_style(),
                                           title = "") {
-  .run_sm_entry("retained intron splicing map", {
-    .assert_sm_entry_args(title, bed_file = bed_file, has_bed = TRUE)
+  wrap_sm_errors("retained intron splicing map", {
+    validate_sm_inputs(events, opts, style, title, bed_file = bed_file)
 
     bed_gr <- .peaks_to_granges(bed_file)
-    scorer <- function(regions_gr, n_events, n_regions, region_width) {
-      peaks_scorer(regions_gr, bed_gr, n_events, n_regions, region_width)
+    scorer <- function(regions_gr, n_regions, region_width, group_name) {
+      peaks_scorer(regions_gr, bed_gr, n_regions, region_width)
     }
     event_map_pipeline(
       events  = events,

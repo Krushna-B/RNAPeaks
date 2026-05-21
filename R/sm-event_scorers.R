@@ -1,19 +1,18 @@
-#' Internal: score matrices for splicing / sequence map events
+#' Internal: hit-list scorers for splicing / sequence map events
 #'
 #' Both scorers consume a regions `GRanges` from `schema$build_regions` and
-#' return the same shape:
-#' `[n_events, n_regions * region_width]`, each cell `0` or `1`.
+#' return `list(event_id, col_idx)` — parallel integer vectors of the
+#' (event, position) pairs that scored 1 in the original dense layout.
+#' `col_idx` is in `[1, n_regions * region_width]`.
 #'
 #' @keywords internal
 #' @name event_scorers
 
-# Place per-bp hits into the score matrix.
-.fill_score_matrix <- function(M, n_regions, region_width,
-                               event_ids, region_indices,
-                               strands, position_in_region,
-                               position_in_transcript_order = FALSE) {
-  is_minus <- strands == "-"
 
+.hits_to_col_idx <- function(region_indices, strands, position_in_region,
+                             n_regions, region_width,
+                             position_in_transcript_order = FALSE) {
+  is_minus <- strands == "-"
   plot_region_idx <- ifelse(is_minus,
                             n_regions - region_indices + 1L,
                             region_indices)
@@ -24,31 +23,37 @@
            region_width - position_in_region + 1L,
            position_in_region)
   }
+  (plot_region_idx - 1L) * region_width + plot_position_in_region
+}
 
-  col_idx <- (plot_region_idx - 1L) * region_width + plot_position_in_region
 
-  in_bounds <- !is.na(col_idx)   & !is.na(event_ids) &
-               col_idx   >= 1L   & col_idx   <= ncol(M) &
-               event_ids >= 1L   & event_ids <= nrow(M)
-
-  if (any(in_bounds)) {
-    M[cbind(event_ids[in_bounds], col_idx[in_bounds])] <- 1L
+.dedupe_hits <- function(event_id, col_idx, n_positions) {
+  if (length(event_id) == 0L) {
+    return(list(event_id = integer(0), col_idx = integer(0)))
   }
-  M
+  ok <- !is.na(col_idx)  & !is.na(event_id) &
+        col_idx  >= 1L   & col_idx  <= n_positions &
+        event_id >= 1L
+  event_id <- event_id[ok]
+  col_idx  <- col_idx[ok]
+  if (length(event_id) == 0L) {
+    return(list(event_id = integer(0), col_idx = integer(0)))
+  }
+  key  <- (as.numeric(event_id) - 1) * n_positions + col_idx
+  keep <- !duplicated(key)
+  list(event_id = event_id[keep], col_idx = col_idx[keep])
 }
 
 
 #' @rdname event_scorers
 #' @noRd
-peaks_scorer <- function(regions_gr, bed_gr,
-                         n_events, n_regions, region_width) {
-
-  M <- matrix(0L, nrow = n_events, ncol = n_regions * region_width)
-  if (length(regions_gr) == 0L || length(bed_gr) == 0L) return(M)
+peaks_scorer <- function(regions_gr, bed_gr, n_regions, region_width) {
+  empty <- list(event_id = integer(0), col_idx = integer(0))
+  if (length(regions_gr) == 0L || length(bed_gr) == 0L) return(empty)
 
   overlaps <- GenomicRanges::findOverlaps(regions_gr, bed_gr,
                                           ignore.strand = FALSE)
-  if (length(overlaps) == 0L) return(M)
+  if (length(overlaps) == 0L) return(empty)
 
   region_of_overlap <- S4Vectors::queryHits(overlaps)
   peak_of_overlap   <- S4Vectors::subjectHits(overlaps)
@@ -57,93 +62,86 @@ peaks_scorer <- function(regions_gr, bed_gr,
                                        bed_gr[peak_of_overlap])
   widths <- IRanges::width(intersections)
   keep   <- widths > 0L
-  if (!any(keep)) return(M)
+  if (!any(keep)) return(empty)
   region_of_overlap <- region_of_overlap[keep]
   intersections     <- intersections[keep]
   widths            <- widths[keep]
 
-  # Expand each intersection range to per-bp entries.
   intersection_of_bp <- rep(seq_along(intersections), widths)
   bp_genomic_pos     <- IRanges::start(intersections)[intersection_of_bp] +
                         sequence(widths) - 1L
 
   region_for_bp <- region_of_overlap[intersection_of_bp]
-  event_ids     <- GenomicRanges::mcols(regions_gr)$event_id[region_for_bp]
+  event_id      <- GenomicRanges::mcols(regions_gr)$event_id[region_for_bp]
   region_idxs   <- GenomicRanges::mcols(regions_gr)$region_idx[region_for_bp]
   strands       <- as.character(GenomicRanges::strand(regions_gr))[region_for_bp]
   region_starts <- GenomicRanges::start(regions_gr)[region_for_bp]
 
-  .fill_score_matrix(
-    M, n_regions, region_width,
-    event_ids          = event_ids,
+  col_idx <- .hits_to_col_idx(
     region_indices     = region_idxs,
     strands            = strands,
-    position_in_region = bp_genomic_pos - region_starts + 1L
+    position_in_region = bp_genomic_pos - region_starts + 1L,
+    n_regions          = n_regions,
+    region_width       = region_width
   )
+
+  .dedupe_hits(event_id, col_idx, n_regions * region_width)
 }
 
 
 #' @rdname event_scorers
 #' @noRd
-motif_scorer <- function(regions_gr, genome, motifs,
-                         n_events, n_regions, region_width) {
-
-  M <- matrix(0L, nrow = n_events, ncol = n_regions * region_width)
-  if (length(regions_gr) == 0L) return(M)
-
-  regions_gr <- .align_seqnames_to_genome(regions_gr, genome)
-  if (length(regions_gr) == 0L) return(M)
-
-  region_seqs <- tryCatch(
-    BSgenome::getSeq(genome, regions_gr),
-    error = function(e) {
-      cli::cli_warn(c(
-        "Sequence extraction failed.",
-        "x" = "{e$message}",
-        "i" = "Check that {.arg genome} matches the chromosome naming of your events."
-      ))
-      NULL
-    }
-  )
-  if (is.null(region_seqs)) return(M)
+motif_scorer <- function(regions_gr, region_seqs, motifs,
+                         n_regions, region_width) {
+  empty <- list(event_id = integer(0), col_idx = integer(0))
+  if (length(regions_gr) == 0L || length(region_seqs) == 0L ||
+      length(motifs) == 0L) return(empty)
 
   region_widths  <- IRanges::width(regions_gr)
   region_strands <- as.character(GenomicRanges::strand(regions_gr))
   region_events  <- GenomicRanges::mcols(regions_gr)$event_id
   region_idxs    <- GenomicRanges::mcols(regions_gr)$region_idx
 
-  for (motif in motifs) {
-    hits <- Biostrings::vmatchPattern(
-      Biostrings::DNAString(motif), region_seqs, fixed = FALSE
+  region_indices_by_motif <- vector("list", length(motifs))
+  hit_starts_by_motif     <- vector("list", length(motifs))
+
+  for (i in seq_along(motifs)) {
+    motif_hits <- Biostrings::vmatchPattern(
+      Biostrings::DNAString(motifs[i]), region_seqs, fixed = FALSE
     )
 
-    n_per_region <- lengths(hits)
-    if (sum(n_per_region) == 0L) next
+    n_hits_per_region <- lengths(motif_hits)
+    if (sum(n_hits_per_region) == 0L) next
 
-    region_of_hit <- rep(seq_along(regions_gr), n_per_region)
-    starts        <- unlist(IRanges::start(hits), use.names = FALSE)
+    region_of_each_hit <- rep.int(seq_along(region_seqs), n_hits_per_region)
+    hit_starts         <- unlist(IRanges::start(motif_hits), use.names = FALSE)
 
-    # Drop hits past the actual region width.
-    within <- starts <= region_widths[region_of_hit]
-    if (!any(within)) next
-    region_of_hit <- region_of_hit[within]
-    starts        <- starts[within]
+    keep <- hit_starts <= region_widths[region_of_each_hit]
+    if (!any(keep)) next
 
-    M <- .fill_score_matrix(
-      M, n_regions, region_width,
-      event_ids                    = region_events[region_of_hit],
-      region_indices               = region_idxs[region_of_hit],
-      strands                      = region_strands[region_of_hit],
-      position_in_region           = starts,
-      position_in_transcript_order = TRUE
-    )
+    region_indices_by_motif[[i]] <- region_of_each_hit[keep]
+    hit_starts_by_motif[[i]]     <- hit_starts[keep]
   }
-  M
+
+  region_of_hit <- unlist(region_indices_by_motif, use.names = FALSE)
+  hit_starts    <- unlist(hit_starts_by_motif,     use.names = FALSE)
+
+  if (length(region_of_hit) == 0L) return(empty)
+
+  col_idx <- .hits_to_col_idx(
+    region_indices               = region_idxs[region_of_hit],
+    strands                      = region_strands[region_of_hit],
+    position_in_region           = hit_starts,
+    n_regions                    = n_regions,
+    region_width                 = region_width,
+    position_in_transcript_order = TRUE
+  )
+
+  .dedupe_hits(region_events[region_of_hit], col_idx,
+               n_regions * region_width)
 }
 
 
-# Map regions_gr chr names to the BSgenome's (e.g. "1" -> "chr1"), dropping
-# anything the genome doesn't recognize.
 .align_seqnames_to_genome <- function(regions_gr, genome) {
   genome_chrs <- GenomeInfoDb::seqnames(GenomeInfoDb::seqinfo(genome))
   levs        <- GenomeInfoDb::seqlevels(regions_gr)
