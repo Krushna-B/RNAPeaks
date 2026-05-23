@@ -22,9 +22,8 @@
 #' }
 #'
 #' @keywords internal
+#' @noRd
 #' @name event_schema
-
-
 
 # Columns every event-table schema must provide.
 .event_required_base <- c(

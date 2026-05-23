@@ -40,6 +40,17 @@ options.}
 }
 }
 
+\section{Control peaks}{
+
+\describe{
+\item{\code{\link[=intersect_peaks]{intersect_peaks()}}}{Intersect a peak BED with a transcript set
+(file, BED data frame, GTF data frame, or GRanges). Pure-R replacement
+for \verb{bedtools intersect}.}
+\item{\code{\link[=generate_control_peaks]{generate_control_peaks()}}}{Generate transcript-region- and
+splice-site-matched control peaks for an eCLIP-seq peak set.}
+}
+}
+
 \section{Helpers}{
 
 \describe{
@@ -55,6 +66,9 @@ options.}
 \item{\link{se_mats_jc}, \link{a3ss_mats_jc}, \link{a5ss_mats_jc}, \link{ri_mats_jc}}{rMATS
 junction-count outputs for skipped-exon, alternative 3'/5' splice-site,
 and retained-intron events.}
+\item{\link{gencode_v46_transcripts}, \link{gencode_v46_genes},
+\link{gencode_v46_anno}}{GENCODE v46 (human, GRCh38) annotation BEDs used by
+\code{\link[=intersect_peaks]{intersect_peaks()}} and \code{\link[=generate_control_peaks]{generate_control_peaks()}}.}
 }
 }
 

@@ -30,6 +30,15 @@
 #'   \item{[splicing_style()]}{Visual settings for splicing / sequence maps.}
 #' }
 #'
+#' @section Control peaks:
+#' \describe{
+#'   \item{[intersect_peaks()]}{Intersect a peak BED with a transcript set
+#'     (file, BED data frame, GTF data frame, or GRanges). Pure-R replacement
+#'     for `bedtools intersect`.}
+#'   \item{[generate_control_peaks()]}{Generate transcript-region- and
+#'     splice-site-matched control peaks for an eCLIP-seq peak set.}
+#' }
+#'
 #' @section Helpers:
 #' \describe{
 #'   \item{[check_bed()]}{Validate and normalize a BED data frame.}
@@ -42,6 +51,9 @@
 #'   \item{[se_mats_jc], [a3ss_mats_jc], [a5ss_mats_jc], [ri_mats_jc]}{rMATS
 #'     junction-count outputs for skipped-exon, alternative 3'/5' splice-site,
 #'     and retained-intron events.}
+#'   \item{[gencode_v46_transcripts], [gencode_v46_genes],
+#'     [gencode_v46_anno]}{GENCODE v46 (human, GRCh38) annotation BEDs used by
+#'     [intersect_peaks()] and [generate_control_peaks()].}
 #' }
 #'
 #' @examples
@@ -91,8 +103,14 @@
 #' @importFrom scales label_comma scientific
 #' @importFrom stats aggregate na.omit setNames
 #' @importFrom utils write.csv read.table
+#' @importFrom methods setRefClass new
 ## usethis namespace: end
 NULL
+
+# Required so data.table's [ method dispatches correctly when called from
+# package code (e.g. dt[, .(...)] inside build_*_table / parsePeaks).
+# Without this, R falls back to base [ and `.()` is undefined.
+.datatable.aware <- TRUE
 
 # Global variables for non-standard evaluation (NSE) in ggplot2 and dplyr
 utils::globalVariables(c(
@@ -112,5 +130,11 @@ utils::globalVariables(c(
   "position_in_bin", "position_in_region", "region_idx", "frequency_sd",
   "n_events", "pvalue_adj", "significant", "plot_group",
   # Other
-  "bed_df", "MASTER_FILE"
+  "bed_df", "MASTER_FILE",
+  # data.table NSE bindings used inside dt[, .(...)] in
+  # generate_control_peaks.R (build_*_table, prepare_annotation_models,
+  # parsePeaks). Listed here to silence R CMD check NOTEs.
+  "chrom", "peak_range", "region", "transcript", "FC",
+  ".SD", ".N", ".idx", "splice_sites", "tx_start", "tx_end",
+  "min_idx", "first", "strand", "gene"
 ))

@@ -6,6 +6,7 @@
 #' `col_idx` is in `[1, n_regions * region_width]`.
 #'
 #' @keywords internal
+#' @noRd
 #' @name event_scorers
 
 #Corrects for global position based on strand and based on whether splicing or sequence map

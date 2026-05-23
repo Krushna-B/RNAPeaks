@@ -205,3 +205,93 @@
 #'   retained_intron_sequence_map(events = ri_mats_jc, sequence = "CCCC")
 #' }
 "ri_mats_jc"
+
+#' GENCODE v46 Transcript BED (human / GRCh38)
+#'
+#' One-row-per-transcript BED extracted from the GENCODE v46 primary-assembly
+#' GTF. Used as the `transcripts` input to [intersect_peaks()] when running
+#' the eCLIP control-peak pipeline against human GRCh38.
+#'
+#' @format A data frame with the following columns:
+#' \describe{
+#'   \item{chr}{Chromosome identifier with "chr" prefix (e.g. "chr1", "chrX").}
+#'   \item{start}{Transcript start coordinate (0-based BED).}
+#'   \item{end}{Transcript end coordinate (exclusive).}
+#'   \item{transcript_name}{GENCODE transcript name (e.g. "DDX11L2-202").}
+#'   \item{score}{BED score column; placeholder "." for this dataset.}
+#'   \item{strand}{Genomic strand ("+" or "-").}
+#' }
+#'
+#' @source GENCODE release 46, primary assembly annotation
+#'   (\url{https://www.gencodegenes.org/human/release_46.html}).
+#' @examples
+#' \dontrun{
+#'   hits <- intersect_peaks(
+#'     peaks       = "K562_RBFOX2_peaks.bed",
+#'     transcripts = gencode_v46_transcripts
+#'   )
+#' }
+"gencode_v46_transcripts"
+
+#' GENCODE v46 Gene BED (human / GRCh38)
+#'
+#' One-row-per-gene BED extracted from the GENCODE v46 primary-assembly GTF.
+#' Used as the `genes` input to [generate_control_peaks()] to constrain
+#' control regions to lie inside the same gene as the peak.
+#'
+#' @format A data frame with the following columns:
+#' \describe{
+#'   \item{chr}{Chromosome identifier with "chr" prefix.}
+#'   \item{start}{Gene start coordinate (0-based BED).}
+#'   \item{end}{Gene end coordinate (exclusive).}
+#'   \item{gene_name}{GENCODE gene symbol (e.g. "DDX11L1").}
+#'   \item{score}{BED score column; placeholder "." for this dataset.}
+#'   \item{strand}{Genomic strand ("+" or "-").}
+#' }
+#'
+#' @source GENCODE release 46, primary assembly annotation.
+#' @examples
+#' \dontrun{
+#'   generate_control_peaks(
+#'     peaks      = hits,
+#'     annotation = gencode_v46_anno,
+#'     genes      = gencode_v46_genes,
+#'     output_dir = "result"
+#'   )
+#' }
+"gencode_v46_genes"
+
+#' GENCODE v46 Per-Region Annotation BED (human / GRCh38)
+#'
+#' Per-region annotation BED derived from the GENCODE v46 GTF: one row per
+#' (transcript, region) where region is one of `UTR3`, `UTR5`, `CDS`, or
+#' `exon`. Introns are not stored; they are derived at runtime from the
+#' exon boundaries inside [generate_control_peaks()]. Used as the
+#' `annotation` input to [generate_control_peaks()].
+#'
+#' @format A data frame with the following columns:
+#' \describe{
+#'   \item{chr}{Chromosome identifier with "chr" prefix.}
+#'   \item{start}{Region start coordinate (0-based BED).}
+#'   \item{end}{Region end coordinate (exclusive).}
+#'   \item{region_id}{Composite `{transcript}_{region}_{key}` string, e.g.
+#'     `DDX11L2-202_exon_11869`. The control-peak algorithm splits this on
+#'     `_` to recover the transcript name and region type.}
+#'   \item{score}{BED score column; "0" for this dataset.}
+#'   \item{strand}{Genomic strand ("+" or "-").}
+#'   \item{gene_name}{Parent gene symbol (e.g. "DDX11L2").}
+#' }
+#'
+#' @source Derived from GENCODE release 46 (primary assembly) via the
+#'   annotation generation pipeline in
+#'   \url{https://github.com/jechia/control_peak} (Yue Hu, 2025).
+#' @examples
+#' \dontrun{
+#'   generate_control_peaks(
+#'     peaks      = hits,
+#'     annotation = gencode_v46_anno,
+#'     genes      = gencode_v46_genes,
+#'     output_dir = "result"
+#'   )
+#' }
+"gencode_v46_anno"

@@ -188,6 +188,10 @@ check_range_or_null <- function(x, arg, call = parent.frame()) {
   invisible(x)
 }
 
+# NULL-coalescing operator. base R only gained `%||%` in 4.4.0; the package
+# depends on R >= 4.3, so we define a local copy.
+`%||%` <- function(x, y) if (is.null(x)) y else x
+
 # Trim whitespace on a single string input. NULL passes through.
 normalize_str <- function(x) {
   if (is.null(x)) return(NULL)

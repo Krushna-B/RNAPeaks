@@ -54,7 +54,9 @@ Imports:
     GenomicAlignments,
     Rsamtools,
     patchwork,
-    Matrix
+    Matrix,
+    methods,
+    data.table
 Suggests:
     testthat (>= 3.0.0),
     knitr,

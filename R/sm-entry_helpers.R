@@ -1,6 +1,7 @@
 #' Internal: shared helpers for splicing / sequence map entry points
 #'
 #' @keywords internal
+#' @noRd
 #' @name sm_entry_helpers
 
 #Read, validate, and turn a BED into a reduced GRanges of peaks.
