@@ -31,7 +31,6 @@
   "PValue", "FDR", "IncLevelDifference"
 )
 
-
 #' @rdname event_schema
 #' @noRd
 event_schema_se <- list(
@@ -262,3 +261,167 @@ event_schema_ri <- list(
     )
   }
 )
+
+#' @rdname event_schema
+#' @noRd
+event_schema_a5ss <- list(
+  name = "Alternative 5' Splice Site",
+
+  required_cols = c(
+    .event_required_base,
+    "longExonStart_0base", "longExonEnd",
+    "shortES", "shortEE",
+    "flankingES", "flankingEE"
+  ),
+
+  n_regions     = 2L,
+
+  region_width  = function(width_exon, width_intron) {
+    as.integer(width_exon + width_intron + 1L)
+  },
+
+  #How to make regions for specific schema
+  build_regions = function(events, width_exon, width_intron) {
+    n <- nrow(events)
+    if (n == 0L) {
+      return(GenomicRanges::GRanges())
+    }
+
+    longS  <- events$longExonStart_0base
+    longE  <- events$longExonEnd
+    shortS <- events$shortES
+    shortE <- events$shortEE
+    flankS <- events$flankingES
+    flankE <- events$flankingEE
+
+    # Put the two exons in genomic left-to-right order.
+    leftS  <- ifelse(longS < flankS, longS, flankS)
+    leftE  <- ifelse(longS < flankS, longE, flankE)
+
+    rightS <- ifelse(longS < flankS, flankS, longS)
+    rightE <- ifelse(longS < flankS, flankE, longE)
+
+    # R1: left exon end into intron
+    s1 <- pmax(leftE - width_exon,   leftS)
+    e1 <- pmin(leftE + width_intron, rightS)
+
+    # R2: intron into right exon start
+    s2 <- pmax(rightS - width_intron, leftE)
+    e2 <- pmin(rightS + width_exon,   rightE)
+
+    starts <- cbind(s1, s2)
+    ends   <- cbind(e1, e2)
+
+    GenomicRanges::GRanges(
+      seqnames   = rep(events$chr, each = 2L),
+      ranges     = IRanges::IRanges(start = as.vector(t(starts)),
+                                    end   = as.vector(t(ends))),
+      strand     = rep(events$strand, each = 2L),
+      event_id   = rep(seq_len(n), each = 2L),
+      region_idx = rep(seq_len(2L), times = n)
+    )
+  },
+
+  #Regions Labels
+  region_labels = c(
+    "Alternative exon | intron",
+    "Intron | flanking exon"
+  ),
+
+  schematic = "a5ss",
+
+  group_set     = c("Negative", "Positive", "Control"),
+
+  # x-axis layout for the plotter.
+  plot_layout = function(width_exon, width_intron) {
+    bin_width <- as.integer(width_exon + width_intron)
+    gap       <- 80L
+    region_starts <- c(0L, bin_width + gap)
+    list(
+      region_starts    = region_starts,
+      bin_width        = bin_width,
+      gap              = gap,
+      boundary_offsets = c(width_exon, width_intron),
+      x_max            = region_starts[2L] + bin_width
+    )
+  },
+
+  # Schematic layers for the splicing event plot
+  build_schematic_layers = function(layout, style, y_min, exon_height) {
+    bs <- layout$region_starts + layout$boundary_offsets
+
+    # Visual width of the alternative exon extension.
+    # This is only for the schematic, not for the real genomic window.
+    ext_width <- max(10L, round(layout$boundary_offsets[1L] * 0.25))
+    ext_width <- min(ext_width, layout$boundary_offsets[1L] - 1L)
+
+    # Main solid exon pieces
+    exon_df <- data.frame(
+      xmin = c(layout$region_starts[1L], bs[2L]),
+      xmax = c(bs[1L] - ext_width,
+               layout$region_starts[2L] + layout$bin_width),
+      ymin = rep(y_min - exon_height, 2L),
+      ymax = rep(y_min, 2L),
+      fill = c("white", "white"),
+      stringsAsFactors = FALSE
+    )
+
+    # Dotted extension on the first exon
+    extension_df <- data.frame(
+      xmin = bs[1L] - ext_width,
+      xmax = bs[1L],
+      ymin = y_min - exon_height,
+      ymax = y_min
+    )
+
+    intron_y <- y_min - exon_height / 2
+    intron_df <- data.frame(
+      x    = bs[1L],
+      xend = bs[2L],
+      y    = intron_y,
+      yend = intron_y
+    )
+
+    list(
+      ggplot2::geom_rect(
+        data = exon_df,
+        ggplot2::aes(xmin = xmin, xmax = xmax,
+                     ymin = ymin, ymax = ymax, fill = fill),
+        color = "black", linewidth = 0.5, inherit.aes = FALSE
+      ),
+
+      ggplot2::geom_rect(
+        data = extension_df,
+        ggplot2::aes(xmin = xmin, xmax = xmax,
+                     ymin = ymin, ymax = ymax),
+        fill = "white",
+        color = "black",
+        linetype = "dotted",
+        linewidth = 0.6,
+        inherit.aes = FALSE
+      ),
+
+      ggplot2::geom_segment(
+        data = intron_df,
+        ggplot2::aes(x = x, xend = xend, y = y, yend = yend),
+        color = "black", linewidth = 1.5, inherit.aes = FALSE
+      )
+    )
+  }
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
