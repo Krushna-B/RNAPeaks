@@ -56,7 +56,10 @@ Imports:
     patchwork,
     Matrix,
     methods,
-    data.table
+    data.table,
+    Rcpp
+LinkingTo:
+    Rcpp
 Suggests:
     testthat (>= 3.0.0),
     knitr,

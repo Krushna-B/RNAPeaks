@@ -104,6 +104,8 @@
 #' @importFrom stats aggregate na.omit setNames
 #' @importFrom utils write.csv read.table
 #' @importFrom methods setRefClass new
+#' @useDynLib RNAPeaks, .registration = TRUE
+#' @importFrom Rcpp sourceCpp
 ## usethis namespace: end
 NULL
 
@@ -132,9 +134,9 @@ utils::globalVariables(c(
   # Other
   "bed_df", "MASTER_FILE",
   # data.table NSE bindings used inside dt[, .(...)] in
-  # generate_control_peaks.R (build_*_table, prepare_annotation_models,
-  # parsePeaks). Listed here to silence R CMD check NOTEs.
-  "chrom", "peak_range", "region", "transcript", "FC",
-  ".SD", ".N", ".idx", "splice_sites", "tx_start", "tx_end",
-  "min_idx", "first", "strand", "gene"
+  # generate_control_peaks.R (read_annotation, read_genes,
+  # .group_peaks_for_engine). Listed here to silence R CMD check NOTEs.
+  "line_id", "chr", "start", "end", "name", "strand", "gene",
+  "transcript", "region", "FC", "peak_range",
+  "V1", "V2", "V3", "V7", "V12"
 ))

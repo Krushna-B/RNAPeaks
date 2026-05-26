@@ -4,28 +4,16 @@
 \alias{intersect_peaks}
 \title{Intersect peaks with transcripts}
 \usage{
-intersect_peaks(
-  peaks,
-  transcripts,
-  output = NULL,
-  fraction = 1,
-  same_strand = TRUE
-)
+intersect_peaks(peaks, transcripts, fraction = 1, same_strand = TRUE)
 }
 \arguments{
 \item{peaks}{Peak input. One of:
-file path to a BED file (>= 6 columns),
-a data.frame in BED layout (cols 1=chr, 2=start, 3=end,
-4=name, 5=score, 6=strand).}
+file path to a BED file or a data.frame in BED layout}
 
 \item{transcripts}{Transcript input. One of:
-a GTF-shaped data.frame
-a BED data.frame (6 cols);
-a file path to a BED file;
-a \code{GRanges} with a \code{transcript_name} or \code{name} \code{mcols} column.}
-
-\item{output}{Optional file path. If supplied, writes a tab-separated BED
-and returns the path invisibly.}
+a GTF-shaped data.frame;
+a BED data.frame (>= 6 cols);
+a file path to a BED file.}
 
 \item{fraction}{Minimum fraction of each peak that must overlap a
 transcript for the hit to be kept. Defaults to \code{1.0} (peak fully
@@ -35,8 +23,7 @@ contained).}
 kept.}
 }
 \value{
-Either a data.frame of peak+transcript rows, or the output file
-path invisibly when \code{output} is supplied.
+A data.frame of peak+transcript rows (one row per overlap).
 }
 \description{
 R replacement for \verb{bedtools intersect -a peaks -b transcripts -f <fraction> -wa -wb [-s]}.
