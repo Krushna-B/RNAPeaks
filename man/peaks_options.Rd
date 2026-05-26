@@ -41,6 +41,7 @@ filtered, grouped into tracks, ordered, and capped before plotting.
 Other params: 
 \code{\link{peaks_plot_style}()},
 \code{\link{splicing_options}()},
-\code{\link{splicing_style}()}
+\code{\link{splicing_style}()},
+\code{\link{utr_style}()}
 }
 \concept{params}

@@ -84,6 +84,7 @@ splicing-map / sequence-map entry points.
 Other params: 
 \code{\link{peaks_options}()},
 \code{\link{peaks_plot_style}()},
-\code{\link{splicing_style}()}
+\code{\link{splicing_style}()},
+\code{\link{utr_style}()}
 }
 \concept{params}

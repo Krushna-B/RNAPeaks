@@ -44,6 +44,7 @@ skipped-exon events and renders the standard four-region sequence map.
 }
 \seealso{
 Other sequence_maps: 
+\code{\link{five_prime_sequence_map}()},
 \code{\link{retained_intron_sequence_map}()}
 }
 \concept{sequence_maps}

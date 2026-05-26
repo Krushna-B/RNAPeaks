@@ -58,6 +58,7 @@ splicing-map / sequence-map outputs
 Other params: 
 \code{\link{peaks_options}()},
 \code{\link{peaks_plot_style}()},
-\code{\link{splicing_options}()}
+\code{\link{splicing_options}()},
+\code{\link{utr_style}()}
 }
 \concept{params}

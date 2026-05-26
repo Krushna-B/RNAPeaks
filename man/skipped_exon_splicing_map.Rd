@@ -34,6 +34,7 @@ splicing map.
 }
 \seealso{
 Other splicing_maps: 
+\code{\link{five_prime_splicing_map}()},
 \code{\link{retained_intron_splicing_map}()}
 }
 \concept{splicing_maps}

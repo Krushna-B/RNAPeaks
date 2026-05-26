@@ -45,6 +45,7 @@ Picks one transcript from \code{gtf} and overlays peaks from \code{bed}.
 }
 \seealso{
 Other plot: 
-\code{\link{plot_region}()}
+\code{\link{plot_region}()},
+\code{\link{plot_utr_binding}()}
 }
 \concept{plot}

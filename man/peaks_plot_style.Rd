@@ -152,6 +152,7 @@ Returns a named list of every visual setting used when rendering
 Other params: 
 \code{\link{peaks_options}()},
 \code{\link{splicing_options}()},
-\code{\link{splicing_style}()}
+\code{\link{splicing_style}()},
+\code{\link{utr_style}()}
 }
 \concept{params}

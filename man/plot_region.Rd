@@ -51,6 +51,7 @@ structures vertically, and overlays peaks from \code{bed}.
 }
 \seealso{
 Other plot: 
-\code{\link{plot_gene}()}
+\code{\link{plot_gene}()},
+\code{\link{plot_utr_binding}()}
 }
 \concept{plot}
