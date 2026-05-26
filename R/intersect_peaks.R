@@ -6,18 +6,12 @@
 #' overlaps it under the given fraction-and-strand constraints.
 #'
 #' @param peaks Peak input. One of:
-#'     file path to a BED file (>= 6 columns),
-#'     a data.frame in BED layout (cols 1=chr, 2=start, 3=end,
-#'     4=name, 5=score, 6=strand).
-#'
+#'     file path to a BED file or a data.frame in BED layout
+#
 #' @param transcripts Transcript input. One of:
-#'     a GTF-shaped data.frame
-#'     a BED data.frame (6 cols);
-#'     a file path to a BED file;
-#'     a `GRanges` with a `transcript_name` or `name` `mcols` column.
-#'
-#' @param output Optional file path. If supplied, writes a tab-separated BED
-#'   and returns the path invisibly.
+#'     a GTF-shaped data.frame;
+#'     a BED data.frame (>= 6 cols);
+#'     a file path to a BED file.
 #'
 #' @param fraction Minimum fraction of each peak that must overlap a
 #'   transcript for the hit to be kept. Defaults to `1.0` (peak fully
@@ -26,17 +20,15 @@
 #' @param same_strand If `TRUE` (default), only same-strand overlaps are
 #'   kept.
 #'
-#' @return Either a data.frame of peak+transcript rows, or the output file
-#'   path invisibly when `output` is supplied.
+#' @return A data.frame of peak+transcript rows (one row per overlap).
 #'
 #' @export
 #' @family analysis
-intersect_peaks <- function(peaks, transcripts, output = NULL,
+intersect_peaks <- function(peaks, transcripts,
                             fraction = 1.0, same_strand = TRUE) {
   #Validate Params
   check_scalar_number(fraction, "fraction", min = 0, max = 1)
   check_flag(same_strand, "same_strand")
-  if (!is.null(output)) check_string(output, "output")
 
   #Normalize Values
   cli::cli_progress_step("Reading peaks and transcripts")
@@ -50,7 +42,7 @@ intersect_peaks <- function(peaks, transcripts, output = NULL,
   peaks_gr <- .bed_to_gr(peaks_df, "peaks")
   tx_gr    <- .bed_to_gr(tx_df,    "transcripts")
 
-  # Restrict both objects to chromosomes present in both.
+  # Report non-shared chromosomes
   common <- intersect(GenomeInfoDb::seqlevels(peaks_gr),
                       GenomeInfoDb::seqlevels(tx_gr))
   if (length(common) == 0L) {
@@ -59,20 +51,21 @@ intersect_peaks <- function(peaks, transcripts, output = NULL,
       "i" = "Check naming convention (UCSC {.val chr1} vs Ensembl {.val 1})."
     ))
   }
-  peaks_keep <- as.character(GenomicRanges::seqnames(peaks_gr)) %in% common
-  tx_keep    <- as.character(GenomicRanges::seqnames(tx_gr))    %in% common
-  dropped_peaks <- sum(!peaks_keep)
-  dropped_tx    <- sum(!tx_keep)
+  dropped_peaks <- sum(!as.character(GenomicRanges::seqnames(peaks_gr)) %in% common)
+  dropped_tx    <- sum(!as.character(GenomicRanges::seqnames(tx_gr))    %in% common)
   if (dropped_peaks > 0L || dropped_tx > 0L) {
     cli::cli_alert_warning(c(
-      "Dropping ranges on non-shared chromosomes: ",
+      "Ranges on non-shared chromosomes will not overlap: ",
       "{dropped_peaks} peak{?s}, {dropped_tx} transcript{?s}."
     ))
   }
-  peaks_gr <- GenomeInfoDb::keepSeqlevels(peaks_gr, common,
-                                          pruning.mode = "coarse")
-  tx_gr    <- GenomeInfoDb::keepSeqlevels(tx_gr, common,
-                                          pruning.mode = "coarse")
+
+  # Match seqlevels to the union so findOverlaps doesn't warn about
+  # mismatched Seqinfo.
+  all_levels <- union(GenomeInfoDb::seqlevels(peaks_gr),
+                      GenomeInfoDb::seqlevels(tx_gr))
+  GenomeInfoDb::seqlevels(peaks_gr) <- all_levels
+  GenomeInfoDb::seqlevels(tx_gr)    <- all_levels
 
   #Find Hits
   cli::cli_progress_step(
@@ -95,14 +88,21 @@ intersect_peaks <- function(peaks, transcripts, output = NULL,
     raw[frac >= fraction]
   }
 
+  # bedtools `-s`
+  if (isTRUE(same_strand)) {
+    p_str <- as.character(GenomicRanges::strand(peaks_gr))[S4Vectors::queryHits(hits)]
+    t_str <- as.character(GenomicRanges::strand(tx_gr))[S4Vectors::subjectHits(hits)]
+    hits <- hits[p_str != "*" & t_str != "*"]
+  }
+
   #Select Hits
   q <- S4Vectors::queryHits(hits)
   s <- S4Vectors::subjectHits(hits)
   if (length(q) == 0L) {
-    cli::cli_progress_done()
-    abort_not_found(c(
-      "No peak/transcript overlaps found.",
-      "i" = "Tried fraction = {fraction}, same_strand = {same_strand}."
+    cli::cli_alert_warning(c(
+      "No peak/transcript overlaps found ",
+      "(fraction = {fraction}, same_strand = {same_strand}). ",
+      "Returning an empty result."
     ))
   }
 
@@ -117,13 +117,6 @@ intersect_peaks <- function(peaks, transcripts, output = NULL,
   out <- as.data.frame(combined, stringsAsFactors = FALSE)
   rownames(out) <- NULL
 
-  if (!is.null(output)) {
-    cli::cli_progress_step("Writing {.path {output}}")
-    utils::write.table(out, file = output, sep = "\t",
-                       quote = FALSE, row.names = FALSE, col.names = FALSE)
-    cli::cli_progress_done()
-    return(invisible(output))
-  }
   cli::cli_progress_done()
   out
 }
@@ -133,42 +126,20 @@ intersect_peaks <- function(peaks, transcripts, output = NULL,
 # Internal normalizers
 # Always returns a character-typed data.frame in BED layout (0-based start).
 .normalize_peaks <- function(x) {
-  if (is.character(x) || is.data.frame(x)) {
-    df <- .read_bed_df(x, "peaks")
-    if (ncol(df) < 6L) {
-      abort_invalid_bed(c(
-        "{.arg peaks} must have at least 6 columns (BED6).",
-        "x" = "Got {ncol(df)}."
-      ))
-    }
-    return(df)
+  if (!is.character(x) && !is.data.frame(x)) {
+    abort_invalid_arg(c(
+      "{.arg peaks} must be a file path or data frame.",
+      "x" = "Got {.cls {class(x)[1]}}."
+    ))
   }
-  if (inherits(x, "GRanges")) {
-    nm <- if (!is.null(S4Vectors::mcols(x)$name)) {
-      as.character(S4Vectors::mcols(x)$name)
-    } else {
-      rep(".", length(x))
-    }
-    sc <- if (!is.null(S4Vectors::mcols(x)$score)) {
-      as.character(S4Vectors::mcols(x)$score)
-    } else {
-      rep("0", length(x))
-    }
-    df <- data.frame(
-      V1 = as.character(GenomicRanges::seqnames(x)),
-      V2 = as.character(as.integer(BiocGenerics::start(x)) - 1L),
-      V3 = as.character(as.integer(BiocGenerics::end(x))),
-      V4 = nm,
-      V5 = sc,
-      V6 = as.character(GenomicRanges::strand(x)),
-      stringsAsFactors = FALSE
-    )
-    return(df)
+  df <- .read_bed_df(x, "peaks")
+  if (ncol(df) < 6L) {
+    abort_invalid_bed(c(
+      "{.arg peaks} must have at least 6 columns (BED6).",
+      "x" = "Got {ncol(df)}."
+    ))
   }
-  abort_invalid_arg(c(
-    "{.arg peaks} must be a file path, data frame, or GRanges.",
-    "x" = "Got {.cls {class(x)[1]}}."
-  ))
+  df
 }
 
 # Always returns a 6-column character-typed BED data.frame (0-based start).
@@ -181,7 +152,7 @@ intersect_peaks <- function(peaks, transcripts, output = NULL,
         "x" = "Got {ncol(df)}."
       ))
     }
-    return(df[, 1:6])
+    return(df)
   }
   if (is.data.frame(x)) {
     # GTF data.frame? Detected by presence of a `type` column.
@@ -215,26 +186,10 @@ intersect_peaks <- function(peaks, transcripts, output = NULL,
         "x" = "Got {ncol(df)}."
       ))
     }
-    return(df[, 1:6])
-  }
-  if (inherits(x, "GRanges")) {
-    nm <- S4Vectors::mcols(x)$transcript_name %||% S4Vectors::mcols(x)$name
-    if (is.null(nm)) {
-      abort_invalid_arg("{.arg transcripts} GRanges needs a {.field transcript_name} or {.field name} mcols column.")
-    }
-    df <- data.frame(
-      V1 = as.character(GenomicRanges::seqnames(x)),
-      V2 = as.character(as.integer(BiocGenerics::start(x)) - 1L),
-      V3 = as.character(as.integer(BiocGenerics::end(x))),
-      V4 = as.character(nm),
-      V5 = ".",
-      V6 = as.character(GenomicRanges::strand(x)),
-      stringsAsFactors = FALSE
-    )
     return(df)
   }
   abort_invalid_arg(c(
-    "{.arg transcripts} must be a file path, BED data frame, GTF data frame, or GRanges.",
+    "{.arg transcripts} must be a file path, BED data frame, or GTF data frame.",
     "x" = "Got {.cls {class(x)[1]}}."
   ))
 }
@@ -316,7 +271,7 @@ intersect_peaks <- function(peaks, transcripts, output = NULL,
   ))
 }
 
-# Parse a BED coordinate column to integer with a clear error pointing at the
+# Parse a BED coordinate column to integer
 .coerce_coord <- function(x, kind, what) {
   vals <- suppressWarnings(as.integer(x))
   bad  <- is.na(vals)
@@ -338,7 +293,8 @@ intersect_peaks <- function(peaks, transcripts, output = NULL,
   vals
 }
 
-# Normalize a BED strand column: accept "+", "-", ".", "*"; map "." to "*".
+# Normalize a BED strand column for GRanges: accept "+", "-", ".", "*".
+# "."
 .coerce_strand <- function(x, kind) {
   s <- as.character(x)
   s[is.na(s) | s == "."] <- "*"

@@ -319,6 +319,14 @@ read_genes <- function(x) {
 build_transcript_annotations <- function(anno_chr) {
   if (nrow(anno_chr) == 0L) return(list())
 
+  # Capture file-order-last gene per transcript BEFORE sorting, to match
+  # Python's `anno_dict[chrom][tx]["gene"] = fields[6]` overwrite-on-every-line
+  # semantics.
+  data.table::setorder(anno_chr, line_id)
+  file_last <- anno_chr[!duplicated(transcript, fromLast = TRUE),
+                       .(transcript, gene)]
+  gene_by_tx_file <- setNames(file_last$gene, file_last$transcript)
+
   # One sort. Then everything is vectorized base-R from here on — no
   # data.table group operations, no per-transcript R loops calling [.data.table.
   data.table::setorder(anno_chr, transcript, region, start)
@@ -329,7 +337,6 @@ build_transcript_annotations <- function(anno_chr) {
   st <- anno_chr$start
   en <- anno_chr$end
   strands <- anno_chr$strand
-  genes <- anno_chr$gene
 
   # Per-transcript first/last row indices (transcript-sorted, so contiguous).
   tx_change <- if (n == 1L) TRUE else c(TRUE, tx[-1L] != tx[-n])
@@ -339,7 +346,7 @@ build_transcript_annotations <- function(anno_chr) {
   n_tx <- length(tx_names)
 
   strand_by_tx <- setNames(strands[tx_first_idx], tx_names)
-  gene_by_tx <- setNames(genes[tx_last_idx], tx_names)
+  gene_by_tx <- gene_by_tx_file[tx_names]
 
   # Reduce (start, end) per (transcript, region) using a flat vectorized sweep.
   in_regions <- rg %in% REGIONS
@@ -476,8 +483,11 @@ build_gene_map <- function(genes_chr) {
 
   data.table::setorder(genes_chr, line_id)
 
-  # Each gene -> flat (start, end). Later duplicate gene records overwrite
-  # earlier ones (matches Python's last-write-wins semantics).
+  # Match Python's last-write-wins: keep only the last row per gene name.
+  # R's `[[` on a named list with duplicates returns the FIRST match, so we
+  # have to drop the earlier duplicates explicitly.
+  genes_chr <- genes_chr[!duplicated(gene, fromLast = TRUE)]
+
   out <- vector("list", nrow(genes_chr))
   for (i in seq_len(nrow(genes_chr))) {
     out[[i]] <- list(start = genes_chr$start[i], end = genes_chr$end[i])
@@ -577,7 +587,7 @@ choose_peak_region <- function(region_names) {
 # Control generation
 # -----------------------------
 
-sample_simple_control <- function(peak_start, peak_end, peak_length, cl_starts, cl_ends, final_region) {
+sample_simple_control <- function(peak_start, peak_end, peak_length, cl_starts, cl_ends, final_region, rng) {
   # Python materializes every integer start in
   #   range(control_region[0], control_region[1] - peak_length)
   # We compute the same uniform-over-positions sample without enumerating.
@@ -594,7 +604,7 @@ sample_simple_control <- function(peak_start, peak_end, peak_length, cl_starts, 
   n_starts <- n_starts[keep]
 
   total <- sum(n_starts)
-  chosen_global <- sample.int(total, 1L)
+  chosen_global <- rng$pick(total)
 
   cumulative <- cumsum(n_starts)
   chosen_row <- which(cumulative >= chosen_global)[1L]
@@ -613,9 +623,9 @@ sample_simple_control <- function(peak_start, peak_end, peak_length, cl_starts, 
   )
 }
 
-sample_uniform_flat <- function(starts, ends) {
+sample_uniform_flat <- function(starts, ends, rng) {
   if (length(starts) == 0L) return(NULL)
-  i <- sample.int(length(starts), 1L)
+  i <- rng$pick(length(starts))
   list(start = starts[i], end = ends[i])
 }
 
@@ -645,7 +655,7 @@ flat_reduce <- function(s, e) {
   list(starts = out_s[seq_len(n)], ends = out_e[seq_len(n)])
 }
 
-get_cds_control <- function(peak_start, peak_end, peak_length, cl_starts, cl_ends, rf, tx) {
+get_cds_control <- function(peak_start, peak_end, peak_length, cl_starts, cl_ends, rf, tx, rng) {
   # rf = tx$regions_flat[["CDS"]] (sorted, reduced).
   # Python's _get_cds_control iterates region_list and overwrites exon_coords
   # on each hit, so the LAST overlapping CDS interval wins.
@@ -675,7 +685,7 @@ get_cds_control <- function(peak_start, peak_end, peak_length, cl_starts, cl_end
   if (!any(ok)) return(NULL)
 
   picked <- flat_reduce(cand_starts[ok], cand_ends[ok])
-  chosen <- sample_uniform_flat(picked$starts, picked$ends)
+  chosen <- sample_uniform_flat(picked$starts, picked$ends, rng)
   if (is.null(chosen)) return(NULL)
 
   list(
@@ -687,7 +697,7 @@ get_cds_control <- function(peak_start, peak_end, peak_length, cl_starts, cl_end
   )
 }
 
-get_intron_control <- function(peak_start, peak_end, peak_length, cl_starts, cl_ends, rf, tx) {
+get_intron_control <- function(peak_start, peak_end, peak_length, cl_starts, cl_ends, rf, tx, rng) {
   # rf = tx$regions_flat[["intron"]].
   region_coords <- NULL
   intersect_length <- 0L
@@ -783,7 +793,7 @@ get_intron_control <- function(peak_start, peak_end, peak_length, cl_starts, cl_
   if (!any(ok)) return(NULL)
 
   picked <- flat_reduce(cand_starts[ok], cand_ends[ok])
-  chosen <- sample_uniform_flat(picked$starts, picked$ends)
+  chosen <- sample_uniform_flat(picked$starts, picked$ends, rng)
   if (is.null(chosen)) return(NULL)
 
   list(
@@ -795,7 +805,7 @@ get_intron_control <- function(peak_start, peak_end, peak_length, cl_starts, cl_
   )
 }
 
-get_control <- function(peak_start, peak_end, region, cl_starts, cl_ends, tx) {
+get_control <- function(peak_start, peak_end, region, cl_starts, cl_ends, tx, rng) {
   peak_start <- as.integer(peak_start)
   peak_end <- as.integer(peak_end)
   peak_length <- peak_end - peak_start
@@ -809,17 +819,17 @@ get_control <- function(peak_start, peak_end, region, cl_starts, cl_ends, tx) {
 
   if (region %in% c("UTR3", "UTR5", "exon")) {
     return(sample_simple_control(
-      peak_start, peak_end, peak_length, cl_starts, cl_ends, region
+      peak_start, peak_end, peak_length, cl_starts, cl_ends, region, rng
     ))
   }
   if (region == "CDS") {
     return(get_cds_control(
-      peak_start, peak_end, peak_length, cl_starts, cl_ends, rf, tx
+      peak_start, peak_end, peak_length, cl_starts, cl_ends, rf, tx, rng
     ))
   }
   if (region == "intron") {
     return(get_intron_control(
-      peak_start, peak_end, peak_length, cl_starts, cl_ends, rf, tx
+      peak_start, peak_end, peak_length, cl_starts, cl_ends, rf, tx, rng
     ))
   }
 
@@ -870,8 +880,14 @@ sliding_window_python <- function(start, end,
 # Per-chromosome processing
 # -----------------------------
 
-process_chromosome <- function(chromosome, chrom_index, peaks, anno, genes, seed) {
-  set.seed(as.integer(seed) + as.integer(chrom_index))
+process_chromosome <- function(chromosome, chrom_index, peaks, anno, genes, seed, rng) {
+  # In R-native mode we reseed per chromosome so parallel mclapply workers
+  # don't share state. In Python-RNG mode the RNG is a single global stream
+  # owned by the embedded Python interpreter, so we skip per-chrom reseeding
+  # to mirror Python's behavior.
+  if (identical(rng$mode, "R")) {
+    set.seed(as.integer(seed) + as.integer(chrom_index))
+  }
 
   peaks_chr <- peaks[chr == chromosome]
   anno_chr <- anno[chr == chromosome]
@@ -1047,7 +1063,7 @@ process_chromosome <- function(chromosome, chrom_index, peaks, anno, genes, seed
 
         if (exists(window_key, envir = processed_windows, inherits = FALSE)) next
 
-        control <- get_control(window_start, window_end, peak_region, cl_starts, cl_ends, tx)
+        control <- get_control(window_start, window_end, peak_region, cl_starts, cl_ends, tx, rng)
         if (is.null(control)) next
         if (is.na(control$control_start) || control$control_start == 0L) next
 
@@ -1107,6 +1123,32 @@ process_chromosome <- function(chromosome, chrom_index, peaks, anno, genes, seed
 # Main user-facing function
 # -----------------------------
 
+make_rng <- function(mode, seed) {
+  mode <- match.arg(mode, c("R", "python"))
+  if (mode == "python") {
+    if (!requireNamespace("reticulate", quietly = TRUE)) {
+      stop("rng = 'python' requires the 'reticulate' package. ",
+           "Install with install.packages('reticulate').")
+    }
+    py_random <- reticulate::import("random", convert = TRUE)
+    py_random$seed(as.integer(seed))
+    list(
+      mode = "python",
+      # Returns an R 1-based index in {1..n}. random.choice(seq) is
+      # equivalent to seq[random.randrange(len(seq))].
+      pick = function(n) {
+        py_random$randrange(as.integer(n)) + 1L
+      }
+    )
+  } else {
+    set.seed(as.integer(seed))
+    list(
+      mode = "R",
+      pick = function(n) sample.int(as.integer(n), 1L)
+    )
+  }
+}
+
 generate_control_peaks <- function(
     input,
     anno,
@@ -1116,6 +1158,7 @@ generate_control_peaks <- function(
     output_file = NULL,
     output_basename = NULL,
     seed = 1234L,
+    rng = c("R", "python"),
     return_results = TRUE,
     write_output = TRUE,
     verbose = TRUE) {
@@ -1131,12 +1174,23 @@ generate_control_peaks <- function(
     stop("You must provide a gene annotation file path or gene data frame.")
   }
 
+  rng_mode <- match.arg(rng)
   pool <- as.integer(pool)
   seed <- as.integer(seed)
   if (is.na(pool) || pool < 1L) pool <- 1L
   if (is.na(seed)) seed <- 1234L
 
-  set.seed(seed)
+  # Python RNG is a single global stream held by the embedded interpreter.
+  # mclapply forks would each get a private copy of that interpreter state
+  # and diverge from Python's reference behavior, so force sequential mode.
+  if (rng_mode == "python" && pool > 1L) {
+    if (verbose) {
+      message("rng = 'python' forces pool = 1 to preserve a single RNG stream.")
+    }
+    pool <- 1L
+  }
+
+  rng_state <- make_rng(rng_mode, seed)
 
   if (verbose) message("Building annotation dict...")
   anno_dt <- read_annotation(anno)
@@ -1179,7 +1233,8 @@ generate_control_peaks <- function(
         peaks = peaks_dt,
         anno = anno_dt,
         genes = genes_dt,
-        seed = seed
+        seed = seed,
+        rng = rng_state
       )
     }
 
