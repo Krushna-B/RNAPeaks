@@ -6,7 +6,7 @@
 #'
 #' @param events Data frame of rMATS RI.MATS events.
 #' @param bed_file BED file path or BED data frame of peaks (chr, start, end,
-#'   name, score, strand). Validated via [check_bed()].
+#'   name, score, strand). Validated via `check_bed()`.
 #' @param opts Result of [splicing_options()].
 #' @param style Result of [splicing_style()].
 #' @param title Plot title.

@@ -7,7 +7,7 @@
 #'   3. binarize per-bp and resample to `n_bins` via the within-bin mean.
 #'
 #'
-#' @param pieces Data frame from [build_utr_events()] (one of
+#' @param pieces Data frame from `build_utr_events()` (one of
 #'   `utr5_pieces` / `utr3_pieces`).
 #' @param bed_gr Reduced `GRanges` of peaks (single track).
 #' @param n_events Total number of events with any exonic UTR on this
@@ -134,9 +134,8 @@ score_utr_metagene <- function(pieces, bed_gr, n_events, n_bins = 100L) {
 }
 
 # Resample length-L 0/1 vector to n_bins.
-# - L >= n_bins: each bin's value is the within-bin mean (down-sample).
-# - L <  n_bins: every bin gets the bp value at its nearest position
-#   (up-sample).
+# - L >= n_bins: within-bin mean (down-sample).
+# - L <  n_bins: hand off to .short_utr_resample.
 .bin_mean <- function(x, n_bins) {
   L <- length(x)
   if (L == 0L) return(rep(0, n_bins))
@@ -150,9 +149,14 @@ score_utr_metagene <- function(pieces, bed_gr, n_events, n_bins = 100L) {
     out[nz] <- sums[nz] / counts[nz]
     return(out)
   }
-  # Up-sample: bin k samples the bp at position ceil(k * L / n_bins).
-  pos <- as.integer(ceiling(seq_len(n_bins) * L / n_bins))
-  pos[pos < 1L] <- 1L
-  pos[pos > L]  <- L
-  as.numeric(x[pos])
+  .short_utr_resample(x, n_bins)
+}
+
+# Short-UTR strategy (L < n_bins): keep each bp at its true position and
+# leave the trailing bins at 0. Swap this body to change the behavior.
+.short_utr_resample <- function(x, n_bins) {
+  out <- numeric(n_bins)
+  L <- length(x)
+  out[seq_len(L)] <- as.numeric(x)
+  out
 }

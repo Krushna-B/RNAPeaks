@@ -44,12 +44,13 @@ A list with \code{plot} (ggplot) and \code{data} (per-bin density frame).
 }
 \description{
 For every protein-coding gene in \code{gtf} (or the subset named by
-\code{transcripts}), picks the transcript with the longest exonic 5' UTR
-and the transcript with the longest exonic 3' UTR. Peaks from \code{bed}
-that fall the UTR are binarized per-bp on the
-spliced transcript, resampled into 100 bins per side, and averaged
-across genes. The result is two density curves (one per BED track)
-shown left-to-right as \verb{[5' UTR] // [3' UTR]}.
+\code{transcripts}), picks the transcript with the longest exonic 5' UTR and
+the one with the longest exonic 3' UTR. Peaks from \code{bed} that fall in
+the UTR are binarized per-bp on the spliced transcript, resampled to
+\code{n_bins} per side, and averaged across genes. UTRs shorter than
+\code{n_bins} keep each bp at its true position and pad the rest with 0.
+The result is two density curves (one per BED track) shown as
+\verb{[5' UTR] // [3' UTR]}.
 }
 \seealso{
 Other plot: 

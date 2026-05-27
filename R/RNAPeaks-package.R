@@ -41,7 +41,7 @@
 #'
 #' @section Helpers:
 #' \describe{
-#'   \item{[check_bed()]}{Validate and normalize a BED data frame.}
+#'   \item{`check_bed()`}{Validate and normalize a BED data frame.}
 #' }
 #'
 #' @section Bundled data:

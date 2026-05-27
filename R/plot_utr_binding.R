@@ -1,13 +1,14 @@
 #' Plot RBP peak binding density over 5' and 3' UTRs
 #'
 #' For every protein-coding gene in `gtf` (or the subset named by
-#' `transcripts`), picks the transcript with the longest exonic 5' UTR
-#' and the transcript with the longest exonic 3' UTR. Peaks from `bed`
-#' that fall the UTR are binarized per-bp on the
-#' spliced transcript, resampled into 100 bins per side, and averaged
-#' across genes. The result is two density curves (one per BED track)
-#' shown left-to-right as `[5' UTR] // [3' UTR]`.
-
+#' `transcripts`), picks the transcript with the longest exonic 5' UTR and
+#' the one with the longest exonic 3' UTR. Peaks from `bed` that fall in
+#' the UTR are binarized per-bp on the spliced transcript, resampled to
+#' `n_bins` per side, and averaged across genes. UTRs shorter than
+#' `n_bins` keep each bp at its true position and pad the rest with 0.
+#' The result is two density curves (one per BED track) shown as
+#' `[5' UTR] // [3' UTR]`.
+#'
 #' @param bed Validated BED data frame, BED file path, or named list of
 #'   either; one density curve is drawn per element.
 #' @param gtf Optional GTF file path. If `NULL`, the bundled

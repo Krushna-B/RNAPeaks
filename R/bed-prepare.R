@@ -93,7 +93,7 @@ prepare_bed <- function(bed,
 #' Restrict a validated BED to a chromosome / strand / coordinate window,
 #' drop omitted targets, and merge nearby peaks per target.
 #'
-#' @param bed A BED data frame returned by [check_bed()].
+#' @param bed A BED data frame returned by `check_bed()`.
 #' @param chr Chromosome to retain; `"chr"` prefix and case are normalized.
 #' @param start,end Region bounds (numeric, `start <= end`, both `>= 0`).
 #' @param strand Strand to retain: `"+"` or `"-"`.

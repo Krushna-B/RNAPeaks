@@ -1,22 +1,20 @@
-# Generate strand and region-matched control peaks.
-
-#' Annotates each peak with the transcripts that fully contain it via
-#' [intersect_peaks()] (bedtools `-f 1 -wa -wb -s` semantics), then chooses
-#' a control region per peak matched in length, strand, and transcript-region
-#' type (UTR3 / UTR5 / CDS / exon / intron).
+#' Generate strand- and region-matched control peaks
 #'
-#' @param raw_peaks Peak BED. File path or data.frame in BED layout (>= 6 cols).
-#
-#' @param anno      Per-region annotation BED. File path or data.frame.
-#'   Either has named columns `chr, start, end, name, strand, gene` (with
-#'   optional `transcript`, `region`) or is positional with col 1=chr,
-#'   2=start, 3=end, 4=name (`{transcript}_{region}_*`), 6=strand, 7=gene.
-#' @param gene      Gene BED. File path or data.frame with named columns
-#'   `chr, start, end, gene` or positional cols 1=chr, 2=start, 3=end, 4=gene.
-#' @param transcripts Transcripts BED passed to [intersect_peaks()] (file
-#'   path or data.frame, same format used in the bedtools intersect example).
-#' @param pool      Parallel cores (>= 1).
-#' @param seed      RNG seed. Default `1234L`.
+#' For each peak, finds the transcripts that fully contain it (via
+#' [intersect_peaks()] with bedtools `-f 1 -wa -wb -s` semantics) and samples
+#' a control region matched in length, strand, and region type
+#' (UTR3 / UTR5 / CDS / exon / intron).
+#'
+#' @param raw_peaks Peak BED. File path or data.frame with >= 6 BED columns.
+#' @param anno Per-region annotation BED. File path or data.frame. Either
+#'   has named columns `chr, start, end, name, strand, gene` (with optional
+#'   `transcript`, `region`), or is positional with col 1=chr, 2=start,
+#'   3=end, 4=name (`{transcript}_{region}_*`), 6=strand, 7=gene.
+#' @param gene Gene BED. Named columns `chr, start, end, gene`, or positional
+#'   cols 1=chr, 2=start, 3=end, 4=gene.
+#' @param transcripts Transcripts BED passed to [intersect_peaks()].
+#' @param threads Number of worker threads (>= 1).
+#' @param seed RNG seed.
 #'
 #' @return A data.frame with columns `chr`, `peak_start`, `peak_end`, `name`,
 #'   `strand`, `control_start`, `control_end`.
@@ -24,10 +22,19 @@
 #' @export
 #' @family control_peaks
 generate_control_peaks <- function(raw_peaks, anno, gene, transcripts,
-                                   pool = 1L, seed = 1234) {
+                                   threads = 1L, seed = 1234) {
   #Validate Params
-  check_scalar_int(pool, "pool", min = 1L)
+  check_scalar_int(threads, "threads", min = 1L)
   check_scalar_int(seed, "seed")
+  for (nm in c("raw_peaks", "anno", "gene", "transcripts")) {
+    val <- get(nm)
+    if (is.null(val) || (!is.character(val) && !is.data.frame(val))) {
+      abort_invalid_arg(c(
+        "{.arg {nm}} must be a file path or data.frame.",
+        "x" = "Got {.cls {class(val)[1]}}."
+      ))
+    }
+  }
 
   cli::cli_progress_step("Intersecting peaks with transcripts")
   peaks_df <- intersect_peaks(raw_peaks, transcripts,
@@ -94,8 +101,17 @@ generate_control_peaks <- function(raw_peaks, anno, gene, transcripts,
   per_chrom <- per_chrom[keep]
   chrom_names <- vapply(per_chrom, function(x) x$chrom, character(1L))
 
-  # One call into C++. `pool` is the user-supplied thread cap (0 = auto).
-  raw <- process_chromosomes_threaded_cpp(per_chrom, as.integer(pool))
+  # One call into C++. Engine errors are re-raised as rnapeaks_error.
+  raw <- tryCatch(
+    process_chromosomes_threaded_cpp(per_chrom, as.integer(threads)),
+    rnapeaks_error = function(e) stop(e),
+    error = function(e) {
+      abort_invalid_arg(c(
+        "Control peak engine failed.",
+        "x" = conditionMessage(e)
+      ))
+    }
+  )
 
   result_list <- lapply(seq_along(raw), function(i) {
     r <- raw[[i]]

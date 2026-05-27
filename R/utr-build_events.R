@@ -5,7 +5,7 @@
 #' the transcript with the longest 5' UTR and the
 #' transcript with the longest 3' UTR.
 #'
-#' @param gtf Normalized GTF data frame (see [get_GTF()]).
+#' @param gtf Normalized GTF data frame (see `get_GTF()`).
 #' @param transcripts Optional character vector of transcript ids to
 #'   restrict to. When `NULL`, all protein-coding transcripts contribute.
 #'

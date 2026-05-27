@@ -16,7 +16,7 @@ five_prime_splicing_map(
 \item{events}{Data frame of rMATS a5ss events.}
 
 \item{bed_file}{BED file path or BED data frame of peaks (chr, start, end,
-name, score, strand). Validated via \code{\link[=check_bed]{check_bed()}}.}
+name, score, strand). Validated via \code{check_bed()}.}
 
 \item{opts}{Result of \code{\link[=splicing_options]{splicing_options()}}.}
 

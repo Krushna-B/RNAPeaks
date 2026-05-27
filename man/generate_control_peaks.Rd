@@ -2,46 +2,42 @@
 % Please edit documentation in R/generate_control_peaks.R
 \name{generate_control_peaks}
 \alias{generate_control_peaks}
-\title{Annotates each peak with the transcripts that fully contain it via
-\code{\link[=intersect_peaks]{intersect_peaks()}} (bedtools \verb{-f 1 -wa -wb -s} semantics), then chooses
-a control region per peak matched in length, strand, and transcript-region
-type (UTR3 / UTR5 / CDS / exon / intron).}
+\title{Generate strand- and region-matched control peaks}
 \usage{
 generate_control_peaks(
   raw_peaks,
   anno,
   gene,
   transcripts,
-  pool = 1L,
-  seed = 1234L
+  threads = 1L,
+  seed = 1234
 )
 }
 \arguments{
-\item{raw_peaks}{Peak BED. File path or data.frame in BED layout (>= 6 cols).}
+\item{raw_peaks}{Peak BED. File path or data.frame with >= 6 BED columns.}
 
-\item{anno}{Per-region annotation BED. File path or data.frame.
-Either has named columns \verb{chr, start, end, name, strand, gene} (with
-optional \code{transcript}, \code{region}) or is positional with col 1=chr,
-2=start, 3=end, 4=name (\verb{\{transcript\}_\{region\}_*}), 6=strand, 7=gene.}
+\item{anno}{Per-region annotation BED. File path or data.frame. Either
+has named columns \verb{chr, start, end, name, strand, gene} (with optional
+\code{transcript}, \code{region}), or is positional with col 1=chr, 2=start,
+3=end, 4=name (\verb{\{transcript\}_\{region\}_*}), 6=strand, 7=gene.}
 
-\item{gene}{Gene BED. File path or data.frame with named columns
-\verb{chr, start, end, gene} or positional cols 1=chr, 2=start, 3=end, 4=gene.}
+\item{gene}{Gene BED. Named columns \verb{chr, start, end, gene}, or positional
+cols 1=chr, 2=start, 3=end, 4=gene.}
 
-\item{transcripts}{Transcripts BED passed to \code{\link[=intersect_peaks]{intersect_peaks()}} (file
-path or data.frame, same format used in the bedtools intersect example).}
+\item{transcripts}{Transcripts BED passed to \code{\link[=intersect_peaks]{intersect_peaks()}}.}
 
-\item{pool}{Parallel cores (>= 1).}
+\item{threads}{Number of worker threads (>= 1).}
 
-\item{seed}{RNG seed. Default \code{1234L}.}
+\item{seed}{RNG seed.}
 }
 \value{
 A data.frame with columns \code{chr}, \code{peak_start}, \code{peak_end}, \code{name},
 \code{strand}, \code{control_start}, \code{control_end}.
 }
 \description{
-Annotates each peak with the transcripts that fully contain it via
-\code{\link[=intersect_peaks]{intersect_peaks()}} (bedtools \verb{-f 1 -wa -wb -s} semantics), then chooses
-a control region per peak matched in length, strand, and transcript-region
-type (UTR3 / UTR5 / CDS / exon / intron).
+For each peak, finds the transcripts that fully contain it (via
+\code{\link[=intersect_peaks]{intersect_peaks()}} with bedtools \verb{-f 1 -wa -wb -s} semantics) and samples
+a control region matched in length, strand, and region type
+(UTR3 / UTR5 / CDS / exon / intron).
 }
 \concept{control_peaks}

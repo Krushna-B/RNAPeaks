@@ -54,7 +54,7 @@ splice-site-matched control peaks for an eCLIP-seq peak set.}
 \section{Helpers}{
 
 \describe{
-\item{\code{\link[=check_bed]{check_bed()}}}{Validate and normalize a BED data frame.}
+\item{\code{check_bed()}}{Validate and normalize a BED data frame.}
 }
 }
 

@@ -462,9 +462,9 @@ struct PickFlat {
   int end   = 0;
 };
 
-//Random Integer Picker from 1 to n
-static int rng_pick_1_based(int n, std::mt19937 &rng) {
-  std::uniform_int_distribution<int> dist(1, n);
+//Random integer in [0, n).
+static int rng_pick(int n, std::mt19937 &rng) {
+  std::uniform_int_distribution<int> dist(0, n - 1);
   return dist(rng);
 }
 
@@ -473,8 +473,7 @@ static PickFlat sample_uniform_flat(const std::vector<int>& starts,
                                     const std::vector<int>& ends, std::mt19937 &rng) {
   PickFlat p;
   if (starts.empty()) return p;
-  const int i1 = rng_pick_1_based((int)starts.size(), rng); // 1..n
-  const int i  = i1 - 1;
+  const int i = rng_pick((int)starts.size(), rng);
   p.start = starts[i];
   p.end   = ends[i];
   p.ok    = true;
@@ -510,9 +509,8 @@ static Control sample_simple_control(int peak_start, int peak_end, int peak_leng
   if (total <= 0 || total > INT_MAX) return c;
 
 
-  //Choose random start position
-  const int chosen_global = rng_pick_1_based((int)total, rng);
-
+  //Choose random start position in [0, total).
+  const int chosen_global = rng_pick((int)total, rng);
 
   long long cumulative = 0;
   int chosen_row = -1;
@@ -521,7 +519,7 @@ static Control sample_simple_control(int peak_start, int peak_end, int peak_leng
   for (size_t i = 0; i < kn.size(); ++i) {
     const long long prev = cumulative;
     cumulative += kn[i];
-    if (cumulative >= chosen_global) {
+    if (cumulative > chosen_global) {
       chosen_row = (int)i;
       previous_total = prev;
       break;
@@ -529,9 +527,7 @@ static Control sample_simple_control(int peak_start, int peak_end, int peak_leng
   }
   if (chosen_row < 0) return c;
 
-  //Convert the global choice into an actual genomic start coordinate.
-  //Create control interval.
-  const int offset = chosen_global - (int)previous_total - 1;
+  const int offset = chosen_global - (int)previous_total;
   c.control_start = ks[chosen_row] + offset;
   c.control_end   = c.control_start + peak_length;
   c.region_type   = final_region;
@@ -1011,6 +1007,62 @@ static Rcpp::List wrap_chrom_output(const ChromOutput& out) {
 
 
 
+// Check the per-chromosome list shape on the main thread before spawning
+// workers. Names the chromosome and the bad field in the error.
+static void validate_chrom_input(const Rcpp::List& el) {
+  static const char* required[] = {
+    "anno_transcript", "anno_region", "anno_start", "anno_end",
+    "anno_strand", "anno_gene",
+    "gene_name", "gene_start", "gene_end",
+    "peak_start", "peak_end", "peak_FC", "peak_transcripts", "seed", "chrom"
+  };
+  Rcpp::CharacterVector names = el.names();
+  std::unordered_set<std::string> have;
+  have.reserve(names.size());
+  for (int i = 0; i < names.size(); ++i) have.insert(Rcpp::as<std::string>(names[i]));
+
+  std::string chrom = have.count("chrom")
+    ? Rcpp::as<std::string>(el["chrom"]) : std::string("<unknown>");
+
+  for (const char* nm : required) {
+    if (!have.count(nm)) {
+      Rcpp::stop("control peak engine: chromosome '%s' is missing field '%s'.",
+                 chrom, nm);
+    }
+  }
+
+  auto check_len = [&](const char* a, R_xlen_t la,
+                       const char* b, R_xlen_t lb) {
+    if (la != lb) {
+      Rcpp::stop("control peak engine: chromosome '%s' has length mismatch "
+                 "between '%s' (%lld) and '%s' (%lld).",
+                 chrom, a, (long long)la, b, (long long)lb);
+    }
+  };
+
+  const R_xlen_t n_anno = Rf_xlength(el["anno_transcript"]);
+  check_len("anno_transcript", n_anno, "anno_region",  Rf_xlength(el["anno_region"]));
+  check_len("anno_transcript", n_anno, "anno_start",   Rf_xlength(el["anno_start"]));
+  check_len("anno_transcript", n_anno, "anno_end",     Rf_xlength(el["anno_end"]));
+  check_len("anno_transcript", n_anno, "anno_strand",  Rf_xlength(el["anno_strand"]));
+  check_len("anno_transcript", n_anno, "anno_gene",    Rf_xlength(el["anno_gene"]));
+
+  const R_xlen_t n_gene = Rf_xlength(el["gene_name"]);
+  check_len("gene_name", n_gene, "gene_start", Rf_xlength(el["gene_start"]));
+  check_len("gene_name", n_gene, "gene_end",   Rf_xlength(el["gene_end"]));
+
+  const R_xlen_t n_peak = Rf_xlength(el["peak_start"]);
+  check_len("peak_start", n_peak, "peak_end",         Rf_xlength(el["peak_end"]));
+  check_len("peak_start", n_peak, "peak_FC",          Rf_xlength(el["peak_FC"]));
+  check_len("peak_start", n_peak, "peak_transcripts", Rf_xlength(el["peak_transcripts"]));
+
+  if (TYPEOF(el["peak_transcripts"]) != VECSXP) {
+    Rcpp::stop("control peak engine: chromosome '%s' 'peak_transcripts' must "
+               "be a list, got SEXP type %d.",
+               chrom, TYPEOF(el["peak_transcripts"]));
+  }
+}
+
 //Multi-threaded entry point
 // [[Rcpp::export]]
 Rcpp::List process_chromosomes_threaded_cpp(Rcpp::List per_chrom, int max_threads) {
@@ -1023,6 +1075,7 @@ Rcpp::List process_chromosomes_threaded_cpp(Rcpp::List per_chrom, int max_thread
   inputs.reserve(n_chrom);
   for (int i{}; i < n_chrom; ++i) {
     Rcpp::List el = per_chrom[i];
+    validate_chrom_input(el);
     inputs.push_back(build_chrom_input(
         Rcpp::as<Rcpp::CharacterVector>(el["anno_transcript"]),
         Rcpp::as<Rcpp::CharacterVector>(el["anno_region"]),
@@ -1092,7 +1145,7 @@ Rcpp::List process_chromosomes_threaded_cpp(Rcpp::List per_chrom, int max_thread
   }
 
   if (failed.load()) {
-    Rcpp::stop("process_chromosomes_threaded_cpp: %s", err_msg);
+    Rcpp::stop("control peak engine worker failed: %s", err_msg);
   }
 
   //Turn outputs back to Rcpp on the main thread.
