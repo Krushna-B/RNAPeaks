@@ -10,35 +10,21 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// process_chromosome_cpp
-Rcpp::List process_chromosome_cpp(Rcpp::IntegerVector anno_line_id, Rcpp::CharacterVector anno_transcript, Rcpp::CharacterVector anno_region, Rcpp::IntegerVector anno_start, Rcpp::IntegerVector anno_end, Rcpp::CharacterVector anno_strand, Rcpp::CharacterVector anno_gene, Rcpp::CharacterVector gene_name, Rcpp::IntegerVector gene_start, Rcpp::IntegerVector gene_end, Rcpp::IntegerVector peak_start, Rcpp::IntegerVector peak_end, Rcpp::CharacterVector peak_FC, Rcpp::CharacterVector peak_range, Rcpp::List peak_transcripts, uint32_t seed);
-RcppExport SEXP _RNAPeaks_process_chromosome_cpp(SEXP anno_line_idSEXP, SEXP anno_transcriptSEXP, SEXP anno_regionSEXP, SEXP anno_startSEXP, SEXP anno_endSEXP, SEXP anno_strandSEXP, SEXP anno_geneSEXP, SEXP gene_nameSEXP, SEXP gene_startSEXP, SEXP gene_endSEXP, SEXP peak_startSEXP, SEXP peak_endSEXP, SEXP peak_FCSEXP, SEXP peak_rangeSEXP, SEXP peak_transcriptsSEXP, SEXP seedSEXP) {
+// process_chromosomes_threaded_cpp
+Rcpp::List process_chromosomes_threaded_cpp(Rcpp::List per_chrom, int max_threads);
+RcppExport SEXP _RNAPeaks_process_chromosomes_threaded_cpp(SEXP per_chromSEXP, SEXP max_threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type anno_line_id(anno_line_idSEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type anno_transcript(anno_transcriptSEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type anno_region(anno_regionSEXP);
-    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type anno_start(anno_startSEXP);
-    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type anno_end(anno_endSEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type anno_strand(anno_strandSEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type anno_gene(anno_geneSEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type gene_name(gene_nameSEXP);
-    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type gene_start(gene_startSEXP);
-    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type gene_end(gene_endSEXP);
-    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type peak_start(peak_startSEXP);
-    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type peak_end(peak_endSEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type peak_FC(peak_FCSEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type peak_range(peak_rangeSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type peak_transcripts(peak_transcriptsSEXP);
-    Rcpp::traits::input_parameter< uint32_t >::type seed(seedSEXP);
-    rcpp_result_gen = Rcpp::wrap(process_chromosome_cpp(anno_line_id, anno_transcript, anno_region, anno_start, anno_end, anno_strand, anno_gene, gene_name, gene_start, gene_end, peak_start, peak_end, peak_FC, peak_range, peak_transcripts, seed));
+    Rcpp::traits::input_parameter< Rcpp::List >::type per_chrom(per_chromSEXP);
+    Rcpp::traits::input_parameter< int >::type max_threads(max_threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(process_chromosomes_threaded_cpp(per_chrom, max_threads));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_RNAPeaks_process_chromosome_cpp", (DL_FUNC) &_RNAPeaks_process_chromosome_cpp, 16},
+    {"_RNAPeaks_process_chromosomes_threaded_cpp", (DL_FUNC) &_RNAPeaks_process_chromosomes_threaded_cpp, 2},
     {NULL, NULL, 0}
 };
 

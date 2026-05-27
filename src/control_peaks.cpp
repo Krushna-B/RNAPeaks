@@ -13,10 +13,8 @@
 #include <atomic>
 #include <thread>
 #include <exception>
+#include <mutex>
 
-// Global random number generator.
-//Not thread safe
-static std::mt19937 g_rng;
 
 //Constants
 static constexpr int MIN_REGION_LENGTH    = 50;
@@ -58,6 +56,35 @@ using TranscriptMap = std::unordered_map<std::string, Transcript>;
 //Gene Name -> Gene Object
 struct GeneRec { int start; int end; };
 using GeneMap = std::unordered_map<std::string, GeneRec>;
+
+//Input per chromosome, built by main thread from Rcpp inputs
+//For thread safety
+struct ChromInput {
+  std::vector<int>         anno_start;
+  std::vector<int>         anno_end;
+  std::vector<std::string> anno_transcript;
+  std::vector<std::string> anno_region;
+  std::vector<std::string> anno_strand;
+  std::vector<std::string> anno_gene;
+  std::vector<std::string> gene_name;
+  std::vector<int>         gene_start;
+  std::vector<int>         gene_end;
+  std::vector<int>         peak_start;
+  std::vector<int>         peak_end;
+  std::vector<std::string> peak_FC;
+  std::vector<std::vector<std::string>> peak_transcripts;
+  uint32_t seed = 0;
+};
+
+//Output per chromosome, converted to Rcpp by main thread
+struct ChromOutput {
+  std::vector<int>         peak_start;
+  std::vector<int>         peak_end;
+  std::vector<int>         control_start;
+  std::vector<int>         control_end;
+  std::vector<std::string> name;
+  std::vector<std::string> strand;
+};
 
 
 // Region to name helpers
@@ -275,14 +302,14 @@ static Windows sliding_window_python(int start, int end,
 // Annotation builders
 //Recieves column vectors from R
 static TranscriptMap build_transcript_annotations(
-    const Rcpp::CharacterVector& anno_transcript,
-    const Rcpp::CharacterVector& anno_region,
-    const Rcpp::IntegerVector&   anno_start,
-    const Rcpp::IntegerVector&   anno_end,
-    const Rcpp::CharacterVector& anno_strand,
-    const Rcpp::CharacterVector& anno_gene) {
+    const std::vector<std::string>& anno_transcript,
+    const std::vector<std::string>& anno_region,
+    const std::vector<int>&         anno_start,
+    const std::vector<int>&         anno_end,
+    const std::vector<std::string>& anno_strand,
+    const std::vector<std::string>& anno_gene) {
   TranscriptMap out;
-  const int n = anno_transcript.size();
+  const size_t n = anno_transcript.size();
   if (n == 0) return out;
 
   // Temp transcript: raw (unreduced) intervals per non-intron
@@ -300,19 +327,19 @@ static TranscriptMap build_transcript_annotations(
   tmp.reserve(n / 4);
 
   // Pass 1: file order. gene gets last-write-wins to mirror Python.
-  for (int i{}; i < n; ++i) {
-    const char* tx_c   = anno_transcript[i];
-    const char* reg_c  = anno_region[i];
-    const char* gen_c  = anno_gene[i];
-    const char* str_c  = anno_strand[i];
+  for (size_t i{}; i < n; ++i) {
+    const std::string& tx_s   = anno_transcript[i];
+    const std::string& reg_s  = anno_region[i];
+    const std::string& gen_s  = anno_gene[i];
+    const std::string& str_s  = anno_strand[i];
     const int   s      = anno_start[i];
     const int   e      = anno_end[i];
 
-    TmpTx& t = tmp[std::string(tx_c)]; //Map tmp object
-    if (t.strand == '*' && str_c && str_c[0]) t.strand = str_c[0]; //Store strand
-    t.gene = gen_c ? gen_c : ""; //Store gene name
+    TmpTx& t = tmp[tx_s]; //Map tmp object
+    if (t.strand == '*' && !str_s.empty()) t.strand = str_s[0]; //Store strand
+    t.gene = gen_s; //Store gene name
 
-    RegionID rid = region_from_cstr(reg_c); //Convert Region String to ID
+    RegionID rid = region_from_cstr(reg_s.c_str()); //Convert Region String to ID
     if (rid == REG_N) continue; // skip unknown / non-stored regions
 
     //Save Intervals
@@ -374,16 +401,15 @@ static TranscriptMap build_transcript_annotations(
 }
 
 //Build Gene Map
-static GeneMap build_gene_map(const Rcpp::CharacterVector& gene_name,
-                              const Rcpp::IntegerVector&   gene_start,
-                              const Rcpp::IntegerVector&   gene_end) {
+static GeneMap build_gene_map(const std::vector<std::string>& gene_name,
+                              const std::vector<int>&         gene_start,
+                              const std::vector<int>&         gene_end) {
   GeneMap out;
-  const int n = gene_name.size();
+  const size_t n = gene_name.size();
   out.reserve(n);
-  for (int i{}; i < n; ++i) {
-    const char* nm = gene_name[i];
-    if (!nm) continue;
-    out[std::string(nm)] = GeneRec{gene_start[i], gene_end[i]};
+  for (size_t i{}; i < n; ++i) {
+    if (gene_name[i].empty()) continue;
+    out[gene_name[i]] = GeneRec{gene_start[i], gene_end[i]};
   }
   return out;
 }
@@ -437,17 +463,17 @@ struct PickFlat {
 };
 
 //Random Integer Picker from 1 to n
-static int rng_pick_1_based(int n) {
+static int rng_pick_1_based(int n, std::mt19937 &rng) {
   std::uniform_int_distribution<int> dist(1, n);
-  return dist(g_rng);
+  return dist(rng);
 }
 
 //Picks random interval from [starts,ends)
 static PickFlat sample_uniform_flat(const std::vector<int>& starts,
-                                    const std::vector<int>& ends) {
+                                    const std::vector<int>& ends, std::mt19937 &rng) {
   PickFlat p;
   if (starts.empty()) return p;
-  const int i1 = rng_pick_1_based((int)starts.size()); // 1..n
+  const int i1 = rng_pick_1_based((int)starts.size(), rng); // 1..n
   const int i  = i1 - 1;
   p.start = starts[i];
   p.end   = ends[i];
@@ -459,7 +485,8 @@ static PickFlat sample_uniform_flat(const std::vector<int>& starts,
 static Control sample_simple_control(int peak_start, int peak_end, int peak_length,
                                      const std::vector<int>& cl_starts,
                                      const std::vector<int>& cl_ends,
-                                     const char* final_region) {
+                                     const char* final_region,
+                                     std::mt19937 &rng) {
   Control c;
   if (cl_starts.empty()) return c;
 
@@ -484,7 +511,7 @@ static Control sample_simple_control(int peak_start, int peak_end, int peak_leng
 
 
   //Choose random start position
-  const int chosen_global = rng_pick_1_based((int)total);
+  const int chosen_global = rng_pick_1_based((int)total, rng);
 
 
   long long cumulative = 0;
@@ -516,7 +543,7 @@ static Control sample_simple_control(int peak_start, int peak_end, int peak_leng
 static Control get_cds_control(int peak_start, int peak_end, int peak_length,
                                const std::vector<int>& cl_starts,
                                const std::vector<int>& cl_ends,
-                               const FlatRegion& rf, const Transcript& tx) {
+                               const FlatRegion& rf, const Transcript& tx, std::mt19937 &rng) {
   Control c;
   // Last overlapping CDS interval (Python's "last hit wins").
   int k = -1;
@@ -555,7 +582,7 @@ static Control get_cds_control(int peak_start, int peak_end, int peak_length,
   if (keep_s.empty()) return c;
 
   FlatRegion red = flat_reduce(std::move(keep_s), std::move(keep_e));
-  PickFlat p = sample_uniform_flat(red.starts, red.ends);
+  PickFlat p = sample_uniform_flat(red.starts, red.ends, rng);
   if (!p.ok) return c;
 
   c.control_start = p.start;
@@ -568,7 +595,7 @@ static Control get_cds_control(int peak_start, int peak_end, int peak_length,
 static Control get_intron_control(int peak_start, int peak_end, int peak_length,
                                   const std::vector<int>& cl_starts,
                                   const std::vector<int>& cl_ends,
-                                  const FlatRegion& rf, const Transcript& tx) {
+                                  const FlatRegion& rf, const Transcript& tx, std::mt19937 &rng) {
   Control c;
   int region_start = -1, region_end = -1;
   int intersect_length = 0;
@@ -676,7 +703,7 @@ static Control get_intron_control(int peak_start, int peak_end, int peak_length,
   if (keep_s.empty()) return c;
 
   FlatRegion red = flat_reduce(std::move(keep_s), std::move(keep_e));
-  PickFlat p = sample_uniform_flat(red.starts, red.ends);
+  PickFlat p = sample_uniform_flat(red.starts, red.ends, rng);
   if (!p.ok) return c;
 
   c.control_start = p.start;
@@ -689,7 +716,7 @@ static Control get_intron_control(int peak_start, int peak_end, int peak_length,
 static Control get_control(int peak_start, int peak_end, RegionID region,
                            const std::vector<int>& cl_starts,
                            const std::vector<int>& cl_ends,
-                           const Transcript& tx) {
+                           const Transcript& tx, std::mt19937 &rng) {
   Control c;
   const int peak_length = peak_end - peak_start;
   if (peak_length < MIN_REGION_LENGTH) return c;
@@ -701,15 +728,15 @@ static Control get_control(int peak_start, int peak_end, RegionID region,
 
   if (region == REG_UTR3 || region == REG_UTR5 || region == REG_EXON) {
     return sample_simple_control(peak_start, peak_end, peak_length,
-                                 cl_starts, cl_ends, region_cstr(region));
+                                 cl_starts, cl_ends, region_cstr(region), rng);
   }
   if (region == REG_CDS) {
     return get_cds_control(peak_start, peak_end, peak_length,
-                           cl_starts, cl_ends, rf, tx);
+                           cl_starts, cl_ends, rf, tx, rng);
   }
   if (region == REG_INTRON) {
     return get_intron_control(peak_start, peak_end, peak_length,
-                              cl_starts, cl_ends, rf, tx);
+                              cl_starts, cl_ends, rf, tx, rng);
   }
   return c;
 }
@@ -730,64 +757,21 @@ static void sorted_insert(std::vector<int>& starts, std::vector<int>& ends,
 // -----------------------------
 // Per-chromosome driver
 // -----------------------------
+// Pure-C++ per-chromosome kernel. Touches no R / Rcpp state — safe to call
+// from worker threads concurrently as long as each call gets its own input.
+static ChromOutput process_chromosome_core(const ChromInput& in) {
+  ChromOutput out;
+  std::mt19937 rng(in.seed);
 
-// [[Rcpp::export]]
-Rcpp::List process_chromosome_cpp(
-    Rcpp::IntegerVector   anno_line_id,
-    Rcpp::CharacterVector anno_transcript,
-    Rcpp::CharacterVector anno_region,
-    Rcpp::IntegerVector   anno_start,
-    Rcpp::IntegerVector   anno_end,
-    Rcpp::CharacterVector anno_strand,
-    Rcpp::CharacterVector anno_gene,
-    Rcpp::CharacterVector gene_name,
-    Rcpp::IntegerVector   gene_start,
-    Rcpp::IntegerVector   gene_end,
-    Rcpp::IntegerVector   peak_start,
-    Rcpp::IntegerVector   peak_end,
-    Rcpp::CharacterVector peak_FC,
-    Rcpp::CharacterVector peak_range,
-    Rcpp::List            peak_transcripts,
-    uint32_t              seed
-) {
-  (void)anno_line_id; // sorting is the caller's responsibility (line_id ascending)
+  const int n_peaks = (int)in.peak_start.size();
+  if (n_peaks == 0 || in.anno_transcript.empty()) return out;
 
-  g_rng.seed(seed);
-
-  const int n_peaks = peak_start.size();
-
-  // No peaks or no anno -> nothing to do.
-  if (n_peaks == 0 || anno_transcript.size() == 0) {
-    return Rcpp::List::create(
-      Rcpp::Named("peak_start")    = Rcpp::IntegerVector(0),
-      Rcpp::Named("peak_end")      = Rcpp::IntegerVector(0),
-      Rcpp::Named("name")          = Rcpp::CharacterVector(0),
-      Rcpp::Named("strand")        = Rcpp::CharacterVector(0),
-      Rcpp::Named("control_start") = Rcpp::IntegerVector(0),
-      Rcpp::Named("control_end")   = Rcpp::IntegerVector(0)
-    );
-  }
-
-  // Build per-chromosome lookups.
   TranscriptMap tx_map = build_transcript_annotations(
-      anno_transcript, anno_region, anno_start, anno_end, anno_strand, anno_gene);
-  GeneMap gene_map = build_gene_map(gene_name, gene_start, gene_end);
+      in.anno_transcript, in.anno_region, in.anno_start, in.anno_end,
+      in.anno_strand, in.anno_gene);
+  GeneMap gene_map = build_gene_map(in.gene_name, in.gene_start, in.gene_end);
 
-  // Per-peak transcript-name lists (materialize once).
-  std::vector<std::vector<std::string>> peak_tx(n_peaks);
-  for (int i = 0; i < n_peaks; ++i) {
-    Rcpp::CharacterVector v = peak_transcripts[i];
-    peak_tx[i].reserve(v.size());
-    for (int j = 0; j < v.size(); ++j) {
-      peak_tx[i].push_back(std::string(v[j]));
-    }
-  }
-
-  // -----------------------------
   // Pass 1: build peak_region_dict + per-strand peak totals.
-  // -----------------------------
-
-  // bucket[p_i][region] = list of tx names qualifying that region for peak p_i.
   struct Bucket {
     std::array<std::vector<std::string>, REG_N> tx_per_region;
     std::array<bool, REG_N> present{};
@@ -797,17 +781,15 @@ Rcpp::List process_chromosome_cpp(
   std::vector<int> peak_order; peak_order.reserve(n_peaks);
 
   std::vector<int> plus_s, plus_e, minus_s, minus_e;
-  plus_s.reserve(n_peaks); plus_e.reserve(n_peaks);
+  plus_s.reserve(n_peaks);  plus_e.reserve(n_peaks);
   minus_s.reserve(n_peaks); minus_e.reserve(n_peaks);
 
   for (int p_i = 0; p_i < n_peaks; ++p_i) {
-    const int ps = peak_start[p_i];
-    const int pe = peak_end[p_i];
-    if (ps == NA_INTEGER || pe == NA_INTEGER || pe <= ps) continue;
-    const int peak_length = pe - ps;
-    (void)peak_length;
+    const int ps = in.peak_start[p_i];
+    const int pe = in.peak_end[p_i];
+    if (pe <= ps) continue;
 
-    for (const std::string& tx_name : peak_tx[p_i]) {
+    for (const std::string& tx_name : in.peak_transcripts[p_i]) {
       auto it = tx_map.find(tx_name);
       if (it == tx_map.end()) continue;
       const Transcript& tx = it->second;
@@ -830,48 +812,29 @@ Rcpp::List process_chromosome_cpp(
     }
   }
 
-  if (peak_order.empty()) {
-    return Rcpp::List::create(
-      Rcpp::Named("peak_start")    = Rcpp::IntegerVector(0),
-      Rcpp::Named("peak_end")      = Rcpp::IntegerVector(0),
-      Rcpp::Named("name")          = Rcpp::CharacterVector(0),
-      Rcpp::Named("strand")        = Rcpp::CharacterVector(0),
-      Rcpp::Named("control_start") = Rcpp::IntegerVector(0),
-      Rcpp::Named("control_end")   = Rcpp::IntegerVector(0)
-    );
-  }
+  if (peak_order.empty()) return out;
 
-  // Total peaks per strand -> sorted reduced.
   FlatRegion tpp = flat_reduce(std::move(plus_s),  std::move(plus_e));
   FlatRegion tpm = flat_reduce(std::move(minus_s), std::move(minus_e));
 
-  // -----------------------------
-  // Pass 2: per peak (in input order), pick a region, walk windows, sample.
-  // -----------------------------
-
-  // Running totals of accepted controls per strand; kept sorted by start.
+  // Pass 2: per peak, pick a region, walk windows, sample.
   std::vector<int> tcp_s, tcp_e, tcm_s, tcm_e;
-  // processed_windows: shared across all peaks within this chromosome,
-  // mirrors `new.env(...)` in R created once before the peak loop.
   std::unordered_set<long long> processed_windows;
 
-  // Output buffers.
-  std::vector<int>         res_pstart, res_pend, res_cstart, res_cend;
-  std::vector<std::string> res_name, res_strand;
-  res_pstart.reserve(peak_order.size());
-  res_pend.reserve(peak_order.size());
-  res_cstart.reserve(peak_order.size());
-  res_cend.reserve(peak_order.size());
-  res_name.reserve(peak_order.size());
-  res_strand.reserve(peak_order.size());
+  out.peak_start.reserve(peak_order.size());
+  out.peak_end.reserve(peak_order.size());
+  out.control_start.reserve(peak_order.size());
+  out.control_end.reserve(peak_order.size());
+  out.name.reserve(peak_order.size());
+  out.strand.reserve(peak_order.size());
 
   for (int p_i : peak_order) {
     const Bucket& b = buckets[p_i];
     const RegionID peak_region = choose_peak_region(b.present);
 
-    const int peak_s = peak_start[p_i];
-    const int peak_e = peak_end[p_i];
-    const std::string fc(Rcpp::as<const char*>(peak_FC[p_i]));
+    const int peak_s = in.peak_start[p_i];
+    const int peak_e = in.peak_end[p_i];
+    const std::string& fc = in.peak_FC[p_i];
     const int peak_length = peak_e - peak_s;
 
     const std::vector<std::string>& peak_txs = b.tx_per_region[peak_region];
@@ -885,7 +848,6 @@ Rcpp::List process_chromosome_cpp(
       const std::vector<int>& tp_s = plus ? tpp.starts : tpm.starts;
       const std::vector<int>& tp_e = plus ? tpp.ends   : tpm.ends;
 
-      // Blacklist (peak-occupied space, restricted to this gene's window).
       std::vector<int> bl_s, bl_e;
       auto gene_it = gene_map.find(tx.gene);
       if (gene_it != gene_map.end()) {
@@ -899,8 +861,6 @@ Rcpp::List process_chromosome_cpp(
         bl_e = tp_e;
       }
 
-      // Region in-set for setdiff. For intron we collapse to a single
-      // [tx_start, tx_end] interval, matching the R reference.
       std::vector<int> ri_s, ri_e;
       if (peak_region == REG_INTRON) {
         if (tx.tx_start < 0 || tx.tx_end < 0) continue;
@@ -913,7 +873,6 @@ Rcpp::List process_chromosome_cpp(
 
       FlatRegion cl = flat_setdiff(ri_s, ri_e, bl_s, bl_e);
 
-      // Windows: peak itself if short, otherwise the Python sliding window.
       Windows ws;
       if (peak_length <= 400) {
         ws.starts.push_back(peak_s);
@@ -930,7 +889,7 @@ Rcpp::List process_chromosome_cpp(
         const long long key = (long long)ws_s * 100000000LL + (long long)ws_e;
         if (processed_windows.count(key)) continue;
 
-        Control ctrl = get_control(ws_s, ws_e, peak_region, cl.starts, cl.ends, tx);
+        Control ctrl = get_control(ws_s, ws_e, peak_region, cl.starts, cl.ends, tx, rng);
         if (!ctrl.ok) continue;
         if (ctrl.control_start == 0) continue;
 
@@ -944,19 +903,17 @@ Rcpp::List process_chromosome_cpp(
           if (flat_overlaps_any_scalar(cs, ce, tcm_s, tcm_e)) continue;
         }
 
-        // Accept: insert into the per-strand running totals.
         if (plus) sorted_insert(tcp_s, tcp_e, cs, ce);
         else      sorted_insert(tcm_s, tcm_e, cs, ce);
 
         processed_windows.insert(key);
 
-        // Output row.
-        res_pstart.push_back(ws_s);
-        res_pend.push_back(ws_e);
-        res_cstart.push_back(cs);
-        res_cend.push_back(ce);
-        res_name.push_back(tx.gene + "_" + ctrl.region_type + "_" + fc);
-        res_strand.push_back(std::string(1, tx.strand));
+        out.peak_start.push_back(ws_s);
+        out.peak_end.push_back(ws_e);
+        out.control_start.push_back(cs);
+        out.control_end.push_back(ce);
+        out.name.push_back(tx.gene + "_" + ctrl.region_type + "_" + fc);
+        out.strand.push_back(std::string(1, tx.strand));
 
         peak_processed = true;
       }
@@ -965,20 +922,81 @@ Rcpp::List process_chromosome_cpp(
     }
   }
 
-  // -----------------------------
-  // Assemble Rcpp output.
-  // -----------------------------
+  return out;
+}
 
-  const int nr = (int)res_pstart.size();
+/**
+ * Converting between RCpp and C++ core to allow for multhreading
+ */
+
+//Rcpp to plain conversion helpers
+static std::vector<std::string> to_string_vec(const Rcpp::CharacterVector x){
+  std::vector<std::string> out;
+  const int n = x.size();
+  out.reserve(n);
+  for (int i{}; i<n; ++i){
+    if (SEXP(x[i]) == NA_STRING) out.emplace_back();
+    else out.emplace_back(Rcpp::as<std::string>(x[i]));
+  }
+  return out;
+}
+
+static std::vector<int> to_int_vec(const Rcpp::IntegerVector& x) {
+  return std::vector<int>(x.begin(), x.end());
+}
+
+//Build C++ Chrom Input from Rcpp
+static ChromInput build_chrom_input(
+    const Rcpp::CharacterVector& anno_transcript,
+    const Rcpp::CharacterVector& anno_region,
+    const Rcpp::IntegerVector&   anno_start,
+    const Rcpp::IntegerVector&   anno_end,
+    const Rcpp::CharacterVector& anno_strand,
+    const Rcpp::CharacterVector& anno_gene,
+    const Rcpp::CharacterVector& gene_name,
+    const Rcpp::IntegerVector&   gene_start,
+    const Rcpp::IntegerVector&   gene_end,
+    const Rcpp::IntegerVector&   peak_start,
+    const Rcpp::IntegerVector&   peak_end,
+    const Rcpp::CharacterVector& peak_FC,
+    const Rcpp::List&            peak_transcripts,
+    uint32_t                     seed) {
+  ChromInput in;
+  in.anno_transcript = to_string_vec(anno_transcript);
+  in.anno_region     = to_string_vec(anno_region);
+  in.anno_start      = to_int_vec(anno_start);
+  in.anno_end        = to_int_vec(anno_end);
+  in.anno_strand     = to_string_vec(anno_strand);
+  in.anno_gene       = to_string_vec(anno_gene);
+  in.gene_name       = to_string_vec(gene_name);
+  in.gene_start      = to_int_vec(gene_start);
+  in.gene_end        = to_int_vec(gene_end);
+  in.peak_start      = to_int_vec(peak_start);
+  in.peak_end        = to_int_vec(peak_end);
+  in.peak_FC         = to_string_vec(peak_FC);
+
+  const int n_peaks = peak_transcripts.size();
+  in.peak_transcripts.resize(n_peaks);
+  for (int i{}; i < n_peaks; ++i) {
+    Rcpp::CharacterVector v = peak_transcripts[i];
+    in.peak_transcripts[i] = to_string_vec(v);
+  }
+  in.seed = seed;
+  return in;
+}
+
+//Build Rcpp Chrom Output from C++
+static Rcpp::List wrap_chrom_output(const ChromOutput& out) {
+  const int nr = (int)out.peak_start.size();
   Rcpp::IntegerVector   o_ps(nr), o_pe(nr), o_cs(nr), o_ce(nr);
   Rcpp::CharacterVector o_nm(nr), o_st(nr);
   for (int i = 0; i < nr; ++i) {
-    o_ps[i] = res_pstart[i];
-    o_pe[i] = res_pend[i];
-    o_cs[i] = res_cstart[i];
-    o_ce[i] = res_cend[i];
-    o_nm[i] = res_name[i];
-    o_st[i] = res_strand[i];
+    o_ps[i] = out.peak_start[i];
+    o_pe[i] = out.peak_end[i];
+    o_cs[i] = out.control_start[i];
+    o_ce[i] = out.control_end[i];
+    o_nm[i] = out.name[i];
+    o_st[i] = out.strand[i];
   }
   return Rcpp::List::create(
     Rcpp::Named("peak_start")    = o_ps,
@@ -989,3 +1007,105 @@ Rcpp::List process_chromosome_cpp(
     Rcpp::Named("control_end")   = o_ce
   );
 }
+
+
+
+
+//Multi-threaded entry point
+// [[Rcpp::export]]
+Rcpp::List process_chromosomes_threaded_cpp(Rcpp::List per_chrom, int max_threads) {
+  const int n_chrom = per_chrom.size();
+  if (n_chrom == 0) return Rcpp::List::create();
+
+  //Main thread Rcpp to C++ conversion. After this loop `inputs` is read-only;
+  //workers only read from it.
+  std::vector<ChromInput> inputs;
+  inputs.reserve(n_chrom);
+  for (int i{}; i < n_chrom; ++i) {
+    Rcpp::List el = per_chrom[i];
+    inputs.push_back(build_chrom_input(
+        Rcpp::as<Rcpp::CharacterVector>(el["anno_transcript"]),
+        Rcpp::as<Rcpp::CharacterVector>(el["anno_region"]),
+        Rcpp::as<Rcpp::IntegerVector>(el["anno_start"]),
+        Rcpp::as<Rcpp::IntegerVector>(el["anno_end"]),
+        Rcpp::as<Rcpp::CharacterVector>(el["anno_strand"]),
+        Rcpp::as<Rcpp::CharacterVector>(el["anno_gene"]),
+        Rcpp::as<Rcpp::CharacterVector>(el["gene_name"]),
+        Rcpp::as<Rcpp::IntegerVector>(el["gene_start"]),
+        Rcpp::as<Rcpp::IntegerVector>(el["gene_end"]),
+        Rcpp::as<Rcpp::IntegerVector>(el["peak_start"]),
+        Rcpp::as<Rcpp::IntegerVector>(el["peak_end"]),
+        Rcpp::as<Rcpp::CharacterVector>(el["peak_FC"]),
+        Rcpp::as<Rcpp::List>(el["peak_transcripts"]),
+        (uint32_t)Rcpp::as<int>(el["seed"])
+    ));
+  }
+
+  //Pick thread count: min(requested, hw_concurrency, n_chrom). At least 1.
+  unsigned int hw_threads = std::thread::hardware_concurrency();
+  if (hw_threads == 0) hw_threads = 1;
+  int n_workers = (max_threads > 0) ? max_threads : (int)hw_threads;
+  if (n_workers > (int)hw_threads) n_workers = (int)hw_threads;
+  if (n_workers > n_chrom)         n_workers = n_chrom;
+  if (n_workers < 1)               n_workers = 1;
+
+  //Output: pre-sized; each slot owned by exactly one worker (no lock needed).
+  std::vector<ChromOutput> outputs(n_chrom);
+
+  //Atomic counter is the entire synchronization mechanism for work claiming.
+  std::atomic<int> next_idx{0};
+
+  //Error capture for the cold path.
+  std::atomic<bool> failed{false};
+  std::mutex err_mu;
+  std::string err_msg;
+
+  auto worker = [&]() {
+    while (true) {
+      const int i = next_idx.fetch_add(1, std::memory_order_relaxed);
+      if (i >= n_chrom) return;
+      if (failed.load(std::memory_order_relaxed)) return;
+      try {
+        outputs[i] = process_chromosome_core(inputs[i]);
+      } catch (const std::exception& e) {
+        std::lock_guard<std::mutex> lk(err_mu);
+        if (err_msg.empty()) err_msg = e.what();
+        failed.store(true, std::memory_order_relaxed);
+        return;
+      } catch (...) {
+        std::lock_guard<std::mutex> lk(err_mu);
+        if (err_msg.empty()) err_msg = "unknown error in chromosome worker";
+        failed.store(true, std::memory_order_relaxed);
+        return;
+      }
+    }
+  };
+
+  //Create threads. Skip spawn if only one worker.
+  if (n_workers == 1) {
+    worker();
+  } else {
+    std::vector<std::thread> threads;
+    threads.reserve(n_workers);
+    for (int t = 0; t < n_workers; ++t) threads.emplace_back(worker);
+    for (auto& th : threads) th.join();
+  }
+
+  if (failed.load()) {
+    Rcpp::stop("process_chromosomes_threaded_cpp: %s", err_msg);
+  }
+
+  //Turn outputs back to Rcpp on the main thread.
+  Rcpp::List result(n_chrom);
+  for (int i = 0; i < n_chrom; ++i) {
+    result[i] = wrap_chrom_output(outputs[i]);
+  }
+  return result;
+}
+
+
+
+
+
+
+

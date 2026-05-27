@@ -24,7 +24,7 @@
 #' @export
 #' @family control_peaks
 generate_control_peaks <- function(raw_peaks, anno, gene, transcripts,
-                                   pool = 1L, seed = 1234L) {
+                                   pool = 1L, seed = 1234) {
   #Validate Params
   check_scalar_int(pool, "pool", min = 1L)
   check_scalar_int(seed, "seed")
@@ -62,10 +62,45 @@ generate_control_peaks <- function(raw_peaks, anno, gene, transcripts,
     "Generating controls across {length(chromosomes)} chromosome{?s}"
   )
 
-  # Dispatch each chromosome to the C++ engine. process_chromosome_cpp()
-  # reseeds std::mt19937 with (seed + chrom_index) on entry.
-  result_list <- lapply(seq_along(chromosomes), function(k) {
-    .run_chrom_cpp(chromosomes[k], k, peaks_grouped, anno_dt, genes_dt, seed)
+  # Build per-chromosome payload list (main thread only — touches Rcpp).
+  # Each chromosome's RNG is seeded with (seed + k) so output is deterministic
+  # regardless of thread scheduling.
+  per_chrom <- lapply(seq_along(chromosomes), function(k) {
+    chrom <- chromosomes[k]
+    pk <- peaks_grouped[chr == chrom]
+    an <- anno_dt[chr == chrom]
+    ge <- genes_dt[chr == chrom]
+    if (nrow(pk) == 0L || nrow(an) == 0L) return(NULL)
+    list(
+      anno_transcript  = an$transcript,
+      anno_region      = an$region,
+      anno_start       = an$start,
+      anno_end         = an$end,
+      anno_strand      = an$strand,
+      anno_gene        = an$gene,
+      gene_name        = ge$gene,
+      gene_start       = ge$start,
+      gene_end         = ge$end,
+      peak_start       = pk$start,
+      peak_end         = pk$end,
+      peak_FC          = pk$FC,
+      peak_transcripts = pk$transcripts,
+      seed             = as.integer(seed) + as.integer(k),
+      chrom            = chrom
+    )
+  })
+
+  keep <- !vapply(per_chrom, is.null, logical(1L))
+  per_chrom <- per_chrom[keep]
+  chrom_names <- vapply(per_chrom, function(x) x$chrom, character(1L))
+
+  # One call into C++. `pool` is the user-supplied thread cap (0 = auto).
+  raw <- process_chromosomes_threaded_cpp(per_chrom, as.integer(pool))
+
+  result_list <- lapply(seq_along(raw), function(i) {
+    r <- raw[[i]]
+    if (length(r$peak_start) == 0L) return(NULL)
+    data.frame(chr = chrom_names[i], r, stringsAsFactors = FALSE)
   })
 
   #Combine results
@@ -85,6 +120,88 @@ generate_control_peaks <- function(raw_peaks, anno, gene, transcripts,
     control_end   = as.integer(total$control_end),
     stringsAsFactors = FALSE
   )
+}
+
+# Read the per-region annotation table. Accepts a file path or a data.frame.
+# Returns a data.table with columns:
+read_annotation <- function(anno) {
+  if (!is.character(anno) && !is.data.frame(anno)) {
+    abort_invalid_arg(c(
+      "{.arg anno} must be a file path or data.frame.",
+      "x" = "Got {.cls {class(anno)[1]}}."
+    ))
+  }
+  df <- .read_bed_df(anno, "anno")
+  has_named <- all(c("chr", "start", "end", "name", "strand", "gene") %in% colnames(df))
+  if (has_named) {
+    dt <- data.table::as.data.table(df)
+  } else {
+    if (ncol(df) < 7L) {
+      abort_invalid_bed(c(
+        "{.arg anno} positional BED needs at least 7 columns.",
+        "x" = "Got {ncol(df)}.",
+        "i" = "Expected 1=chr, 2=start, 3=end, 4=name, 6=strand, 7=gene."
+      ))
+    }
+    dt <- data.table::data.table(
+      chr    = as.character(df[[1L]]),
+      start  = as.integer(df[[2L]]),
+      end    = as.integer(df[[3L]]),
+      name   = as.character(df[[4L]]),
+      strand = as.character(df[[6L]]),
+      gene   = as.character(df[[7L]])
+    )
+  }
+  dt[, start := as.integer(start)]
+  dt[, end   := as.integer(end)]
+
+  if (!"transcript" %in% colnames(dt) || !"region" %in% colnames(dt)) {
+    parts <- data.table::tstrsplit(dt$name, "_", fixed = TRUE)
+    if (length(parts) < 2L) {
+      abort_invalid_bed(c(
+        "{.arg anno}: cannot parse transcript/region from {.field name}.",
+        "i" = "Expected {.val transcript_region_*} (e.g. ENST..._CDS_1)."
+      ))
+    }
+    if (!"transcript" %in% colnames(dt)) dt[, transcript := parts[[1L]]]
+    if (!"region"     %in% colnames(dt)) dt[, region     := parts[[2L]]]
+  }
+  dt[]
+}
+
+# Read the gene table. Accepts a file path or a data.frame. Returns a
+# data.table with columns: chr, start, end, gene.
+read_genes <- function(gene) {
+  if (!is.character(gene) && !is.data.frame(gene)) {
+    abort_invalid_arg(c(
+      "{.arg gene} must be a file path or data.frame.",
+      "x" = "Got {.cls {class(gene)[1]}}."
+    ))
+  }
+  df <- .read_bed_df(gene, "gene")
+  has_named <- all(c("chr", "start", "end", "gene") %in% colnames(df))
+  if (has_named) {
+    dt <- data.table::as.data.table(df)
+    dt <- dt[, .(chr  = as.character(chr),
+                 start = as.integer(start),
+                 end   = as.integer(end),
+                 gene  = as.character(gene))]
+  } else {
+    if (ncol(df) < 4L) {
+      abort_invalid_bed(c(
+        "{.arg gene} positional BED needs at least 4 columns.",
+        "x" = "Got {ncol(df)}.",
+        "i" = "Expected 1=chr, 2=start, 3=end, 4=gene."
+      ))
+    }
+    dt <- data.table::data.table(
+      chr   = as.character(df[[1L]]),
+      start = as.integer(df[[2L]]),
+      end   = as.integer(df[[3L]]),
+      gene  = as.character(df[[4L]])
+    )
+  }
+  dt[]
 }
 
 # Empty result with the final column shape.
@@ -126,36 +243,4 @@ generate_control_peaks <- function(raw_peaks, anno, gene, transcripts,
   grouped[]
 }
 
-# Run the C++ engine for one chromosome. Slices anno / genes / peaks for the
-# chromosome, hands them to process_chromosome_cpp, and attaches `chr` to the
-# returned rows. Returns NULL when there is nothing to process.
-.run_chrom_cpp <- function(chrom, k, peaks_dt, anno_dt, genes_dt, seed) {
-  pk <- peaks_dt[chr == chrom]
-  an <- anno_dt[chr == chrom]
-  ge <- genes_dt[chr == chrom]
-
-  if (nrow(pk) == 0L || nrow(an) == 0L) return(NULL)
-
-  res <- process_chromosome_cpp(
-    anno_line_id    = an$line_id,
-    anno_transcript = an$transcript,
-    anno_region     = an$region,
-    anno_start      = an$start,
-    anno_end        = an$end,
-    anno_strand     = an$strand,
-    anno_gene       = an$gene,
-    gene_name       = ge$gene,
-    gene_start      = ge$start,
-    gene_end        = ge$end,
-    peak_start       = pk$start,
-    peak_end         = pk$end,
-    peak_FC          = pk$FC,
-    peak_range       = pk$peak_range,
-    peak_transcripts = pk$transcripts,
-    seed             = as.integer(seed) + as.integer(k)
-  )
-
-  if (length(res$peak_start) == 0L) return(NULL)
-  data.frame(chr = chrom, res, stringsAsFactors = FALSE)
-}
 
