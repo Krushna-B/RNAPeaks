@@ -22,6 +22,20 @@ retained_intron_splicing_map <- function(events, bed_file,
                                           title = "") {
   #Wraps Error's thrown
   wrap_sm_errors("retained intron splicing map", {
+    # Required args have no default; report a forgotten one as a clear
+    # validation error instead of a base-R "missing argument" error.
+    if (missing(events)) {
+      abort_invalid_arg(c(
+        "{.arg events} is required.",
+        "i" = "Supply a data frame of rMATS RI.MATS events."
+      ))
+    }
+    if (missing(bed_file)) {
+      abort_invalid_arg(c(
+        "{.arg bed_file} is required.",
+        "i" = "Supply a BED file path or a BED data frame of peaks."
+      ))
+    }
     #Validate Input Params
     validate_sm_inputs(events, opts, style, title, bed_file = bed_file)
 

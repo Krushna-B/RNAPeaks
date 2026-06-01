@@ -27,6 +27,16 @@
 intersect_peaks <- function(peaks, transcripts,
                             fraction = 1.0, same_strand = TRUE) {
   #Validate Params
+  # Required inputs have no default; report a forgotten one as a clear
+  # validation error instead of a base-R "missing argument" error.
+  if (missing(peaks)) {
+    abort_invalid_arg(c("{.arg peaks} is required.",
+                        "i" = "Supply a file path or a data.frame."))
+  }
+  if (missing(transcripts)) {
+    abort_invalid_arg(c("{.arg transcripts} is required.",
+                        "i" = "Supply a file path, a BED data.frame, or a GTF data.frame."))
+  }
   check_scalar_number(fraction, "fraction", min = 0, max = 1)
   check_flag(same_strand, "same_strand")
 

@@ -541,7 +541,7 @@ static Control get_cds_control(int peak_start, int peak_end, int peak_length,
                                const std::vector<int>& cl_ends,
                                const FlatRegion& rf, const Transcript& tx, std::mt19937 &rng) {
   Control c;
-  // Last overlapping CDS interval (Python's "last hit wins").
+  // Last overlapping CDS interval
   int k = -1;
   for (int i = (int)rf.starts.size() - 1; i >= 0; --i) {
     if (rf.starts[i] < peak_end && rf.ends[i] > peak_start) { k = i; break; }
@@ -660,7 +660,6 @@ static Control get_intron_control(int peak_start, int peak_end, int peak_length,
       }
     }
   } else {
-    // Two independent ifs — both can fire (the second overwrites the first).
     if (dist_to_start < 0) {
       ss = splice_slice(tx.splice_sites, 1);
       final_region = p_plus ? "5pss" : "3pss";
@@ -737,10 +736,8 @@ static Control get_control(int peak_start, int peak_end, RegionID region,
   return c;
 }
 
-// -----------------------------
-// Sorted insert helper (mirrors R's append at findInterval position).
-// -----------------------------
 
+// Sorted insert helper
 static void sorted_insert(std::vector<int>& starts, std::vector<int>& ends,
                           int cs, int ce) {
   // findInterval(cs, starts) returns count of elements <= cs. Insert after.
@@ -750,10 +747,9 @@ static void sorted_insert(std::vector<int>& starts, std::vector<int>& ends,
   ends.insert(ends.begin() + pos, ce);
 }
 
-// -----------------------------
+
 // Per-chromosome driver
-// -----------------------------
-// Pure-C++ per-chromosome kernel. Touches no R / Rcpp state — safe to call
+// Per-chromosome kernel.
 // from worker threads concurrently as long as each call gets its own input.
 static ChromOutput process_chromosome_core(const ChromInput& in) {
   ChromOutput out;

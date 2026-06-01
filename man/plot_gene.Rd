@@ -23,10 +23,11 @@ plot_gene(
 \item{transcript}{Optional Ensembl transcript id or transcript name.
 Defaults to the longest transcript of \code{gene}.}
 
-\item{gtf}{Optional GTF data frame, or path to a local GTF file.
-If \code{NULL}, the bundled annotation for \code{species} is used.}
+\item{gtf}{Optional path to a local GTF file. If \code{NULL}, the bundled
+annotation for \code{species} is used.}
 
-\item{species}{One of \code{"hg38"}, \code{"mm10"}, or \code{"mm39"}.}
+\item{species}{One of \code{"hg38"}, \code{"mm10"}, or \code{"mm39"}. Ignored when
+\code{gtf} is supplied.}
 
 \item{bam_files}{Optional named character vector of BAM file paths drawn as
 coverage tracks above the gene structure. Names become track labels; if

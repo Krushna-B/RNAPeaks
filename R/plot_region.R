@@ -8,8 +8,8 @@
 #' @param chr Chromosome (with or without `"chr"` prefix; normalized).
 #' @param start,end Region bounds (bp, `start <= end`).
 #' @param strand `"+"` or `"-"`.
-#' @param gtf Optional GTF data frame, or path to a local GTF file.
-#'   If `NULL`, the bundled annotation for `species` is used.
+#' @param gtf Optional path to a local GTF file. If `NULL`, the bundled
+#'   annotation for `species` is used.
 #' @param species One of `"hg38"`, `"mm10"`, or `"mm39"`. Ignored when
 #'   `gtf` is supplied.
 #' @param bam_files Optional named character vector of BAM file paths drawn as
@@ -34,6 +34,23 @@ plot_region <- function(bed,
                         style         = peaks_plot_style()) {
   tryCatch(
     {
+      # Required args have no default; catch them here so a forgotten
+      # argument reports as a clear validation error instead of falling
+      # through to the generic "unexpected error" branch below.
+      absent <- c(
+        if (missing(bed))    "bed",
+        if (missing(chr))    "chr",
+        if (missing(start))  "start",
+        if (missing(end))    "end",
+        if (missing(strand)) "strand"
+      )
+      if (length(absent)) {
+        abort_invalid_arg(c(
+          "Required argument{?s} missing: {.arg {absent}}.",
+          "i" = "{.fun plot_region} needs {.arg bed}, {.arg chr}, {.arg start}, {.arg end}, and {.arg strand}."
+        ))
+      }
+
       # 0. Normalize inputs
       chr     <- normalize_chr(chr)
       strand  <- normalize_str(strand)

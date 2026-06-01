@@ -6,8 +6,9 @@
 #' the UTR are binarized per-bp on the spliced transcript, resampled to
 #' `n_bins` per side, and averaged across genes. UTRs shorter than
 #' `n_bins` keep each bp at its true position and pad the rest with 0.
-#' The result is two density curves (one per BED track) shown as
-#' `[5' UTR] // [3' UTR]`.
+#' The 5' and 3' UTRs are returned as two independent plots, each with its
+#' own schematic (a thin UTR box abutting the CDS) and percentage markers
+#' running 5' -> 3' along the window.
 #'
 #' @param bed Validated BED data frame, BED file path, or named list of
 #'   either; one density curve is drawn per element.
@@ -19,13 +20,17 @@
 #'   `gtf` is supplied.
 #' @param moving_average Window size for moving-average smoothing of the
 #'   per-bin curve. `0` or `NULL` disables smoothing.
-#' @param style Output of [utr_style()].
-#' @param track_colors Optional named character vector of colors keyed
-#'   by BED track name. When `NULL`, a single track is drawn black and
-#'   multiple tracks use a `Set1` palette.
-#' @param title Plot title.
+#' @param style Output of [utr_style()]. Track colors come from the style:
+#'   `single_track_color` for one track, and `palette` for several. A
+#'   *named* `palette` (keyed by BED track name) assigns colors per track
+#'   regardless of order; an unnamed one is applied positionally.
+#' @param title Optional plot title. When supplied it prefixes each
+#'   panel's heading (e.g. `"<title> — 5' UTR"`); otherwise each plot is
+#'   titled `"5' UTR"` / `"3' UTR"`.
 #'
-#' @return A list with `plot` (ggplot) and `data` (per-bin density frame).
+#' @return A list with two elements, `utr5` and `utr3`. Each is itself a
+#'   list with `plot` (ggplot) and `data` (per-bin density frame for that
+#'   side).
 #' @export
 #' @family plot
 plot_utr_binding <- function(bed,
@@ -34,10 +39,19 @@ plot_utr_binding <- function(bed,
                              species        = "hg38",
                              moving_average = 5L,
                              style          = utr_style(),
-                             track_colors   = NULL,
                              title          = "") {
   tryCatch(
     {
+      # `bed` is required and has no default; catch it here so a forgotten
+      # argument reports as a clear validation error instead of falling
+      # through to the generic "unexpected error" branch below.
+      if (missing(bed)) {
+        abort_invalid_arg(c(
+          "{.arg bed} is required.",
+          "i" = "Supply a BED data frame, a file path, or a named list of either."
+        ))
+      }
+
       check_string(title, "title")
       species <- normalize_str(species)
       check_string(species, "species", choices = c("hg38", "mm10", "mm39"))
@@ -60,29 +74,40 @@ plot_utr_binding <- function(bed,
         "Kept {nrow(events)} gene{?s}: {n5} with 5' UTR, {n3} with 3' UTR."
       )
 
+      # Capture the symbol the caller passed (e.g. `K562_bed`) so a single
+      # unnamed data frame is labelled with its variable name rather than a
+      # generic "bed1".
+      bed_sym  <- substitute(bed)
+      bed_name <- if (is.symbol(bed_sym)) as.character(bed_sym) else NULL
+
       cli::cli_progress_step("Preparing BED tracks")
-      tracks <- .prep_utr_bed_tracks(bed)
+      tracks <- .prep_utr_bed_tracks(bed, default_name = bed_name)
 
       cli::cli_progress_step("Scoring utr region")
       n_bins <- event_schema_utr$n_bins
-      freq_df <- .score_all_tracks(tracks, built, n_bins,
-                                   n5 = n5, n3 = n3)
+      side5 <- .score_one_side(tracks, built$utr5_pieces, n_events = n5,
+                               n_bins = n_bins)
+      side3 <- .score_one_side(tracks, built$utr3_pieces, n_events = n3,
+                               n_bins = n_bins)
       cli::cli_progress_done()
 
-      # Per-track smoothing across the two concatenated panels.
-      freq_df$moving_avg <- .smooth_utr(freq_df, moving_average, n_bins)
+      # Per-track moving average within each (single-region) panel.
+      side5$moving_avg <- .smooth_side(side5, moving_average, n_bins)
+      side3$moving_avg <- .smooth_side(side3, moving_average, n_bins)
 
-      cli::cli_progress_step("Rendering plot")
-      p <- plot_utr_map(
-        data         = freq_df,
-        schema       = event_schema_utr,
-        style        = style,
-        track_colors = track_colors,
-        title        = title
+      cli::cli_progress_step("Rendering plots")
+      ttl5 <- if (nzchar(title)) paste0(title, " — 5' UTR") else "5' UTR"
+      ttl3 <- if (nzchar(title)) paste0(title, " — 3' UTR") else "3' UTR"
+      p5 <- plot_utr_side_map(side5, event_schema_utr, style, "utr5",
+                              title = ttl5)
+      p3 <- plot_utr_side_map(side3, event_schema_utr, style, "utr3",
+                              title = ttl3)
+      cli::cli_progress_done()
+
+      list(
+        utr5 = list(plot = p5, data = side5),
+        utr3 = list(plot = p3, data = side3)
       )
-      cli::cli_progress_done()
-
-      list(plot = p, data = freq_df)
     },
     error = function(cnd) {
       if (inherits(cnd, "rnapeaks_error")) {
@@ -99,7 +124,8 @@ plot_utr_binding <- function(bed,
 }
 
 # Normalize the `bed` argument to a named list of reduced GRanges.
-.prep_utr_bed_tracks <- function(bed) {
+# `default_name` is the caller's symbol for a single unnamed data frame.
+.prep_utr_bed_tracks <- function(bed, default_name = NULL) {
   items <- if (is.data.frame(bed)) {
     list(bed)
   } else if (is.character(bed)) {
@@ -128,7 +154,17 @@ plot_utr_binding <- function(bed,
   }
   nm <- names(items)
   if (is.null(nm)) nm <- rep("", length(items))
-  nm[nm == ""] <- paste0("bed", which(nm == ""))
+  for (i in seq_along(items)) {
+    if (nm[i] != "") next
+    it <- items[[i]]
+    nm[i] <- if (is.character(it)) {
+      tools::file_path_sans_ext(basename(it))
+    } else if (length(items) == 1L && !is.null(default_name)) {
+      default_name
+    } else {
+      paste0("bed", i)
+    }
+  }
   if (anyDuplicated(nm)) {
     abort_invalid_arg(c(
       "{.arg bed} has duplicate track names.",
@@ -157,96 +193,107 @@ plot_utr_binding <- function(bed,
   })
 }
 
-# Build the per-bin frequency frame across all tracks and both sides.
-.score_all_tracks <- function(tracks, built, n_bins, n5, n3) {
-  rows <- list()
-  for (g in names(tracks)) {
-    s5 <- score_utr_metagene(built$utr5_pieces, tracks[[g]],
-                             n_events = n5, n_bins = n_bins)
-    s3 <- score_utr_metagene(built$utr3_pieces, tracks[[g]],
-                             n_events = n3, n_bins = n_bins)
-    rows[[g]] <- data.frame(
-      global_position    = seq_len(2L * n_bins),
-      region_idx         = rep(c(1L, 2L), each = n_bins),
-      position_in_region = rep(seq_len(n_bins), times = 2L),
-      frequency          = c(s5$density, s3$density),
+# Build the per-bin frequency frame for one UTR side across all tracks.
+.score_one_side <- function(tracks, pieces, n_events, n_bins) {
+  rows <- lapply(names(tracks), function(g) {
+    s <- score_utr_side(pieces, tracks[[g]],
+                        n_events = n_events, n_bins = n_bins)
+    data.frame(
+      position_in_region = seq_len(n_bins),
+      frequency          = s$density,
       group              = g,
-      n_events           = c(rep(s5$n, n_bins), rep(s3$n, n_bins)),
+      n_events           = s$n,
       stringsAsFactors   = FALSE
     )
-  }
+  })
   do.call(rbind, rows)
 }
 
-# Per-track moving average. Smoothing stays within each utr pannel.
-.smooth_utr <- function(df, window, n_bins) {
+# Per-track moving average within a single-region panel.
+.smooth_side <- function(df, window, n_bins) {
   if (is.null(window) || window <= 1L) return(df$frequency)
   out <- df$frequency
   for (g in unique(df$group)) {
     idx <- df$group == g
     out[idx] <- apply_moving_average(df$frequency[idx], window,
-                                     n_regions = 2L, region_width = n_bins)
+                                     n_regions = 1L, region_width = n_bins)
   }
   out
 }
 
 
-#' Internal: UTR plotter
+#' Internal: single-side UTR plotter
+#'
+#' Draws one UTR side (`"utr5"` or `"utr3"`) as a single-region density
+#' plot with a gene-anatomy schematic (UTR box + adjacent CDS) and
+#' percentage markers beneath it.
 #'
 #' @keywords internal
 #' @noRd
-plot_utr_map <- function(data, schema, style, track_colors = NULL,
-                          title = "") {
+plot_utr_side_map <- function(data, schema, style, side, title = "") {
   layout <- schema$plot_layout(n_bins = schema$n_bins)
 
-  data$schematic_position <-
-    layout$region_starts[data$region_idx] + data$position_in_region
-  data$group      <- factor(data$group, levels = unique(data$group))
-  data$plot_group <- paste(data$region_idx, data$group, sep = ":")
+  data$schematic_position <- layout$region_start + data$position_in_region
+  data$group <- factor(data$group, levels = unique(data$group))
 
-  y <- .y_geometry(data)
+  # Size the schematic to the displayed height. UTR curves sit on an
+  # elevated baseline, so scaling boxes to the data range (as the splicing
+  # maps do) would collapse them to slivers.
+  vals  <- data$moving_avg[!is.na(data$moving_avg)]
+  y_max <- if (length(vals)) max(vals) else 0.01
+  if (y_max <= 0) y_max <- 0.01
+  exon_height <- y_max * (style$schematic_height %||% 0.06)
+  y_top       <- 0
 
-  # Resolve per-track colors. Single track defaults to black
+  # Resolve per-track colors from the style. A named palette maps colors
+  # to tracks by name; an unnamed palette is positional; a lone track
+  # falls back to single_track_color.
   track_levels <- levels(data$group)
-  colors <- if (!is.null(track_colors)) {
-    missing <- setdiff(track_levels, names(track_colors))
+  pal          <- style$palette
+  colors <- if (!is.null(names(pal)) && any(nzchar(names(pal)))) {
+    missing <- setdiff(track_levels, names(pal))
     if (length(missing) > 0L) {
       abort_invalid_arg(c(
-        "{.arg track_colors} is missing entries for some tracks.",
+        "{.arg palette} is missing entries for some tracks.",
         "x" = "Missing: {.val {missing}}."
       ))
     }
-    track_colors[track_levels]
+    pal[track_levels]
   } else if (length(track_levels) == 1L) {
     stats::setNames(style$single_track_color, track_levels)
   } else {
-    stats::setNames(rep(style$palette, length.out = length(track_levels)),
+    stats::setNames(rep(pal, length.out = length(track_levels)),
                     track_levels)
   }
 
   legend_labels <- vapply(track_levels, function(g) {
-    n5 <- data$n_events[data$group == g & data$region_idx == 1L][1L]
-    n3 <- data$n_events[data$group == g & data$region_idx == 2L][1L]
-    sprintf("%s [n = %s / %s]", g,
-            format(n5, big.mark = ","),
-            format(n3, big.mark = ","))
+    n <- data$n_events[data$group == g][1L]
+    sprintf("%s [n = %s]", g, format(n, big.mark = ","))
   }, character(1L))
+
+  # x range includes the CDS block on the side-appropriate end.
+  if (identical(side, "utr5")) {
+    x_lim <- c(layout$region_start, layout$bin_width + layout$cds_width)
+  } else {
+    x_lim <- c(-layout$cds_width, layout$bin_width)
+  }
 
   ggplot2::ggplot(
     data,
     ggplot2::aes(x = schematic_position, y = moving_avg, color = group,
-                  group = plot_group)
+                  group = group)
   ) +
     ggplot2::geom_line(linewidth = style$line_width,
                        alpha     = style$line_alpha) +
-    schema$build_schematic_layers(layout, style, y$y_min, y$exon_height) +
+    schema$build_schematic_layers(layout, style, y_top, exon_height, side) +
     ggplot2::geom_hline(yintercept = 0, color = "black", linewidth = 0.5) +
     ggplot2::scale_fill_identity() +
     ggplot2::scale_color_manual(values = colors, labels = legend_labels,
                                  name = "BED track") +
+    ggplot2::scale_x_continuous(limits = x_lim,
+                                expand = ggplot2::expansion(mult = 0.02)) +
     ggplot2::scale_y_continuous(
-      limits = c(y$y_min - y$exon_height * 2,
-                 y$y_max * 1.05 + y$y_range * 0.15)
+      limits = c(-exon_height * 3.2, y_max * 1.1)
     ) +
     ggplot2::labs(x = NULL, y = style$ylab, title = title) +
     .plot_theme(style)

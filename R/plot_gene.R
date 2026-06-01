@@ -6,9 +6,10 @@
 #' @param gene Gene symbol or Ensembl gene id.
 #' @param transcript Optional Ensembl transcript id or transcript name.
 #'   Defaults to the longest transcript of `gene`.
-#' @param gtf Optional GTF data frame, or path to a local GTF file.
-#'   If `NULL`, the bundled annotation for `species` is used.
-#' @param species One of `"hg38"`, `"mm10"`, or `"mm39"`.
+#' @param gtf Optional path to a local GTF file. If `NULL`, the bundled
+#'   annotation for `species` is used.
+#' @param species One of `"hg38"`, `"mm10"`, or `"mm39"`. Ignored when
+#'   `gtf` is supplied.
 #' @param bam_files Optional named character vector of BAM file paths drawn as
 #'   coverage tracks above the gene structure. Names become track labels; if
 #'   unnamed, the filename (without extension) is used. Each BAM must be
@@ -29,6 +30,22 @@ plot_gene <- function(bed,
                       style         = peaks_plot_style()) {
   tryCatch(
     {
+      # Required args have no default; catch them here so a forgotten
+      # argument reports as a clear validation error instead of falling
+      # through to the generic "unexpected error" branch below.
+      if (missing(bed)) {
+        abort_invalid_arg(c(
+          "{.arg bed} is required.",
+          "i" = "Supply a BED data frame, a file path, or a named list of either."
+        ))
+      }
+      if (missing(gene)) {
+        abort_invalid_arg(c(
+          "{.arg gene} is required.",
+          "i" = "Supply a gene symbol (e.g. {.val APOE}) or an Ensembl gene id."
+        ))
+      }
+
       # 0. Normalize string inputs
       gene       <- normalize_str(gene)
       transcript <- normalize_str(transcript)

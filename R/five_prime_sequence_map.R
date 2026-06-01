@@ -28,7 +28,21 @@ five_prime_sequence_map <- function(events, sequence,
                                           title      = "",
                                           motif_mode = "combined") {
   #Wraps Error's thrown
-  wrap_sm_errors("retained intron sequence map", {
+  wrap_sm_errors("5' sequence map", {
+    # Required args have no default; report a forgotten one as a clear
+    # validation error instead of a base-R "missing argument" error.
+    if (missing(events)) {
+      abort_invalid_arg(c(
+        "{.arg events} is required.",
+        "i" = "Supply a data frame of rMATS a5ss events."
+      ))
+    }
+    if (missing(sequence)) {
+      abort_invalid_arg(c(
+        "{.arg sequence} is required.",
+        "i" = "Supply a character vector of motifs (e.g. {.val GCATG})."
+      ))
+    }
     #Validate Input Params
     validate_sm_inputs(events, opts, style, title,
                        sequence = sequence, genome = genome,

@@ -11,7 +11,6 @@ plot_utr_binding(
   species = "hg38",
   moving_average = 5L,
   style = utr_style(),
-  track_colors = NULL,
   title = ""
 )
 }
@@ -31,16 +30,19 @@ restrict to. Default uses every protein-coding transcript.}
 \item{moving_average}{Window size for moving-average smoothing of the
 per-bin curve. \code{0} or \code{NULL} disables smoothing.}
 
-\item{style}{Output of \code{\link[=utr_style]{utr_style()}}.}
+\item{style}{Output of \code{\link[=utr_style]{utr_style()}}. Track colors come from the style:
+\code{single_track_color} for one track, and \code{palette} for several. A
+\emph{named} \code{palette} (keyed by BED track name) assigns colors per track
+regardless of order; an unnamed one is applied positionally.}
 
-\item{track_colors}{Optional named character vector of colors keyed
-by BED track name. When \code{NULL}, a single track is drawn black and
-multiple tracks use a \code{Set1} palette.}
-
-\item{title}{Plot title.}
+\item{title}{Optional plot title. When supplied it prefixes each
+panel's heading (e.g. \code{"<title> — 5' UTR"}); otherwise each plot is
+titled \code{"5' UTR"} / \code{"3' UTR"}.}
 }
 \value{
-A list with \code{plot} (ggplot) and \code{data} (per-bin density frame).
+A list with two elements, \code{utr5} and \code{utr3}. Each is itself a
+list with \code{plot} (ggplot) and \code{data} (per-bin density frame for that
+side).
 }
 \description{
 For every protein-coding gene in \code{gtf} (or the subset named by
@@ -49,8 +51,9 @@ the one with the longest exonic 3' UTR. Peaks from \code{bed} that fall in
 the UTR are binarized per-bp on the spliced transcript, resampled to
 \code{n_bins} per side, and averaged across genes. UTRs shorter than
 \code{n_bins} keep each bp at its true position and pad the rest with 0.
-The result is two density curves (one per BED track) shown as
-\verb{[5' UTR] // [3' UTR]}.
+The 5' and 3' UTRs are returned as two independent plots, each with its
+own schematic (a thin UTR box abutting the CDS) and percentage markers
+running 5' -> 3' along the window.
 }
 \seealso{
 Other plot: 

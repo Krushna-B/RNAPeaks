@@ -19,7 +19,7 @@
 #'
 #' @keywords internal
 #' @noRd
-score_utr_metagene <- function(pieces, bed_gr, n_events, n_bins = 100L) {
+score_utr_side <- function(pieces, bed_gr, n_events, n_bins = 100L) {
   #Validate Params
   check_scalar_int(n_bins, "n_bins", min = 2L)
   if (!methods::is(bed_gr, "GRanges")) {

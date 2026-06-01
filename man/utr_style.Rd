@@ -8,10 +8,15 @@ utr_style(
   line_width = 0.8,
   line_alpha = 1,
   utr_fill = "lightgray",
-  baseline_col = "black",
+  cds_fill = "navy",
+  schematic_height = 0.06,
+  label_size = 3.2,
+  label_position = "ends",
+  pct_label_size = 3,
+  pct_label_color = "grey30",
   palette = c("black", "red", "blue", "darkgreen", "purple", "orange", "brown",
     "magenta"),
-  single_track_color = "black",
+  single_track_color = "blue",
   title_size = 20,
   title_color = "black",
   axis_text_size = 11,
@@ -24,14 +29,30 @@ utr_style(
 
 \item{line_alpha}{Opacity of the per-track frequency lines (0-1).}
 
-\item{utr_fill}{Fill color for the two UTR rectangles in the schematic.}
+\item{utr_fill}{Fill color for the thin UTR box in the schematic.}
 
-\item{baseline_col}{Color of the thin baseline segment (and \verb{//} break)
-joining the 5' and 3' panels.}
+\item{cds_fill}{Fill color for the adjacent (taller) CDS box in the
+schematic.}
 
-\item{palette}{Character vector of colors used when \code{track_colors} is
-\code{NULL} and more than one BED track is plotted. Recycled if there are
-more tracks than colors.}
+\item{schematic_height}{Height of the schematic boxes as a fraction of
+the maximum plotted frequency. Larger values make the gene diagram
+taller relative to the curve.}
+
+\item{label_size}{Font size of the \verb{5' UTR} / \verb{3' UTR} / \code{CDS} part
+labels in the schematic.}
+
+\item{label_position}{Where to place the part labels: \code{"ends"} (at the
+outer end of each box, clear of the percentage markers) or \code{"center"}
+(centered under each box).}
+
+\item{pct_label_size}{Font size of the \verb{0\%}-\verb{100\%} position markers.}
+
+\item{pct_label_color}{Color of the position markers (ticks and text).}
+
+\item{palette}{Character vector of colors for the curves when more than
+one BED track is plotted. If unnamed it is applied positionally
+(recycled when there are more tracks than colors). If \emph{named} by BED
+track name, each track gets its mapped color regardless of order.}
 
 \item{single_track_color}{Color used when \code{track_colors} is \code{NULL} and
 exactly one BED track is plotted.}

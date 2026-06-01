@@ -26,6 +26,24 @@ generate_control_peaks <- function(raw_peaks, anno, gene, transcripts,
   #Validate Params
   check_scalar_int(threads, "threads", min = 1L)
   check_scalar_int(seed, "seed")
+  # Required inputs have no default; report a forgotten one as a clear
+  # validation error instead of a base-R "missing argument" error.
+  if (missing(raw_peaks)) {
+    abort_invalid_arg(c("{.arg raw_peaks} is required.",
+                        "i" = "Supply a file path or a data.frame."))
+  }
+  if (missing(anno)) {
+    abort_invalid_arg(c("{.arg anno} is required.",
+                        "i" = "Supply a file path or a data.frame."))
+  }
+  if (missing(gene)) {
+    abort_invalid_arg(c("{.arg gene} is required.",
+                        "i" = "Supply a file path or a data.frame."))
+  }
+  if (missing(transcripts)) {
+    abort_invalid_arg(c("{.arg transcripts} is required.",
+                        "i" = "Supply a file path or a data.frame."))
+  }
   for (nm in c("raw_peaks", "anno", "gene", "transcripts")) {
     val <- get(nm)
     if (is.null(val) || (!is.character(val) && !is.data.frame(val))) {

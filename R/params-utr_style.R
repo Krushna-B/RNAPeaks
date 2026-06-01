@@ -5,12 +5,23 @@
 #'
 #' @param line_width Width of the per-track frequency lines.
 #' @param line_alpha Opacity of the per-track frequency lines (0-1).
-#' @param utr_fill Fill color for the two UTR rectangles in the schematic.
-#' @param baseline_col Color of the thin baseline segment (and `//` break)
-#'   joining the 5' and 3' panels.
-#' @param palette Character vector of colors used when `track_colors` is
-#'   `NULL` and more than one BED track is plotted. Recycled if there are
-#'   more tracks than colors.
+#' @param utr_fill Fill color for the thin UTR box in the schematic.
+#' @param cds_fill Fill color for the adjacent (taller) CDS box in the
+#'   schematic.
+#' @param schematic_height Height of the schematic boxes as a fraction of
+#'   the maximum plotted frequency. Larger values make the gene diagram
+#'   taller relative to the curve.
+#' @param label_size Font size of the `5' UTR` / `3' UTR` / `CDS` part
+#'   labels in the schematic.
+#' @param label_position Where to place the part labels: `"ends"` (at the
+#'   outer end of each box, clear of the percentage markers) or `"center"`
+#'   (centered under each box).
+#' @param pct_label_size Font size of the `0%`-`100%` position markers.
+#' @param pct_label_color Color of the position markers (ticks and text).
+#' @param palette Character vector of colors for the curves when more than
+#'   one BED track is plotted. If unnamed it is applied positionally
+#'   (recycled when there are more tracks than colors). If *named* by BED
+#'   track name, each track gets its mapped color regardless of order.
 #' @param single_track_color Color used when `track_colors` is `NULL` and
 #'   exactly one BED track is plotted.
 #' @param title_size,title_color Plot title appearance.
@@ -29,12 +40,17 @@ utr_style <- function(
 
   # Schematic
   utr_fill           = "lightgray",
-  baseline_col       = "black",
+  cds_fill           = "navy",
+  schematic_height   = 0.06,
+  label_size         = 3.2,
+  label_position     = "ends",
+  pct_label_size     = 3,
+  pct_label_color    = "grey30",
 
   # Track colors (fallback when track_colors arg is NULL)
   palette            = c("black", "red", "blue", "darkgreen",
                          "purple", "orange", "brown", "magenta"),
-  single_track_color = "black",
+  single_track_color = "blue",
 
   # Title
   title_size         = 20,
@@ -52,8 +68,14 @@ utr_style <- function(
   check_unit_interval(line_alpha, "line_alpha")
 
   # Schematic
-  check_color(utr_fill,     "utr_fill",     allow_na = FALSE)
-  check_color(baseline_col, "baseline_col", allow_na = FALSE)
+  check_color(utr_fill, "utr_fill", allow_na = FALSE)
+  check_color(cds_fill, "cds_fill", allow_na = FALSE)
+  check_scalar_number(schematic_height, "schematic_height", min = 0)
+  check_scalar_number(label_size,       "label_size",       min = 0)
+  check_string(label_position, "label_position",
+               choices = c("ends", "center"))
+  check_scalar_number(pct_label_size,   "pct_label_size",   min = 0)
+  check_color(pct_label_color, "pct_label_color", allow_na = FALSE)
 
   # Palette
   if (!is.character(palette) || length(palette) == 0L || anyNA(palette)) {

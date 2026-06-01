@@ -26,8 +26,8 @@ plot_region(
 
 \item{strand}{\code{"+"} or \code{"-"}.}
 
-\item{gtf}{Optional GTF data frame, or path to a local GTF file.
-If \code{NULL}, the bundled annotation for \code{species} is used.}
+\item{gtf}{Optional path to a local GTF file. If \code{NULL}, the bundled
+annotation for \code{species} is used.}
 
 \item{species}{One of \code{"hg38"}, \code{"mm10"}, or \code{"mm39"}. Ignored when
 \code{gtf} is supplied.}
