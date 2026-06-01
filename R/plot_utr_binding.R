@@ -25,7 +25,7 @@
 #'   *named* `palette` (keyed by BED track name) assigns colors per track
 #'   regardless of order; an unnamed one is applied positionally.
 #' @param title Optional plot title. When supplied it prefixes each
-#'   panel's heading (e.g. `"<title> — 5' UTR"`); otherwise each plot is
+#'   panel's heading (e.g. `"<title> - 5' UTR"`); otherwise each plot is
 #'   titled `"5' UTR"` / `"3' UTR"`.
 #'
 #' @return A list with two elements, `utr5` and `utr3`. Each is itself a
@@ -96,8 +96,8 @@ plot_utr_binding <- function(bed,
       side3$moving_avg <- .smooth_side(side3, moving_average, n_bins)
 
       cli::cli_progress_step("Rendering plots")
-      ttl5 <- if (nzchar(title)) paste0(title, " — 5' UTR") else "5' UTR"
-      ttl3 <- if (nzchar(title)) paste0(title, " — 3' UTR") else "3' UTR"
+      ttl5 <- if (nzchar(title)) paste0(title, " \u2014 5' UTR") else "5' UTR"
+      ttl3 <- if (nzchar(title)) paste0(title, " \u2014 3' UTR") else "3' UTR"
       p5 <- plot_utr_side_map(side5, event_schema_utr, style, "utr5",
                               title = ttl5)
       p3 <- plot_utr_side_map(side3, event_schema_utr, style, "utr3",

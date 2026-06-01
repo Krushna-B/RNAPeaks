@@ -14,7 +14,7 @@
 #'   side.
 #' @param n_bins Integer number of utr bins.
 #'
-#' @return `list(density = numeric(n_bins), n = integer)` — `n` is
+#' @return `list(density = numeric(n_bins), n = integer)` - `n` is
 #'   `n_events`.
 #'
 #' @keywords internal

@@ -138,5 +138,6 @@ utils::globalVariables(c(
   # .group_peaks_for_engine). Listed here to silence R CMD check NOTEs.
   "line_id", "chr", "start", "end", "name", "strand", "gene",
   "transcript", "region", "FC", "peak_range",
-  "V1", "V2", "V3", "V7", "V12"
+  "V1", "V2", "V3", "V7", "V12",
+  ".", ".I", ":=", "first_line"
 ))

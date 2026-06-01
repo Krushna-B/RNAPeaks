@@ -5,14 +5,16 @@
 \alias{K562_bed}
 \title{K562 RBP Binding Peaks}
 \format{
-A data frame with the following columns:
+A BED-style data frame with unnamed columns \code{V1}-\code{V8}:
 \describe{
-\item{chr}{Chromosome identifier (without "chr" prefix, e.g., "1", "X")}
-\item{start}{Peak start coordinate}
-\item{end}{Peak end coordinate}
-\item{tag}{RBP name or peak identifier}
-\item{score}{Peak score or confidence value}
-\item{strand}{Genomic strand ("+" or "-")}
+\item{V1}{Chromosome identifier ("chr"-prefixed, e.g. "chr16")}
+\item{V2}{Peak start coordinate (0-based)}
+\item{V3}{Peak end coordinate}
+\item{V4}{RBP name}
+\item{V5}{Associated gene symbol}
+\item{V6}{Genomic strand ("+" or "-")}
+\item{V7}{Signal value (fold enrichment)}
+\item{V8}{Significance (p-value)}
 }
 }
 \source{

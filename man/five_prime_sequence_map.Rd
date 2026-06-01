@@ -29,7 +29,7 @@ or a \code{BSgenome} instance.}
 
 \item{title}{Plot title.}
 
-\item{motif_mode}{One of \code{"combined"} (default — all motifs pooled into
+\item{motif_mode}{One of \code{"combined"} (default - all motifs pooled into
 a single map) or \code{"individual"} (one map per motif).}
 }
 \value{

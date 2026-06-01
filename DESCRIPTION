@@ -38,22 +38,17 @@ Imports:
     BiocGenerics,
     GenomeInfoDb,
     AnnotationHub,
-    BiocFileCache,
     Biostrings,
     BSgenome,
-    BSgenome.Hsapiens.UCSC.hg38,
     rtracklayer,
-    BiocIO,
     scales,
-    slider,
-    progress,
+    cli,
     grid,
     stats,
     tools,
     utils,
     GenomicAlignments,
     Rsamtools,
-    patchwork,
     Matrix,
     methods,
     data.table,
@@ -65,7 +60,9 @@ Suggests:
     knitr,
     rmarkdown,
     ensembldb,
-    BSgenome.Mmusculus.UCSC.mm10
+    BSgenome.Hsapiens.UCSC.hg38,
+    BSgenome.Mmusculus.UCSC.mm10,
+    BSgenome.Mmusculus.UCSC.mm39
 Config/testthat/edition: 3
 Config/Needs/website: pkgdown
 Depends:

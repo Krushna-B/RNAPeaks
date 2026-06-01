@@ -11,7 +11,7 @@
 #' @param opts Result of [splicing_options()].
 #' @param style Result of [splicing_style()].
 #' @param title Plot title.
-#' @param motif_mode One of `"combined"` (default — all motifs pooled into
+#' @param motif_mode One of `"combined"` (default - all motifs pooled into
 #'   a single map) or `"individual"` (one map per motif).
 #'
 #' @return For `motif_mode = "combined"`: a list with `plot` (ggplot) and

@@ -10,7 +10,7 @@ A data frame with the following columns:
 \item{chr}{Chromosome identifier with "chr" prefix.}
 \item{start}{Gene start coordinate (0-based BED).}
 \item{end}{Gene end coordinate (exclusive).}
-\item{gene_name}{GENCODE gene symbol (e.g. "DDX11L1").}
+\item{name}{GENCODE gene symbol (e.g. "DDX11L1").}
 \item{score}{BED score column; placeholder "." for this dataset.}
 \item{strand}{Genomic strand ("+" or "-").}
 }

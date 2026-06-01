@@ -149,9 +149,9 @@ plot_event_map <- function(data, schema, style, opts,
 
   labels <- vapply(present, function(g) {
     switch(g,
-      Negative = sprintf("ΔΨ < %g [n = %s]",
+      Negative = sprintf("\u0394\u03a8 < %g [n = %s]",
                          opts$psi_cutoff[1L], fmt_n(n_by_group[[g]])),
-      Positive = sprintf("ΔΨ > %g [n = %s]",
+      Positive = sprintf("\u0394\u03a8 > %g [n = %s]",
                          opts$psi_cutoff[2L], fmt_n(n_by_group[[g]])),
       Control  = sprintf("Control [n = %s]", fmt_n(n_by_group[[g]])),
       g

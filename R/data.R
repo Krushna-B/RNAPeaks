@@ -5,14 +5,16 @@
 #' line, provided for testing and demonstration of RNAPeaks visualization and
 #' analysis functions.
 #'
-#' @format A data frame with the following columns:
+#' @format A BED-style data frame with unnamed columns `V1`-`V8`:
 #' \describe{
-#'   \item{chr}{Chromosome identifier (without "chr" prefix, e.g., "1", "X")}
-#'   \item{start}{Peak start coordinate}
-#'   \item{end}{Peak end coordinate}
-#'   \item{tag}{RBP name or peak identifier}
-#'   \item{score}{Peak score or confidence value}
-#'   \item{strand}{Genomic strand ("+" or "-")}
+#'   \item{V1}{Chromosome identifier ("chr"-prefixed, e.g. "chr16")}
+#'   \item{V2}{Peak start coordinate (0-based)}
+#'   \item{V3}{Peak end coordinate}
+#'   \item{V4}{RBP name}
+#'   \item{V5}{Associated gene symbol}
+#'   \item{V6}{Genomic strand ("+" or "-")}
+#'   \item{V7}{Signal value (fold enrichment)}
+#'   \item{V8}{Significance (p-value)}
 #' }
 #'
 #' @source ENCODE Project (\url{https://www.encodeproject.org/})
@@ -33,14 +35,16 @@
 #' line, provided for testing and demonstration of RNAPeaks visualization and
 #' analysis functions.
 #'
-#' @format A data frame with the following columns:
+#' @format A BED-style data frame with unnamed columns `V1`-`V8`:
 #' \describe{
-#'   \item{chr}{Chromosome identifier (without "chr" prefix, e.g., "1", "X")}
-#'   \item{start}{Peak start coordinate}
-#'   \item{end}{Peak end coordinate}
-#'   \item{tag}{RBP name or peak identifier}
-#'   \item{score}{Peak score or confidence value}
-#'   \item{strand}{Genomic strand ("+" or "-")}
+#'   \item{V1}{Chromosome identifier ("chr"-prefixed, e.g. "chr16")}
+#'   \item{V2}{Peak start coordinate (0-based)}
+#'   \item{V3}{Peak end coordinate}
+#'   \item{V4}{RBP name}
+#'   \item{V5}{Associated gene symbol}
+#'   \item{V6}{Genomic strand ("+" or "-")}
+#'   \item{V7}{Signal value (fold enrichment)}
+#'   \item{V8}{Significance (p-value)}
 #' }
 #'
 #' @source ENCODE Project (\url{https://www.encodeproject.org/})
@@ -119,7 +123,7 @@
 #'   \item{PValue, FDR}{Differential-splicing p-value and BH-adjusted FDR}
 #'   \item{IncLevel1, IncLevel2}{Per-replicate inclusion levels (PSI),
 #'     comma-separated}
-#'   \item{IncLevelDifference}{Mean ΔΨ (sample 1 − sample 2)}
+#'   \item{IncLevelDifference}{Mean \eqn{\Delta\Psi} (sample 1 - sample 2)}
 #'   \item{upstream_to_target_count, target_to_downstream_count, target_count,
 #'     upstream_to_downstream_count}{rMATS JC-specific junction counts}
 #' }
@@ -217,7 +221,7 @@
 #'   \item{chr}{Chromosome identifier with "chr" prefix (e.g. "chr1", "chrX").}
 #'   \item{start}{Transcript start coordinate (0-based BED).}
 #'   \item{end}{Transcript end coordinate (exclusive).}
-#'   \item{transcript_name}{GENCODE transcript name (e.g. "DDX11L2-202").}
+#'   \item{name}{GENCODE transcript name (e.g. "DDX11L2-202").}
 #'   \item{score}{BED score column; placeholder "." for this dataset.}
 #'   \item{strand}{Genomic strand ("+" or "-").}
 #' }
@@ -244,7 +248,7 @@
 #'   \item{chr}{Chromosome identifier with "chr" prefix.}
 #'   \item{start}{Gene start coordinate (0-based BED).}
 #'   \item{end}{Gene end coordinate (exclusive).}
-#'   \item{gene_name}{GENCODE gene symbol (e.g. "DDX11L1").}
+#'   \item{name}{GENCODE gene symbol (e.g. "DDX11L1").}
 #'   \item{score}{BED score column; placeholder "." for this dataset.}
 #'   \item{strand}{Genomic strand ("+" or "-").}
 #' }
@@ -274,12 +278,12 @@
 #'   \item{chr}{Chromosome identifier with "chr" prefix.}
 #'   \item{start}{Region start coordinate (0-based BED).}
 #'   \item{end}{Region end coordinate (exclusive).}
-#'   \item{region_id}{Composite `{transcript}_{region}_{key}` string, e.g.
+#'   \item{name}{Composite `{transcript}_{region}_{key}` string, e.g.
 #'     `DDX11L2-202_exon_11869`. The control-peak algorithm splits this on
 #'     `_` to recover the transcript name and region type.}
 #'   \item{score}{BED score column; "0" for this dataset.}
 #'   \item{strand}{Genomic strand ("+" or "-").}
-#'   \item{gene_name}{Parent gene symbol (e.g. "DDX11L2").}
+#'   \item{gene}{Parent gene symbol (e.g. "DDX11L2").}
 #' }
 #'
 #' @source Derived from GENCODE release 46 (primary assembly) via the

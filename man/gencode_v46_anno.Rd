@@ -10,12 +10,12 @@ A data frame with the following columns:
 \item{chr}{Chromosome identifier with "chr" prefix.}
 \item{start}{Region start coordinate (0-based BED).}
 \item{end}{Region end coordinate (exclusive).}
-\item{region_id}{Composite \verb{\{transcript\}_\{region\}_\{key\}} string, e.g.
+\item{name}{Composite \verb{\{transcript\}_\{region\}_\{key\}} string, e.g.
 \verb{DDX11L2-202_exon_11869}. The control-peak algorithm splits this on
 \verb{_} to recover the transcript name and region type.}
 \item{score}{BED score column; "0" for this dataset.}
 \item{strand}{Genomic strand ("+" or "-").}
-\item{gene_name}{Parent gene symbol (e.g. "DDX11L2").}
+\item{gene}{Parent gene symbol (e.g. "DDX11L2").}
 }
 }
 \source{

@@ -87,7 +87,7 @@ generate_control_peaks <- function(raw_peaks, anno, gene, transcripts,
     "Generating controls across {length(chromosomes)} chromosome{?s}"
   )
 
-  # Build per-chromosome payload list (main thread only — touches Rcpp).
+  # Build per-chromosome payload list (main thread only - touches Rcpp).
   # Each chromosome's RNG is seeded with (seed + k) so output is deterministic
   # regardless of thread scheduling.
   per_chrom <- lapply(seq_along(chromosomes), function(k) {

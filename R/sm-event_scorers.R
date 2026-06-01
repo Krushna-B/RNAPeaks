@@ -1,7 +1,7 @@
 #' Internal: hit-list scorers for splicing / sequence map events
 #'
 #' Both scorers consume a regions `GRanges` from `schema$build_regions` and
-#' return `list(event_id, col_idx)` — parallel integer vectors of the
+#' return `list(event_id, col_idx)` - parallel integer vectors of the
 #' (event, position) pairs that scored 1 in the original dense layout.
 #' `col_idx` is in `[1, n_regions * region_width]`.
 #'

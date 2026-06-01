@@ -25,7 +25,7 @@ sample 2}
 \item{PValue, FDR}{Differential-splicing p-value and BH-adjusted FDR}
 \item{IncLevel1, IncLevel2}{Per-replicate inclusion levels (PSI),
 comma-separated}
-\item{IncLevelDifference}{Mean ΔΨ (sample 1 − sample 2)}
+\item{IncLevelDifference}{Mean \eqn{\Delta\Psi} (sample 1 - sample 2)}
 \item{upstream_to_target_count, target_to_downstream_count, target_count,
 upstream_to_downstream_count}{rMATS JC-specific junction counts}
 }

@@ -34,8 +34,8 @@ be eligible as Positive or Negative.}
 event to be eligible as a Control.}
 
 \item{psi_cutoff}{Length-2 numeric \code{c(neg, pos)} giving the
-\code{IncLevelDifference} thresholds. Events with \code{ΔΨ < neg} are Negative,
-\code{ΔΨ > pos} are Positive.}
+\code{IncLevelDifference} thresholds. Events with \eqn{\Delta\Psi} below \code{neg} are Negative,
+above \code{pos} are Positive.}
 
 \item{psi_control_max}{Maximum \code{abs(IncLevelDifference)} allowed for an
 event to enter the Control pool.}

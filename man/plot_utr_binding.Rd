@@ -36,7 +36,7 @@ per-bin curve. \code{0} or \code{NULL} disables smoothing.}
 regardless of order; an unnamed one is applied positionally.}
 
 \item{title}{Optional plot title. When supplied it prefixes each
-panel's heading (e.g. \code{"<title> — 5' UTR"}); otherwise each plot is
+panel's heading (e.g. \code{"<title> - 5' UTR"}); otherwise each plot is
 titled \code{"5' UTR"} / \code{"3' UTR"}.}
 }
 \value{

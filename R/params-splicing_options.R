@@ -11,8 +11,8 @@
 #' @param control_pval Minimum value of the rMATS `PValue` column for an
 #'   event to be eligible as a Control.
 #' @param psi_cutoff Length-2 numeric `c(neg, pos)` giving the
-#'   `IncLevelDifference` thresholds. Events with `ΔΨ < neg` are Negative,
-#'   `ΔΨ > pos` are Positive.
+#'   `IncLevelDifference` thresholds. Events with \eqn{\Delta\Psi} below \code{neg} are Negative,
+#'   above \code{pos} are Positive.
 #' @param psi_control_max Maximum `abs(IncLevelDifference)` allowed for an
 #'   event to enter the Control pool.
 #' @param min_count Minimum junction-read coverage required for an event to
