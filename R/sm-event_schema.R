@@ -31,6 +31,20 @@
   "PValue", "FDR", "IncLevelDifference"
 )
 
+# Long-only extension width for the a5ss / a3ss cartoon: the median real
+# extension (to scale, capped to the intron side) when event stats exist,
+# else a small fixed cue.
+.schematic_ext <- function(schematic_data, layout) {
+  intron_w <- layout$boundary_offsets[2L]
+  if (!is.null(schematic_data) &&
+      is.finite(schematic_data$median_ext) &&
+      schematic_data$median_ext > 0) {
+    min(as.integer(round(schematic_data$median_ext)), intron_w)
+  } else {
+    max(8L, round(layout$bin_width * 0.12))
+  }
+}
+
 #' @rdname event_schema
 #' @noRd
 event_schema_se <- list(
@@ -117,7 +131,8 @@ event_schema_se <- list(
   },
 
   # Schematic layers for the splicing event plot
-  build_schematic_layers = function(layout, style, y_min, exon_height) {
+  build_schematic_layers = function(layout, style, y_min, exon_height,
+                                    schematic_data = NULL) {
     bs <- layout$region_starts + layout$boundary_offsets
     exon_df <- data.frame(
       xmin = c(layout$region_starts[1L], bs[2L], bs[4L]),
@@ -229,7 +244,8 @@ event_schema_ri <- list(
   },
 
   # Schematic layers for the splicing event plot
-  build_schematic_layers = function(layout, style, y_min, exon_height) {
+  build_schematic_layers = function(layout, style, y_min, exon_height,
+                                    schematic_data = NULL) {
     bs <- layout$region_starts + layout$boundary_offsets
     exon_df <- data.frame(
       xmin = c(layout$region_starts[1L], bs[2L]),
@@ -287,27 +303,27 @@ event_schema_a5ss <- list(
       return(GenomicRanges::GRanges())
     }
 
-    longS  <- events$longExonStart_0base
-    longE  <- events$longExonEnd
-    shortS <- events$shortES
-    shortE <- events$shortEE
-    flankS <- events$flankingES
-    flankE <- events$flankingEE
+    plus <- events$strand == "+"
 
-    # Put the two exons in genomic left-to-right order.
-    leftS  <- ifelse(longS < flankS, longS, flankS)
-    leftE  <- ifelse(longS < flankS, longE, flankE)
+    # Anchor on the short-isoform donor; the long donor falls inside the
+    # window on the intron side. The flanking edge faces the intron.
+    alt_prox   <- ifelse(plus, events$shortEE, events$shortES)
+    flank_edge <- ifelse(plus, events$flankingES, events$flankingEE)
 
-    rightS <- ifelse(longS < flankS, flankS, longS)
-    rightE <- ifelse(longS < flankS, flankE, longE)
+    # Genomic left/right order (the scorer reorients - strand). On + the alt
+    # exon is left of the flanking exon; on - it is reversed.
+    left_anchor  <- ifelse(plus, alt_prox,   flank_edge)
+    right_anchor <- ifelse(plus, flank_edge, alt_prox)
 
-    # R1: left exon end into intron
-    s1 <- pmax(leftE - width_exon,   leftS)
-    e1 <- pmin(leftE + width_intron, rightS)
+    # Far exon edges to clamp against; the alt exon's far edge is its shared
+    # splice site (+ shares the start, - shares the end).
+    left_far  <- ifelse(plus, events$shortES,    events$flankingES)
+    right_far <- ifelse(plus, events$flankingEE, events$shortEE)
 
-    # R2: intron into right exon start
-    s2 <- pmax(rightS - width_intron, leftE)
-    e2 <- pmin(rightS + width_exon,   rightE)
+    s1 <- pmax(left_anchor  - width_exon,   left_far)
+    e1 <- pmin(left_anchor  + width_intron, right_anchor)
+    s2 <- pmax(right_anchor - width_intron, left_anchor)
+    e2 <- pmin(right_anchor + width_exon,   right_far)
 
     starts <- cbind(s1, s2)
     ends   <- cbind(e1, e2)
@@ -322,13 +338,18 @@ event_schema_a5ss <- list(
     )
   },
 
-  #Regions Labels
   region_labels = c(
-    "Alternative exon | intron",
-    "Intron | flanking exon"
+    "Alternative 5' splice site",
+    "Flanking exon"
   ),
 
   schematic = "a5ss",
+
+  schematic_stat = function(events) {
+    ext <- (events$longExonEnd - events$longExonStart_0base) -
+           (events$shortEE - events$shortES)
+    list(median_ext = stats::median(ext, na.rm = TRUE))
+  },
 
   group_set     = c("Negative", "Positive", "Control"),
 
@@ -347,40 +368,37 @@ event_schema_a5ss <- list(
   },
 
   # Schematic layers for the splicing event plot
-  build_schematic_layers = function(layout, style, y_min, exon_height) {
+  build_schematic_layers = function(layout, style, y_min, exon_height,
+                                    schematic_data = NULL) {
     bs <- layout$region_starts + layout$boundary_offsets
 
-    # Visual width of the alternative exon extension.
-    # This is only for the schematic, not for the real genomic window.
-    ext_width <- max(10L, round(layout$boundary_offsets[1L] * 0.25))
-    ext_width <- min(ext_width, layout$boundary_offsets[1L] - 1L)
+    ext <- .schematic_ext(schematic_data, layout)
 
-    # Main solid exon pieces
+    # R1 = alternative exon (solid = short isoform), R2 = flanking exon.
     exon_df <- data.frame(
       xmin = c(layout$region_starts[1L], bs[2L]),
-      xmax = c(bs[1L] - ext_width,
-               layout$region_starts[2L] + layout$bin_width),
+      xmax = c(bs[1L], layout$region_starts[2L] + layout$bin_width),
       ymin = rep(y_min - exon_height, 2L),
       ymax = rep(y_min, 2L),
-      fill = c("white", "white"),
+      fill = c(style$exon_col, "white"),
       stringsAsFactors = FALSE
     )
 
-    # Dotted extension on the first exon
     extension_df <- data.frame(
-      xmin = bs[1L] - ext_width,
-      xmax = bs[1L],
-      ymin = y_min - exon_height,
-      ymax = y_min
+      xmin = bs[1L], xmax = bs[1L] + ext,
+      ymin = y_min - exon_height, ymax = y_min
     )
 
-    intron_y <- y_min - exon_height / 2
-    intron_df <- data.frame(
-      x    = bs[1L],
-      xend = bs[2L],
-      y    = intron_y,
-      yend = intron_y
+    intron_y  <- y_min - exon_height / 2
+    intron_df <- data.frame(x = bs[1L] + ext, xend = bs[2L],
+                            y = intron_y, yend = intron_y)
+
+    label_df <- data.frame(
+      x     = c(bs[1L], bs[1L] + ext) + style$isoform_label_nudge_x,
+      label = c("Short isoform", "Long isoform"),
+      stringsAsFactors = FALSE
     )
+    label_y <- y_min - exon_height * 1.45 + style$isoform_label_nudge_y
 
     list(
       ggplot2::geom_rect(
@@ -389,22 +407,173 @@ event_schema_a5ss <- list(
                      ymin = ymin, ymax = ymax, fill = fill),
         color = "black", linewidth = 0.5, inherit.aes = FALSE
       ),
-
       ggplot2::geom_rect(
         data = extension_df,
-        ggplot2::aes(xmin = xmin, xmax = xmax,
-                     ymin = ymin, ymax = ymax),
-        fill = "white",
-        color = "black",
-        linetype = "dotted",
-        linewidth = 0.6,
-        inherit.aes = FALSE
+        ggplot2::aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
+        fill = "white", color = "black", linetype = "dotted",
+        linewidth = 0.6, inherit.aes = FALSE
       ),
-
       ggplot2::geom_segment(
         data = intron_df,
         ggplot2::aes(x = x, xend = xend, y = y, yend = yend),
         color = "black", linewidth = 1.5, inherit.aes = FALSE
+      ),
+      ggplot2::geom_text(
+        data = label_df,
+        ggplot2::aes(x = x, y = label_y, label = label),
+        hjust = c(1, 0), vjust = 1, size = style$isoform_label_size,
+        fontface = "italic", inherit.aes = FALSE
+      )
+    )
+  }
+)
+
+
+#' @rdname event_schema
+#' @noRd
+event_schema_a3ss <- list(
+  name = "Alternative 3' Splice Site",
+
+  required_cols = c(
+    .event_required_base,
+    "longExonStart_0base", "longExonEnd",
+    "shortES", "shortEE",
+    "flankingES", "flankingEE"
+  ),
+
+  n_regions     = 2L,
+
+  region_width  = function(width_exon, width_intron) {
+    as.integer(width_exon + width_intron + 1L)
+  },
+
+  #How to make regions for specific schema
+  build_regions = function(events, width_exon, width_intron) {
+    n <- nrow(events)
+    if (n == 0L) {
+      return(GenomicRanges::GRanges())
+    }
+
+    plus <- events$strand == "+"
+
+    # Anchor on the short-isoform acceptor; the long acceptor falls inside the
+    # window on the intron side. The flanking edge faces the intron.
+    alt_prox   <- ifelse(plus, events$shortES, events$shortEE)
+    flank_edge <- ifelse(plus, events$flankingEE, events$flankingES)
+
+    # Genomic left/right order (the scorer reorients - strand). On + the
+    # flanking exon is left of the alt exon; on - it is reversed.
+    left_anchor  <- ifelse(plus, flank_edge, alt_prox)
+    right_anchor <- ifelse(plus, alt_prox,   flank_edge)
+
+    # Far exon edges to clamp against; the alt exon's far edge is its shared
+    # splice site (+ shares the end, - shares the start).
+    left_far  <- ifelse(plus, events$flankingES, events$shortES)
+    right_far <- ifelse(plus, events$shortEE,    events$flankingEE)
+
+    s1 <- pmax(left_anchor  - width_exon,   left_far)
+    e1 <- pmin(left_anchor  + width_intron, right_anchor)
+    s2 <- pmax(right_anchor - width_intron, left_anchor)
+    e2 <- pmin(right_anchor + width_exon,   right_far)
+
+    starts <- cbind(s1, s2)
+    ends   <- cbind(e1, e2)
+
+    GenomicRanges::GRanges(
+      seqnames   = rep(events$chr, each = 2L),
+      ranges     = IRanges::IRanges(start = as.vector(t(starts)),
+                                    end   = as.vector(t(ends))),
+      strand     = rep(events$strand, each = 2L),
+      event_id   = rep(seq_len(n), each = 2L),
+      region_idx = rep(seq_len(2L), times = n)
+    )
+  },
+
+  region_labels = c(
+    "Flanking exon",
+    "Alternative 3' splice site"
+  ),
+
+  schematic = "a3ss",
+
+  schematic_stat = function(events) {
+    ext <- (events$longExonEnd - events$longExonStart_0base) -
+           (events$shortEE - events$shortES)
+    list(median_ext = stats::median(ext, na.rm = TRUE))
+  },
+
+  group_set     = c("Negative", "Positive", "Control"),
+
+  # x-axis layout for the plotter.
+  plot_layout = function(width_exon, width_intron) {
+    bin_width <- as.integer(width_exon + width_intron)
+    gap       <- 80L
+    region_starts <- c(0L, bin_width + gap)
+    list(
+      region_starts    = region_starts,
+      bin_width        = bin_width,
+      gap              = gap,
+      boundary_offsets = c(width_exon, width_intron),
+      x_max            = region_starts[2L] + bin_width
+    )
+  },
+
+  # Schematic layers for the splicing event plot
+  build_schematic_layers = function(layout, style, y_min, exon_height,
+                                    schematic_data = NULL) {
+    bs <- layout$region_starts + layout$boundary_offsets
+
+    ext <- .schematic_ext(schematic_data, layout)
+
+    # R1 = flanking exon, R2 = alternative exon (solid = short isoform).
+    exon_df <- data.frame(
+      xmin = c(layout$region_starts[1L], bs[2L]),
+      xmax = c(bs[1L], layout$region_starts[2L] + layout$bin_width),
+      ymin = rep(y_min - exon_height, 2L),
+      ymax = rep(y_min, 2L),
+      fill = c("white", style$exon_col),
+      stringsAsFactors = FALSE
+    )
+
+    extension_df <- data.frame(
+      xmin = bs[2L] - ext, xmax = bs[2L],
+      ymin = y_min - exon_height, ymax = y_min
+    )
+
+    intron_y  <- y_min - exon_height / 2
+    intron_df <- data.frame(x = bs[1L], xend = bs[2L] - ext,
+                            y = intron_y, yend = intron_y)
+
+    label_df <- data.frame(
+      x     = c(bs[2L] - ext, bs[2L]) + style$isoform_label_nudge_x,
+      label = c("Long isoform", "Short isoform"),
+      stringsAsFactors = FALSE
+    )
+    label_y <- y_min - exon_height * 1.45 + style$isoform_label_nudge_y
+
+    list(
+      ggplot2::geom_rect(
+        data = exon_df,
+        ggplot2::aes(xmin = xmin, xmax = xmax,
+                     ymin = ymin, ymax = ymax, fill = fill),
+        color = "black", linewidth = 0.5, inherit.aes = FALSE
+      ),
+      ggplot2::geom_rect(
+        data = extension_df,
+        ggplot2::aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
+        fill = "white", color = "black", linetype = "dotted",
+        linewidth = 0.6, inherit.aes = FALSE
+      ),
+      ggplot2::geom_segment(
+        data = intron_df,
+        ggplot2::aes(x = x, xend = xend, y = y, yend = yend),
+        color = "black", linewidth = 1.5, inherit.aes = FALSE
+      ),
+      ggplot2::geom_text(
+        data = label_df,
+        ggplot2::aes(x = x, y = label_y, label = label),
+        hjust = c(1, 0), vjust = 1, size = style$isoform_label_size,
+        fontface = "italic", inherit.aes = FALSE
       )
     )
   }

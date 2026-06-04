@@ -17,6 +17,11 @@
 #' @param boundary_col Color of dashed vertical boundary lines between
 #'   regions.
 #' @param exon_col Fill color for exon boxes in the bottom schematic.
+#' @param isoform_label_size Font size of the "Long isoform" / "Short
+#'   isoform" labels in the a5ss / a3ss schematic.
+#' @param isoform_label_nudge_x,isoform_label_nudge_y Horizontal / vertical
+#'   shift applied to those labels (x in plot bp units, y in data units), so
+#'   they can be repositioned. Both default to `0`.
 #' @param legend_position One of `"bottom"`, `"top"`, `"left"`, `"right"`,
 #'   or `"none"`.
 #'
@@ -48,6 +53,11 @@ splicing_style <- function(
   # Schematic
   boundary_col      = "gray70",
   exon_col          = "navy",
+
+  # Isoform labels (a5ss / a3ss schematic)
+  isoform_label_size    = 2.6,
+  isoform_label_nudge_x = 10,
+  isoform_label_nudge_y = 0,
 
   # Legend
   legend_position   = "bottom"
@@ -85,6 +95,11 @@ splicing_style <- function(
   # Schematic
   check_color(boundary_col, "boundary_col", allow_na = FALSE)
   check_color(exon_col,     "exon_col",     allow_na = FALSE)
+
+  # Isoform labels
+  check_scalar_number(isoform_label_size,    "isoform_label_size", min = 0)
+  check_scalar_number(isoform_label_nudge_x, "isoform_label_nudge_x")
+  check_scalar_number(isoform_label_nudge_y, "isoform_label_nudge_y")
 
   # Legend
   check_string(legend_position, "legend_position",

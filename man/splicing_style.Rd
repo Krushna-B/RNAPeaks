@@ -16,6 +16,9 @@ splicing_style(
   ylab = "Frequency",
   boundary_col = "gray70",
   exon_col = "navy",
+  isoform_label_size = 2.6,
+  isoform_label_nudge_x = 0,
+  isoform_label_nudge_y = 0,
   legend_position = "bottom"
 )
 }
@@ -43,6 +46,13 @@ Control.}
 regions.}
 
 \item{exon_col}{Fill color for exon boxes in the bottom schematic.}
+
+\item{isoform_label_size}{Font size of the "Long isoform" / "Short
+isoform" labels in the a5ss / a3ss schematic.}
+
+\item{isoform_label_nudge_x, isoform_label_nudge_y}{Horizontal / vertical
+shift applied to those labels (x in plot bp units, y in data units), so
+they can be repositioned. Both default to \code{0}.}
 
 \item{legend_position}{One of \code{"bottom"}, \code{"top"}, \code{"left"}, \code{"right"},
 or \code{"none"}.}

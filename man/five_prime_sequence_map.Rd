@@ -45,6 +45,7 @@ Computes per-position motif frequency around the two splice boundaries of
 \seealso{
 Other sequence_maps: 
 \code{\link{retained_intron_sequence_map}()},
-\code{\link{skipped_exon_sequence_map}()}
+\code{\link{skipped_exon_sequence_map}()},
+\code{\link{three_prime_sequence_map}()}
 }
 \concept{sequence_maps}

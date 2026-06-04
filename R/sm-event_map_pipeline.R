@@ -46,6 +46,7 @@ event_map_pipeline <- function(events = NULL, schema, scorer, opts, style,
   n_regions        <- prep$n_regions
   region_width     <- prep$region_width
   n_positions      <- prep$total_positions
+  schematic_data   <- prep$schematic_data
 
   #Verbose mode print size to cli
   .report_group_sizes(groups_idx, opts)
@@ -117,7 +118,8 @@ event_map_pipeline <- function(events = NULL, schema, scorer, opts, style,
     style        = style,
     opts         = opts,
     significance = sig_df,
-    title        = title
+    title        = title,
+    schematic_data = schematic_data
   )
   cli::cli_progress_done()
 
@@ -156,6 +158,14 @@ prepare_event_map <- function(events, schema, opts) {
                          opts$width_exon, opts$width_intron)
   })
 
+  #Optional per-schema schematic stats over the plotted events (e.g. the
+  #median long-isoform extension for the a5ss / a3ss cartoon).
+  plotted_idx    <- unique(unlist(groups_idx, use.names = FALSE))
+  schematic_data <- if (is.function(schema$schematic_stat) &&
+                        length(plotted_idx) > 0L) {
+    schema$schematic_stat(events[plotted_idx, , drop = FALSE])
+  } else NULL
+
   cli::cli_progress_done()
   list(
     groups_idx       = groups_idx,
@@ -163,7 +173,8 @@ prepare_event_map <- function(events, schema, opts) {
     regions_by_group = regions_by_group,
     n_regions        = n_regions,
     region_width     = region_width,
-    total_positions  = total_positions
+    total_positions  = total_positions,
+    schematic_data   = schematic_data
   )
 }
 

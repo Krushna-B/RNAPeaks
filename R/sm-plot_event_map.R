@@ -14,7 +14,8 @@
 #' @keywords internal
 #' @noRd
 plot_event_map <- function(data, schema, style, opts,
-                            significance = NULL, title = "") {
+                            significance = NULL, title = "",
+                            schematic_data = NULL) {
   layout <- schema$plot_layout(opts$width_exon, opts$width_intron)
   data   <- .add_schematic_position(data, schema, layout, opts)
   y      <- .y_geometry(data)
@@ -31,7 +32,8 @@ plot_event_map <- function(data, schema, style, opts,
     .ribbon_layer(data, style) +
     ggplot2::geom_line(linewidth = style$line_width, alpha = style$line_alpha) +
     .boundary_lines_layer(layout, style) +
-    schema$build_schematic_layers(layout, style, y$y_min, y$exon_height) +
+    schema$build_schematic_layers(layout, style, y$y_min, y$exon_height,
+                                  schematic_data) +
     ggplot2::scale_fill_identity() +
     .significance_bars(significance, schema, layout, opts, y, style) +
     ggplot2::geom_hline(yintercept = 0, color = "black", linewidth = 0.5) +
