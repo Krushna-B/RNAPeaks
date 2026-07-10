@@ -131,6 +131,8 @@ utils::globalVariables(c(
   "schematic_start", "schematic_end", "bar_y", "overlap_count", "match_count",
   "position_in_bin", "position_in_region", "region_idx", "frequency_sd",
   "n_events", "pvalue_adj", "significant", "plot_group",
+  # k-mer enrichment variables
+  "freq_a", "freq_b", "difference", "rank", "kmer",
   # Other
   "bed_df", "MASTER_FILE",
   # data.table NSE bindings used inside dt[, .(...)] in

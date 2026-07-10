@@ -17,7 +17,7 @@ splicing_style(
   boundary_col = "gray70",
   exon_col = "navy",
   isoform_label_size = 2.6,
-  isoform_label_nudge_x = 0,
+  isoform_label_nudge_x = 10,
   isoform_label_nudge_y = 0,
   legend_position = "bottom"
 )
