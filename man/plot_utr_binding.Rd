@@ -21,8 +21,10 @@ either; one density curve is drawn per element.}
 \item{gtf}{Optional GTF file path. If \code{NULL}, the bundled
 annotation for \code{species} is used.}
 
-\item{transcripts}{Optional character vector of transcript ids to
-restrict to. Default uses every protein-coding transcript.}
+\item{transcripts}{Optional character vector restricting which transcripts
+contribute. Accepts Ensembl transcript ids (\verb{ENST…}), gene ids (\verb{ENSG…}),
+or gene symbols (e.g. \code{"CXCR4"}); gene-level ids expand to all of that
+gene's transcripts. Default uses every protein-coding transcript.}
 
 \item{species}{One of \code{"hg38"}, \code{"mm10"}, \code{"mm39"}. Ignored when
 \code{gtf} is supplied.}

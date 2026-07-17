@@ -6,8 +6,10 @@
 #' transcript with the longest 3' UTR.
 #'
 #' @param gtf Normalized GTF data frame (see `get_GTF()`).
-#' @param transcripts Optional character vector of transcript ids to
-#'   restrict to. When `NULL`, all protein-coding transcripts contribute.
+#' @param transcripts Optional character vector restricting which transcripts
+#'   contribute. Accepts Ensembl transcript ids (`ENST…`), gene ids (`ENSG…`),
+#'   or gene symbols; gene-level ids expand to all of that gene's transcripts.
+#'   When `NULL`, all protein-coding transcripts contribute.
 #'
 #' @return List with:
 #'   \describe{
@@ -29,13 +31,8 @@ build_utr_events <- function(gtf, transcripts = NULL) {
         "{.arg transcripts} must be a non-empty character vector with no NAs."
       )
     }
-    gtf <- gtf[gtf$transcript_id %in% transcripts, , drop = FALSE]
-    if (nrow(gtf) == 0L) {
-      abort_not_found(c(
-        "No GTF rows match {.arg transcripts}.",
-        "i" = "Check that the ids are GTF transcript_id values."
-      ))
-    }
+    tx_ids <- resolve_transcript_ids(gtf, transcripts)
+    gtf <- gtf[gtf$transcript_id %in% tx_ids, , drop = FALSE]
   }
 
   # Restrict to protein-coding transcripts when biotype is present.
@@ -182,4 +179,49 @@ build_utr_events <- function(gtf, transcripts = NULL) {
     stringsAsFactors = FALSE
   )
   out[order(out$event_idx, out$start), , drop = FALSE]
+}
+
+
+# Internal: resolve a mixed vector of user ids to GTF transcript_id values.
+#
+# Mirrors the id auto-detection in select_gene_transcript() so utr-binding
+# accepts the same identifiers plot_gene() does. Each id is classified by shape:
+# an Ensembl transcript id matches transcript_id directly; an Ensembl gene id or
+# a gene symbol is expanded to *all* transcripts of that gene. Unmatched ids are
+# reported but do not abort as long as at least one id resolves.
+resolve_transcript_ids <- function(gtf, ids) {
+  species  <- detect_species(gtf)
+  tx_pat   <- if (species == "human") "^ENST\\d"  else "^ENSMUST\\d"
+  gene_pat <- if (species == "human") "^ENSG\\d"  else "^ENSMUSG\\d"
+
+  ids   <- trimws(ids)
+  ids_u <- toupper(ids)
+  kind  <- ifelse(grepl(tx_pat, ids_u), "tx",
+                  ifelse(grepl(gene_pat, ids_u), "gene", "symbol"))
+
+  out       <- character(0)
+  unmatched <- character(0)
+  for (i in seq_along(ids)) {
+    tx <- switch(kind[i],
+      tx     = gtf$transcript_id[!is.na(gtf$transcript_id) &
+                                   gtf$transcript_id == ids_u[i]],
+      gene   = gtf$transcript_id[!is.na(gtf$gene_id) &
+                                   gtf$gene_id == ids_u[i]],
+      symbol = gtf$transcript_id[!is.na(gtf$gene_name) &
+                                   gtf$gene_name == normalize_label(ids[i], species)]
+    )
+    if (length(tx)) out <- c(out, tx) else unmatched <- c(unmatched, ids[i])
+  }
+
+  out <- unique(stats::na.omit(out))
+  if (length(out) == 0L) {
+    abort_not_found(c(
+      "No GTF rows match {.arg transcripts}.",
+      "i" = "Accepts Ensembl transcript ids ({.val ENST…}), gene ids ({.val ENSG…}), or gene symbols ({.val CXCR4})."
+    ))
+  }
+  if (length(unmatched)) {
+    cli::cli_alert_info("No match for: {.val {unmatched}}.")
+  }
+  out
 }

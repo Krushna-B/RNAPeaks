@@ -14,8 +14,10 @@
 #'   either; one density curve is drawn per element.
 #' @param gtf Optional GTF file path. If `NULL`, the bundled
 #'   annotation for `species` is used.
-#' @param transcripts Optional character vector of transcript ids to
-#'   restrict to. Default uses every protein-coding transcript.
+#' @param transcripts Optional character vector restricting which transcripts
+#'   contribute. Accepts Ensembl transcript ids (`ENST…`), gene ids (`ENSG…`),
+#'   or gene symbols (e.g. `"CXCR4"`); gene-level ids expand to all of that
+#'   gene's transcripts. Default uses every protein-coding transcript.
 #' @param species One of `"hg38"`, `"mm10"`, `"mm39"`. Ignored when
 #'   `gtf` is supplied.
 #' @param moving_average Window size for moving-average smoothing of the
