@@ -1,50 +1,24 @@
-#'Internal: classed-conditions helpers for RNAPeak's Errors
+#'Internal: classed-conditions helpers for RNAPeek's Errors
 #' @keywords internal
 
-#1. Any BED Related Issue
+#1-4 Any BED Related Issue
 #' @noRd
-abort_invalid_bed <- function(message, ..., call = parent.frame()){
-  cli::cli_abort(
-    message,
-    ...,
-    class = c("rnapeaks_error_invalid_bed","rnapeaks_error"),
-    call = call,
-    .envir = call
-  )
+.make_aborter <- function(suffix) {
+  function(message, ..., call = parent.frame()) {
+    cli::cli_abort(
+      message, ...,
+      class = c(paste0("rnapeaks_error_", suffix), "rnapeaks_error"),
+      call = call,
+      .envir = call
+    )
+  }
 }
+abort_invalid_bed <- .make_aborter("invalid_bed")
+abort_invalid_arg <- .make_aborter("invalid_arg")
+abort_not_found   <- .make_aborter("not_found")
+abort_invalid_gtf <- .make_aborter("invalid_gtf")
 
-#2. Any Argument Related Issue
-abort_invalid_arg <- function(message, ..., call = parent.frame()){
-  cli::cli_abort(
-    message,
-    ...,
-    class = c("rnapeaks_error_invalid_arg","rnapeaks_error"),
-    call = call,
-    .envir = call
-  )
-}
 
-#3. Any lookup not found
-abort_not_found <- function(message, ..., call = parent.frame()){
-  cli::cli_abort(
-    message,
-    ...,
-    class = c("rnapeaks_error_not_found","rnapeaks_error"),
-    call = call,
-    .envir = call
-  )
-}
-
-#4. Invalid GTF
-abort_invalid_gtf <- function(message, ..., call = parent.frame()){
-  cli::cli_abort(
-    message,
-    ...,
-    class = c("rnapeaks_error_invalid_gtf","rnapeaks_error"),
-    call = call,
-    .envir = call
-  )
-}
 
 #5. Cannot determine GTF Species
 abort_species_unknown <- function(..., call = parent.frame()){
