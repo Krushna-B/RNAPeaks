@@ -14,8 +14,9 @@
 #'   transcript_id}.
 #' @noRd
 #' @family gene
-get_GTF <- function(species = "hg38", file = NULL) {
+get_GTF <- function(species, file) {
   if (!is.null(file)) {
+
     # File arg must be a single, non-NA character path
     if (!is.character(file) || length(file) != 1L || is.na(file) || !nzchar(file)) {
       abort_invalid_arg(c(
@@ -54,6 +55,7 @@ get_GTF <- function(species = "hg38", file = NULL) {
       "x" = "You supplied {.cls {class(species)[1]}} of length {length(species)}."
     ))
   }
+
   valid <- c("hg38", "mm10", "mm39")
   if (!species %in% valid) {
     abort_invalid_arg(c(
@@ -101,7 +103,7 @@ normalize_gtf <- function(gtf) {
 verify_gtf <- function(gtf) {
   if (!is.data.frame(gtf)) {
     abort_invalid_gtf(c(
-      "GTF must be a data frame.",
+      "GTF invalid",
       "x" = "Got {.cls {class(gtf)[1]}}."
     ))
   }

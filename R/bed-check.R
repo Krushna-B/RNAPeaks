@@ -101,8 +101,8 @@ check_bed <- function(bed, split_col = NULL) {
   #Combine into one bed and normalize
   combined <- do.call(rbind, beds)
   combined$chr <- normalize_chr(combined$chr) #All upper case, '1', 'X', 'Y'
-  combined$start <- suppressWarnings(as.numeric(combined$start))
-  combined$end   <- suppressWarnings(as.numeric(combined$end))    #may produce NA which will be ignored
+  combined$start <- suppressWarnings(as.numeric(as.character(combined$start)))
+  combined$end   <- suppressWarnings(as.numeric(as.character(combined$end)))    #may produce NA which will be ignored
   combined$strand <- as.character(combined$strand)
 
   #Remove any rows with Start and End coordinates are NA (Warning)
