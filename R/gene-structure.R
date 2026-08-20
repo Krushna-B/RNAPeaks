@@ -154,7 +154,7 @@ intron_rows <- function(features, center, exon_height) {
   n          <- nrow(features)
   prev_end   <- features$end[-n]
   next_start <- features$start[-1]
-  keep       <- next_start > prev_end
+  keep       <- next_start > prev_end +1L
 
   #If no features return
   if (!any(keep)) return(features[0, , drop = FALSE])
@@ -175,8 +175,6 @@ intron_rows <- function(features, center, exon_height) {
   row.names(introns) <- NULL
   return(introns)
 }
-
-
 
 
 # Place 5'/3' tags just outside the gene. x_offset is measured from the gene
