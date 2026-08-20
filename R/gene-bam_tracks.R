@@ -2,6 +2,36 @@
 #' @family gene
 #' @noRd
 compute_bam_coverage <- function(bam_path, chr, start, end) {
+
+  #check if the bam file is valid and can be opened
+  if (!is.character(bam_path) || length(bam_path) != 1L || is.na(bam_path) ||
+      !nzchar(bam_path)) {
+    abort_invalid_arg("{.arg bam_path} must be a single non-empty file path.")
+  }
+  if (!file.exists(bam_path)) {
+    abort_not_found(c(
+      "BAM file does not exist.",
+      "x" = "Path: {.path {bam_path}}."
+    ))
+  }
+  bai_path <- paste0(bam_path, ".bai")
+  if (!file.exists(bai_path)) {
+    abort_not_found(c(
+      "BAM index (.bai) not found.",
+      "x" = "Expected: {.path {bai_path}}.",
+      "i" = "Index the BAM first, e.g. with {.code Rsamtools::indexBam()} or {.code samtools index}."
+    ))
+  }
+
+  bam_file <- tryCatch(
+    Rsamtools::BamFile(bam_path),
+    error = function(e) abort_invalid_arg(c(
+      "Failed to open {.arg bam_path} as a BAM file.",
+      "x" = "{conditionMessage(e)}",
+      "i" = "Path: {.path {bam_path}}."
+    ))
+  )
+
   bam_chroms <- GenomeInfoDb::seqnames(
     Rsamtools::seqinfo(Rsamtools::BamFile(bam_path))
   )
