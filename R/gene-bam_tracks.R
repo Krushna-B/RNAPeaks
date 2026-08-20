@@ -5,6 +5,8 @@ compute_bam_coverage <- function(bam_path, chr, start, end) {
   bam_chroms <- GenomeInfoDb::seqnames(
     Rsamtools::seqinfo(Rsamtools::BamFile(bam_path))
   )
+
+  #check chromosome name convention
   chr_resolved <- if (chr %in% bam_chroms) {
     chr
   } else if (paste0("chr", chr) %in% bam_chroms) {
@@ -17,18 +19,24 @@ compute_bam_coverage <- function(bam_path, chr, start, end) {
     )
   }
 
+  #ranges o fregion of interest
   roi <- GenomicRanges::GRanges(
     seqnames = chr_resolved,
     ranges   = IRanges::IRanges(start = start, end = end)
   )
+
+  #loading genomic alignments
   ga  <- GenomicAlignments::readGAlignments(
     bam_path, param = Rsamtools::ScanBamParam(which = roi)
   )
   cov <- GenomicAlignments::coverage(ga)
 
+
   if (!chr_resolved %in% names(cov)) {
     return(data.frame(pos = seq(start, end), coverage = 0L))
   }
+
+  #if the end of the region is less than the region
   data.frame(
     pos      = seq(start, end),
     coverage = as.numeric(cov[[chr_resolved]][start:end])
