@@ -105,7 +105,38 @@ prepare_bed <- function(bed,
 #'
 #' @noRd
 #' @family bed
-filter_bed <- function(bed, chr, start, end, strand, omit = NULL, collapse) {
+filter_bed <- function(bed, chr, start, end, strand, omit, collapse) {
+
+  #checking if start and end are numeric and then converting them to numeric
+  if (length(start) != 1L || is.na(start)) {
+    abort_invalid_arg("{.arg start} must be a single non-NA value.")
+  }
+
+  if (!is.numeric(start)) {
+    start_n <- suppressWarnings(as.numeric(start))
+    if (is.na(start_n)) {
+      abort_invalid_arg(c(
+        "{.arg start} must be numeric or a numeric string.",
+        "x" = "Could not parse {.val {start}} as a number."
+      ))
+    }
+    start <- start_n
+  }
+
+  if (length(end) != 1L || is.na(end)) {
+    abort_invalid_arg("{.arg end} must be a single non-NA value.")
+  }
+
+  if (!is.numeric(end)) {
+    end_n <- suppressWarnings(as.numeric(end))
+    if (is.na(end_n)) {
+      abort_invalid_arg(c(
+        "{.arg end} must be numeric or a numeric string.",
+        "x" = "Could not parse {.val {end}} as a number."
+      ))
+    }
+    end <- end_n
+  }
 
   if (length(chr) != 1L || is.na(chr)) {
     abort_invalid_arg("{.arg chr} must be a single non-NA value.")
@@ -159,7 +190,8 @@ filter_bed <- function(bed, chr, start, end, strand, omit = NULL, collapse) {
     gr <- GenomicRanges::makeGRangesListFromDataFrame(
       bed,
       keep.extra.columns = TRUE,
-      split.field        = "target"
+      split.field        = "target",
+      starts.in.df.are.0based = TRUE
     )
     GenomicRanges::reduce(gr, min.gapwidth = collapse)
   }, error = function(e) {
