@@ -90,7 +90,17 @@ check_bed <- function(bed, split_col = NULL) {
 
   #Adding target column
   if (!is.null(split_col)) {
-    beds <- lapply(beds, function(b){ b$target <- b[[split_col]]; return(b) })
+    if (length(beds)==1){
+      beds <- lapply(beds, function(b){ b$target <- b[[split_col]]; return(b) })
+    } else if (length(beds)>1){
+      nm <- names(beds)
+      if (is.null(nm)) { nm <- rep("", length(beds)) }
+      nm[nm == ""] <- paste0("bed", which(nm == ""))
+      beds <- Map(function(b, lab) {
+        b$target <- paste(lab, b[[split_col]], sep = "_")
+        b
+      }, beds, nm)
+    }
   } else if (length(beds) >= 1L){
     nm <- names(beds)
     if (is.null(nm)){ nm <- rep("", length(beds)) }
