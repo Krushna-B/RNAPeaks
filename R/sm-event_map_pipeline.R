@@ -60,7 +60,7 @@ event_map_pipeline <- function(events = NULL, schema, scorer, opts, style,
       per_group[[g]] <- list(counts = integer(n_positions), n = 0L, hits = NULL)
       next
     }
-    cli::cli_progress_step("Scoring {.val {g}} ({n_g} events)")
+    cli::cli_progress_step("Scoring {.val {g}} ({n_g} events)",.auto_close = FALSE)
     #Pass inputs to specific scorer for hits
     regions_g <- regions_by_group[[g]]
     hits_g    <- scorer(regions_g, n_regions, region_width, group_name = g)
@@ -74,6 +74,7 @@ event_map_pipeline <- function(events = NULL, schema, scorer, opts, style,
       n      = n_g,
       hits   = if (identical(g, "Control")) hits_g else NULL
     )
+    cli::cli_progress_done()
   }
   cli::cli_progress_done()
 

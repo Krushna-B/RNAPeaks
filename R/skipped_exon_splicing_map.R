@@ -40,10 +40,12 @@ skipped_exon_splicing_map <- function(events, bed_file,
 
     #Validate bed file and turn into GRanges
     bed_gr <- .peaks_to_granges(bed_file)
+
     #Choose Scorer function (peaks_scorer for splicing)
     scorer <- function(regions_gr, n_regions, region_width, group_name) {
       peaks_scorer(regions_gr, bed_gr, n_regions, region_width)
     }
+
     #Run pipeline
     event_map_pipeline(
       events  = events,

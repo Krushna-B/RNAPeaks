@@ -24,7 +24,8 @@
     start.field        = "start",
     end.field          = "end",
     strand.field       = "strand",
-    keep.extra.columns = TRUE
+    keep.extra.columns = TRUE,
+    starts.in.df.are.0based = TRUE
   )
   GenomicRanges::reduce(gr)
 }
