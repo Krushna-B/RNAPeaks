@@ -78,6 +78,7 @@ event_map_pipeline <- function(events = NULL, schema, scorer, opts, style,
   }
   cli::cli_progress_done()
 
+
   #Bootstrap Controls
   control_stats <- if ("Control" %in% names(per_group)) {
     n_pos <- if (!is.null(per_group$Positive)) per_group$Positive$n else 0L
@@ -124,7 +125,15 @@ event_map_pipeline <- function(events = NULL, schema, scorer, opts, style,
   )
   cli::cli_progress_done()
 
-  list(plot = plot, data = list(frequency = freq_df, significance = sig_df))
+  #Preparing for output
+  prep_events <- prep$events
+  positive_events <- NULL
+  negative_events <- NULL
+  if (!is.null(prep_events)) {
+    if (!is.null(groups_idx$Positive)) {positive_events <- prep_events[groups_idx$Positive, , drop = FALSE]}
+    if (!is.null(groups_idx$Negative)) {negative_events <- prep_events[groups_idx$Negative, , drop = FALSE]}
+  }
+  list(plot = plot, data = list(Negative = negative_events, Positive = positive_events))
 }
 
 
