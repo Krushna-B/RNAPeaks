@@ -46,6 +46,7 @@
     mm39 = "BSgenome.Mmusculus.UCSC.mm39",
     NULL
   )
+
   #Validate
   if (is.null(pkg)) {
     abort_invalid_arg(c(
@@ -225,14 +226,13 @@ wrap_sm_errors <- function(map_name, body, call = parent.frame()) {
   for (g in names(prep$groups_idx)) {
     n_regions_g <- length(prep$regions_by_group[[g]])
     if (n_regions_g > 0L) {
-      cli::cli_progress_step(
-        "Extracting sequences for {.val {g}} ({n_regions_g} regions)"
-      )
+      cli::cli_progress_step("Extracting sequences for {.val {g}} ({n_regions_g} regions)",.auto_close = FALSE)
     }
     rs <- .extract_region_seqs(prep$regions_by_group[[g]], genome,
                                 extension = extension)
     prep$regions_by_group[[g]] <- rs$regions
     seqs_by_group[[g]]         <- rs$seqs
+    cli::cli_progress_done()
   }
   cli::cli_progress_done()
   prep$seqs_by_group <- seqs_by_group
