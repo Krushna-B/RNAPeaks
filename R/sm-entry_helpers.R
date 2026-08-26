@@ -181,6 +181,10 @@ wrap_sm_errors <- function(map_name, body, call = parent.frame()) {
   #Extended regions
   if (extension > 0L) {
     is_minus <- as.character(GenomicRanges::strand(aligned)) == "-"
+    if (any(as.character(GenomicRanges::strand(aligned)) == "*")) {
+      cli::cli_abort("Encountered {sum(strands == '*')} region(s) with unknown/unresolved strand; cannot orient sequence map.")
+    }
+
     seqlens  <- GenomeInfoDb::seqlengths(genome)
     chr_lens <- seqlens[as.character(GenomeInfoDb::seqnames(aligned))]
 
@@ -273,6 +277,9 @@ wrap_sm_errors <- function(map_name, body, call = parent.frame()) {
   })
   names(results) <- motifs
   results
+
+
+
 }
 
 

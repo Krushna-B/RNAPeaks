@@ -14,6 +14,10 @@
                              n_regions, region_width,
                              position_in_transcript_order = FALSE) {
   is_minus <- strands == "-"
+  if (any(strands == "*")) {
+    cli::cli_abort("Encountered {sum(strands == '*')} region(s) with unknown/unresolved strand; cannot orient sequence map.")
+  }
+
   plot_region_idx <- ifelse(is_minus,
                             n_regions - region_indices + 1L,
                             region_indices)
