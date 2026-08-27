@@ -6,6 +6,5 @@
 .quarto
 CLAUDE.md
 benchmarks/*
-tests/*
 docs/
 
