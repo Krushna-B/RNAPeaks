@@ -39,3 +39,31 @@ make_checked_bed <- function(chr = "1",
     stringsAsFactors = FALSE
   )
 }
+
+# Canonical (already chr-normalized) GTF data frame for gene / selection tests.
+# Two + strand genes on chr "1": SRSF1 (a long transcript ENST...1 and a shorter
+# ENST...2) and U2AF2 (ENST...3) in a separate window; plus a - strand gene
+# MINUS (ENST...4). Carries transcript_name so name-based lookup can be tested.
+make_gtf <- function() {
+  row <- function(type, start, end, strand, gid, gname, tid, tname, width) {
+    data.frame(seqnames = "1", start = start, end = end, strand = strand,
+               type = type, gene_id = gid, gene_name = gname,
+               transcript_id = tid, transcript_name = tname, width = width,
+               stringsAsFactors = FALSE)
+  }
+  rbind(
+    # SRSF1, + strand: long transcript (width 1000) and short transcript (width 400)
+    row("transcript", 100, 1100, "+", "ENSG00000136450", "SRSF1", "ENST00000001", "SRSF1-201", 1000),
+    row("exon",       100,  300, "+", "ENSG00000136450", "SRSF1", "ENST00000001", "SRSF1-201", 200),
+    row("exon",       900, 1100, "+", "ENSG00000136450", "SRSF1", "ENST00000001", "SRSF1-201", 200),
+    row("UTR",        100,  150, "+", "ENSG00000136450", "SRSF1", "ENST00000001", "SRSF1-201", 50),
+    row("transcript", 100,  500, "+", "ENSG00000136450", "SRSF1", "ENST00000002", "SRSF1-202", 400),
+    row("exon",       100,  500, "+", "ENSG00000136450", "SRSF1", "ENST00000002", "SRSF1-202", 400),
+    # U2AF2, + strand, separate window
+    row("transcript", 5000, 5600, "+", "ENSG00000063244", "U2AF2", "ENST00000003", "U2AF2-201", 600),
+    row("exon",       5000, 5600, "+", "ENSG00000063244", "U2AF2", "ENST00000003", "U2AF2-201", 600),
+    # MINUS, - strand
+    row("transcript", 2000, 2400, "-", "ENSG00000000009", "MINUS", "ENST00000004", "MINUS-201", 400),
+    row("exon",       2000, 2400, "-", "ENSG00000000009", "MINUS", "ENST00000004", "MINUS-201", 400)
+  )
+}
