@@ -80,3 +80,49 @@ write_min_gtf <- function() {
   ), path)
   path
 }
+
+# Normalized GTF with CDS + UTR rows for build_utr_events() tests. Three genes:
+#   ENSG1 / ENST1 (+): CDS 200-300, 5'UTR 100-150 (51 bp), 3'UTR 400-450 (51 bp)
+#   ENSG2 / ENST2 (-): same coords; on - strand the sides swap (100-150 is 3',
+#                      400-450 is 5')
+#   ENSG3: two transcripts to exercise the longest-per-(gene, side) pick --
+#     ENST3 (+): 5'UTR 100-150 (51), 3'UTR 400-450 (51)
+#     ENST4 (+): 5'UTR 130-150 (21), 3'UTR 400-460 (61)
+#   so ENSG3 should choose tx5 = ENST3 (51) and tx3 = ENST4 (61).
+make_utr_gtf <- function() {
+  row <- function(type, start, end, strand, gid, gname, tid) {
+    data.frame(seqnames = "1", start = start, end = end, strand = strand,
+               type = type, gene_id = gid, gene_name = gname,
+               transcript_id = tid, gene_biotype = "protein_coding",
+               stringsAsFactors = FALSE)
+  }
+  rbind(
+    row("CDS", 200, 300, "+", "ENSG1", "GENEA", "ENST1"),
+    row("UTR", 100, 150, "+", "ENSG1", "GENEA", "ENST1"),
+    row("UTR", 400, 450, "+", "ENSG1", "GENEA", "ENST1"),
+
+    row("CDS", 200, 300, "-", "ENSG2", "GENEB", "ENST2"),
+    row("UTR", 100, 150, "-", "ENSG2", "GENEB", "ENST2"),
+    row("UTR", 400, 450, "-", "ENSG2", "GENEB", "ENST2"),
+
+    row("CDS", 200, 300, "+", "ENSG3", "GENEC", "ENST3"),
+    row("UTR", 100, 150, "+", "ENSG3", "GENEC", "ENST3"),
+    row("UTR", 400, 450, "+", "ENSG3", "GENEC", "ENST3"),
+    row("CDS", 200, 300, "+", "ENSG3", "GENEC", "ENST4"),
+    row("UTR", 130, 150, "+", "ENSG3", "GENEC", "ENST4"),
+    row("UTR", 400, 460, "+", "ENSG3", "GENEC", "ENST4")
+  )
+}
+
+# Minimal on-disk GTF with CDS + UTR for the plot_utr_binding() entry point:
+# gene AAA (+), CDS 200-300, 5'UTR 100-150, 3'UTR 400-450. Requires rtracklayer.
+write_utr_gtf <- function() {
+  path <- tempfile(fileext = ".gtf")
+  attr <- 'gene_id "ENSG1"; gene_name "AAA"; transcript_id "ENST1"; gene_biotype "protein_coding";'
+  writeLines(c(
+    paste0('1\tsrc\tCDS\t200\t300\t.\t+\t.\t', attr),
+    paste0('1\tsrc\tUTR\t100\t150\t.\t+\t.\t', attr),
+    paste0('1\tsrc\tUTR\t400\t450\t.\t+\t.\t', attr)
+  ), path)
+  path
+}
