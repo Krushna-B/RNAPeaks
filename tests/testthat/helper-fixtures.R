@@ -67,3 +67,16 @@ make_gtf <- function() {
     row("exon",       2000, 2400, "-", "ENSG00000000009", "MINUS", "ENST00000004", "MINUS-201", 400)
   )
 }
+
+# Minimal on-disk GTF for the plot entry points: gene AAA (ENSG1) with one + strand
+# transcript ENST1 on chr 1, exons 100-400 and 800-1100. Returns the file path.
+# Import requires rtracklayer, so guard callers with skip_if_not_installed().
+write_min_gtf <- function() {
+  path <- tempfile(fileext = ".gtf")
+  writeLines(c(
+    '1\tsrc\ttranscript\t100\t1100\t.\t+\t.\tgene_id "ENSG1"; gene_name "AAA"; transcript_id "ENST1";',
+    '1\tsrc\texon\t100\t400\t.\t+\t.\tgene_id "ENSG1"; gene_name "AAA"; transcript_id "ENST1";',
+    '1\tsrc\texon\t800\t1100\t.\t+\t.\tgene_id "ENSG1"; gene_name "AAA"; transcript_id "ENST1";'
+  ), path)
+  path
+}
