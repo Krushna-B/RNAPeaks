@@ -1,0 +1,104 @@
+# Tests for filter_bed() in R/bed-prepare.R
+#
+# Contract:
+#   Restrict a validated BED to a chromosome / strand / coordinate window,
+#   drop omitted targets, and merge nearby peaks PER TARGET.
+#   - Filtering is by CONTAINMENT: a peak is kept only if it lies fully inside
+#     [start, end] (start >= window start AND end <= window end).
+#   - chr is normalised, so "chr1" and "1" refer to the same chromosome.
+#   - Empty result -> NULL.
+#   - Merged output carries a `group_name` column (= source target).
+
+# --- argument validation --------------------------------------------------
+
+test_that("start / end must be single, non-NA, parseable numbers with end >= start", {
+  bed <- make_checked_bed()
+  expect_error(filter_bed(bed, "1", NA, 1000, "+", NULL, 0), class = "rnapeaks_error_invalid_arg")
+  expect_error(filter_bed(bed, "1", "abc", 1000, "+", NULL, 0), class = "rnapeaks_error_invalid_arg")
+  expect_error(filter_bed(bed, "1", 0, NA, "+", NULL, 0), class = "rnapeaks_error_invalid_arg")
+  expect_error(filter_bed(bed, "1", 500, 100, "+", NULL, 0), class = "rnapeaks_error_invalid_arg")
+  expect_error(filter_bed(bed, "1", -1, 1000, "+", NULL, 0), class = "rnapeaks_error_invalid_arg")
+})
+
+test_that("numeric strings are accepted for start / end", {
+  bed <- make_checked_bed()
+  out <- filter_bed(bed, "1", "0", "1000", "+", NULL, 0)
+  expect_equal(nrow(out), 3)
+})
+
+test_that("chr, strand, omit and collapse are validated", {
+  bed <- make_checked_bed()
+  expect_error(filter_bed(bed, c("1", "2"), 0, 1000, "+", NULL, 0), class = "rnapeaks_error_invalid_arg")
+  expect_error(filter_bed(bed, "1", 0, 1000, ".", NULL, 0), class = "rnapeaks_error_invalid_arg")
+  expect_error(filter_bed(bed, "1", 0, 1000, "+", 1L, 0), class = "rnapeaks_error_invalid_arg")
+  expect_error(filter_bed(bed, "1", 0, 1000, "+", NULL, -1), class = "rnapeaks_error_invalid_arg")
+  expect_error(filter_bed(bed, "1", 0, 1000, "+", NULL, NA), class = "rnapeaks_error_invalid_arg")
+})
+
+# --- window filtering (containment) ---------------------------------------
+
+test_that("peaks fully inside the window are kept and tagged with group_name", {
+  out <- filter_bed(make_checked_bed(), "1", 0, 1000, "+", NULL, 0)
+  expect_equal(nrow(out), 3)
+  expect_true("group_name" %in% colnames(out))
+  expect_equal(unique(out$group_name), "SRSF1")
+})
+
+test_that("peaks not fully contained in the window are dropped", {
+  # peaks at 100-150, 300-350, 500-550; window 200-1000 excludes the first.
+  out <- filter_bed(make_checked_bed(), "1", 200, 1000, "+", NULL, 0)
+  expect_equal(nrow(out), 2)
+})
+
+test_that("only the requested strand is retained", {
+  bed <- rbind(
+    make_checked_bed(start = c(100, 300), end = c(150, 350), strand = "+"),
+    make_checked_bed(start = 700, end = 750, strand = "-")
+  )
+  out <- filter_bed(bed, "1", 0, 1000, "+", NULL, 0)
+  expect_equal(nrow(out), 2)
+})
+
+test_that("chr prefix / case does not affect matching", {
+  bed <- make_checked_bed(chr = "1")
+  out <- filter_bed(bed, "chr1", 0, 1000, "+", NULL, 0)
+  expect_equal(nrow(out), 3)
+})
+
+# --- omit -----------------------------------------------------------------
+
+test_that("omit drops the named targets", {
+  bed <- rbind(
+    make_checked_bed(start = 100, end = 150, target = "A"),
+    make_checked_bed(start = 300, end = 350, target = "B")
+  )
+  out <- filter_bed(bed, "1", 0, 1000, "+", "B", 0)
+  expect_equal(unique(out$group_name), "A")
+})
+
+# --- empty result ---------------------------------------------------------
+
+test_that("a window containing no peaks returns NULL", {
+  out <- suppressMessages(filter_bed(make_checked_bed(), "1", 0, 10, "+", NULL, 0))
+  expect_null(out)
+})
+
+# --- per-target merging ---------------------------------------------------
+
+test_that("collapse merges nearby peaks of the SAME target", {
+  bed <- make_checked_bed(start = c(100, 160), end = c(150, 200), target = "SRSF1")
+  merged <- filter_bed(bed, "1", 0, 1000, "+", NULL, 1000)
+  separate <- filter_bed(bed, "1", 0, 1000, "+", NULL, 0)
+  expect_equal(nrow(merged), 1)
+  expect_equal(nrow(separate), 2)
+})
+
+test_that("merging never crosses target boundaries", {
+  bed <- rbind(
+    make_checked_bed(start = 100, end = 150, target = "A"),
+    make_checked_bed(start = 160, end = 200, target = "B")
+  )
+  out <- filter_bed(bed, "1", 0, 1000, "+", NULL, 1000)
+  expect_equal(nrow(out), 2)
+  expect_setequal(out$group_name, c("A", "B"))
+})
