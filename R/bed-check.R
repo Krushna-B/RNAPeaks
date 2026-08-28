@@ -97,7 +97,7 @@ check_bed <- function(bed, split_col = NULL) {
       if (is.null(nm)) { nm <- rep("", length(beds)) }
       nm[nm == ""] <- paste0("bed", which(nm == ""))
       beds <- Map(function(b, lab) {
-        b$target <- paste(lab, b[[split_col]], sep = "_")
+        b$target <- paste(b[[split_col]],lab, sep = "_")
         b
       }, beds, nm)
     }
