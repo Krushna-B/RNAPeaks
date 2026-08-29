@@ -167,11 +167,19 @@ filter_bed <- function(bed, chr, start, end, strand, omit, collapse) {
   # Normalize chr (strip "chr" prefix, uppercase)
   chr <- normalize_chr(chr)
 
+  # Keep any peak that overlaps the window (not just fully-contained peaks),
+  # then clip the overhanging ends back to the window bounds below.
   keep <- as.character(bed$chr) == chr &
-    bed$start  >= start &
-    bed$end    <= end   &
+    bed$end    >= start &
+    bed$start  <= end   &
     bed$strand == strand
   bed <- bed[which(keep), , drop = FALSE]
+
+  # Clip peaks that start before / end after the window to the window bounds.
+  if (nrow(bed) > 0L) {
+    bed$start <- pmax(bed$start, start)
+    bed$end   <- pmin(bed$end, end)
+  }
 
   if (length(omit) > 0L) {
     bed <- bed[!bed$target %in% omit, , drop = FALSE]

@@ -3,8 +3,8 @@
 # Contract:
 #   Restrict a validated BED to a chromosome / strand / coordinate window,
 #   drop omitted targets, and merge nearby peaks PER TARGET.
-#   - Filtering is by CONTAINMENT: a peak is kept only if it lies fully inside
-#     [start, end] (start >= window start AND end <= window end).
+#   - Filtering is by OVERLAP: a peak is kept if it overlaps [start, end] at
+#     all. Peaks that straddle a window edge are CLIPPED to the window bounds.
 #   - chr is normalised, so "chr1" and "1" refer to the same chromosome.
 #   - Empty result -> NULL.
 #   - Merged output carries a `group_name` column (= source target).
@@ -44,10 +44,23 @@ test_that("peaks fully inside the window are kept and tagged with group_name", {
   expect_equal(unique(out$group_name), "SRSF1")
 })
 
-test_that("peaks not fully contained in the window are dropped", {
+test_that("peaks with no overlap of the window are dropped", {
   # peaks at 100-150, 300-350, 500-550; window 200-1000 excludes the first.
   out <- filter_bed(make_checked_bed(), "1", 200, 1000, "+", NULL, 0)
   expect_equal(nrow(out), 2)
+})
+
+test_that("peaks straddling a window edge are clipped to the window bounds", {
+  # single peak 100-150; window 120-1000 clips its left edge to 120.
+  out <- filter_bed(make_checked_bed(start = 100, end = 150), "1", 120, 1000, "+", NULL, 0)
+  expect_equal(nrow(out), 1)
+  expect_equal(out$start, 121)  # GRanges 1-based start of clipped 0-based 120
+  expect_equal(out$end, 150)
+
+  # single peak 500-550; window 0-520 clips its right edge to 520.
+  out2 <- filter_bed(make_checked_bed(start = 500, end = 550), "1", 0, 520, "+", NULL, 0)
+  expect_equal(nrow(out2), 1)
+  expect_equal(out2$end, 520)
 })
 
 test_that("only the requested strand is retained", {
