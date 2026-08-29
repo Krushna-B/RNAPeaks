@@ -2,8 +2,6 @@
 
 RNAPeaks is an R package for making publication quality figures of RNA binding protein (RBP) peaks on top of gene structures, together with statistical analysis of where those peaks and their motifs fall around splice junctions.
 
-Everything here is plain R functions that return ggplot objects and tidy data frames, so you can drop the results straight into your own analysis.
-
 ## Installation
 
 RNAPeaks is a Bioconductor style package, so the easiest path is through BiocManager. It will pull the Bioconductor dependencies for you.
