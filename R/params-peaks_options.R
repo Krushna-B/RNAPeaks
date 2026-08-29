@@ -6,7 +6,9 @@
 #' @param split_by Optional positive integer giving the BED column index used
 #'   to split peaks into per-target tracks. Must not point at a canonical
 #'   column (positions 1, 2, 3, or 6).
-#' @param omit Optional character vector of target names to drop.
+#' @param include Optional character vector of track names to keep; all other
+#'   tracks are dropped. Matches the `split_by` value (protein name) when
+#'   `split_by` is set, otherwise the bed label. `NULL` keeps every track.
 #' @param order_by `"Count"` (most peaks first) or `"Alphabetical"`. Ignored
 #'   when `order_in` is supplied.
 #' @param order_in Optional character vector giving an explicit target order.
@@ -18,7 +20,7 @@
 #' @family params
 #' @export
 peaks_options <- function(split_by     = 4,
-                          omit         = NULL,
+                          include      = NULL,
                           order_by     = "Count",
                           order_in     = NULL,
                           collapse     = 0,
@@ -28,9 +30,9 @@ peaks_options <- function(split_by     = 4,
     check_scalar_int(split_by, "split_by", min = 1)
   }
 
-  # omit: NULL or character vector with no NAs
-  if (!is.null(omit) && (!is.character(omit) || anyNA(omit))) {
-    abort_invalid_arg("{.arg omit} must be a character vector with no NAs, or {.code NULL}.")
+  # include: NULL or character vector with no NAs
+  if (!is.null(include) && (!is.character(include) || anyNA(include))) {
+    abort_invalid_arg("{.arg include} must be a character vector with no NAs, or {.code NULL}.")
   }
 
   # order_by: one of two values

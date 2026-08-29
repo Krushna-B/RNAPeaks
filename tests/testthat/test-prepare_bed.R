@@ -13,7 +13,7 @@
 # orderings are distinguishable.
 
 full_window <- list(chr = "1", start = 0, end = 1000,
-                    strand = "+", omit = NULL, collapse = 0)
+                    strand = "+", collapse = 0)
 
 bed_two_targets <- function() {
   rbind(

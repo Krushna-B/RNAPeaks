@@ -30,13 +30,13 @@ plot_peaks_pipeline <- function(transcripts,
     start    = window$start,
     end      = window$end,
     strand   = as.character(transcripts$strand[1]),
-    omit     = peaks_opts$omit,
     collapse = peaks_opts$collapse
   )
 
-  # 2. Validate BED, then prepare into peaks
+  # 2. Validate BED (restricting to `include` tracks), then prepare into peaks
   cli::cli_progress_step("Validating BED")
-  bed      <- check_bed(bed, split_col = peaks_opts$split_by)
+  bed      <- check_bed(bed, split_col = peaks_opts$split_by,
+                        include = peaks_opts$include)
   cli::cli_progress_step("Filtering peaks ({nrow(bed)} rows)")
   peaks_df <- prepare_bed(
     bed,

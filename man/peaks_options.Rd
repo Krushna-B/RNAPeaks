@@ -6,7 +6,7 @@
 \usage{
 peaks_options(
   split_by = 4,
-  omit = NULL,
+  include = NULL,
   order_by = "Count",
   order_in = NULL,
   collapse = 0,
@@ -18,7 +18,9 @@ peaks_options(
 to split peaks into per-target tracks. Must not point at a canonical
 column (positions 1, 2, 3, or 6).}
 
-\item{omit}{Optional character vector of target names to drop.}
+\item{include}{Optional character vector of track names to keep; all other
+tracks are dropped. Matches the \code{split_by} value (protein name) when
+\code{split_by} is set, otherwise the bed label. \code{NULL} keeps every track.}
 
 \item{order_by}{\code{"Count"} (most peaks first) or \code{"Alphabetical"}. Ignored
 when \code{order_in} is supplied.}

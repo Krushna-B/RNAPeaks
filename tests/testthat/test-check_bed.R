@@ -104,7 +104,7 @@ test_that("named multi-bed with split_col combines label and value", {
          HepG2 = make_raw_bed(2, protein = "U2AF2")),
     split_col = 4
   )
-  expect_setequal(unique(out$target), c("K562_SRSF1", "HepG2_U2AF2"))
+  expect_setequal(unique(out$target), c("SRSF1_K562", "U2AF2_HepG2"))
 })
 
 test_that("unnamed multi-bed with split_col synthesises per-bed labels", {
@@ -112,12 +112,51 @@ test_that("unnamed multi-bed with split_col synthesises per-bed labels", {
     list(make_raw_bed(1, protein = "A"), make_raw_bed(1, protein = "B")),
     split_col = 4
   )
-  expect_setequal(unique(out$target), c("bed1_A", "bed2_B"))
+  expect_setequal(unique(out$target), c("A_bed1", "B_bed2"))
 })
 
 test_that("named multi-bed, no split_col -> target is the label alone", {
   out <- check_bed(list(K562 = make_raw_bed(2), HepG2 = make_raw_bed(3)))
   expect_setequal(unique(out$target), c("K562", "HepG2"))
+})
+
+# --- include (track selection) --------------------------------------------
+
+test_that("include keeps only the named proteins, matched on the raw split value", {
+  bed <- rbind(
+    make_raw_bed(2, protein = "SRSF1"),
+    make_raw_bed(2, protein = "U2AF2")
+  )
+  out <- check_bed(bed, split_col = 4, include = "SRSF1")
+  expect_equal(unique(out$target), "SRSF1")
+})
+
+test_that("include matches the BARE protein name even across multiple beds", {
+  # The per-bed suffix ("_K562") is appended AFTER include filters, so asking
+  # for "SRSF1" keeps SRSF1 rows from every bed.
+  out <- check_bed(
+    list(K562 = make_raw_bed(2, protein = "SRSF1"),
+         HepG2 = make_raw_bed(2, protein = "SRSF1"),
+         other = make_raw_bed(2, protein = "U2AF2")),
+    split_col = 4,
+    include = "SRSF1"
+  )
+  expect_setequal(unique(out$target), c("SRSF1_K562", "SRSF1_HepG2"))
+})
+
+test_that("include with no split_col matches bed labels", {
+  out <- check_bed(
+    list(K562 = make_raw_bed(2), HepG2 = make_raw_bed(2)),
+    include = "K562"
+  )
+  expect_equal(unique(out$target), "K562")
+})
+
+test_that("include matching nothing aborts as not_found", {
+  expect_error(
+    check_bed(make_raw_bed(2, protein = "SRSF1"), split_col = 4, include = "NOPE"),
+    class = "rnapeaks_error_not_found"
+  )
 })
 
 # --- coordinate normalisation & validation --------------------------------

@@ -11,10 +11,15 @@
 #'   index cannot point at a canonical position (1=chr, 2=start, 3=end,
 #'   6=strand).
 #'
+#' @param include Optional character vector of track names to keep. Matched
+#'   against the raw `split_col` value (protein name) when `split_col` is set,
+#'   otherwise against the bed label -- before any per-bed suffix is appended.
+#'   `NULL` keeps every track.
+#'
 #' @return A single combined, validated bed data frame
 #' @noRd
 #' @family bed
-check_bed <- function(bed, split_col = NULL) {
+check_bed <- function(bed, split_col = NULL, include = NULL) {
   #Check if input is a list c(Bed1,...Bedn)
   beds <- if (is.data.frame(bed)) list(bed) else bed
 
@@ -88,24 +93,42 @@ check_bed <- function(bed, split_col = NULL) {
     }
   }
 
-  #Adding target column
+  #Resolve per-bed labels ("bed1", "bed2", ... for unnamed inputs)
+  nm <- names(beds)
+  if (is.null(nm)) nm <- rep("", length(beds))
+  nm[nm == ""] <- paste0("bed", which(nm == ""))
+
+  #Adding target column. When `include` is set we restrict tracks HERE, on the
+  #raw split value (protein name) / bed label, before any per-bed suffix is
+  #appended -- otherwise a suffixed target like "SRSF1_bed1" would never match
+  #the bare name the user asked for.
   if (!is.null(split_col)) {
-    if (length(beds)==1){
-      beds <- lapply(beds, function(b){ b$target <- b[[split_col]]; return(b) })
-    } else if (length(beds)>1){
-      nm <- names(beds)
-      if (is.null(nm)) { nm <- rep("", length(beds)) }
-      nm[nm == ""] <- paste0("bed", which(nm == ""))
-      beds <- Map(function(b, lab) {
-        b$target <- paste(b[[split_col]],lab, sep = "_")
-        b
-      }, beds, nm)
+    multi <- length(beds) > 1L
+    beds <- Map(function(b, lab) {
+      if (!is.null(include)) {
+        b <- b[b[[split_col]] %in% include, , drop = FALSE]
+      }
+      # Guard the empty case: paste() would recycle a length-0 split value up
+      # to length 1 and clash with the 0-row frame.
+      b$target <- if (nrow(b) == 0L) character(0)
+                  else if (multi) paste(b[[split_col]], lab, sep = "_")
+                  else b[[split_col]]
+      b
+    }, beds, nm)
+  } else {
+    if (!is.null(include)) {
+      keep_bed <- nm %in% include
+      beds <- beds[keep_bed]
+      nm   <- nm[keep_bed]
     }
-  } else if (length(beds) >= 1L){
-    nm <- names(beds)
-    if (is.null(nm)){ nm <- rep("", length(beds)) }
-      nm[nm == ""] <- paste0("bed", which(nm == ""))
-      beds <- Map(function(b, lab) { b$target <- lab; b }, beds, nm)
+    beds <- Map(function(b, lab) { b$target <- lab; b }, beds, nm)
+  }
+
+  if (length(beds) == 0L || sum(vapply(beds, nrow, integer(1))) == 0L) {
+    abort_not_found(c(
+      "No peaks remain after applying {.arg include}.",
+      "x" = "None of {.val {include}} matched the available tracks."
+    ))
   }
 
   #Combine into one bed and normalize

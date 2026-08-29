@@ -24,15 +24,15 @@ test_that("split_by is optional but otherwise a positive whole number", {
   expect_error(peaks_options(split_by = "4"), class = "rnapeaks_error_invalid_arg")
 })
 
-test_that("omit / order_in accept NULL (off) or an NA-free character vector", {
-  expect_null(peaks_options(omit = NULL)$omit)
-  expect_equal(peaks_options(omit = c("A", "B"))$omit, c("A", "B"))
+test_that("include / order_in accept NULL (off) or an NA-free character vector", {
+  expect_null(peaks_options(include = NULL)$include)
+  expect_equal(peaks_options(include = c("A", "B"))$include, c("A", "B"))
   expect_equal(peaks_options(order_in = c("A", "B"))$order_in, c("A", "B"))
 })
 
-test_that("omit / order_in reject non-character or NA-containing vectors", {
-  expect_error(peaks_options(omit = 1L), class = "rnapeaks_error_invalid_arg")
-  expect_error(peaks_options(omit = c("A", NA)), class = "rnapeaks_error_invalid_arg")
+test_that("include / order_in reject non-character or NA-containing vectors", {
+  expect_error(peaks_options(include = 1L), class = "rnapeaks_error_invalid_arg")
+  expect_error(peaks_options(include = c("A", NA)), class = "rnapeaks_error_invalid_arg")
   expect_error(peaks_options(order_in = c("A", NA)), class = "rnapeaks_error_invalid_arg")
 })
 
@@ -52,7 +52,7 @@ test_that("collapse must be non-negative and max_proteins a positive integer", {
 test_that("every argument rejects a known-bad value with an invalid_arg error", {
   bad_values <- list(
     split_by     = 0,
-    omit         = 1L,             # must be character
+    include      = 1L,             # must be character
     order_by     = "Random",
     order_in     = c("A", NA),     # NA not allowed
     collapse     = -1,

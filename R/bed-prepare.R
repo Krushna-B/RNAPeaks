@@ -1,7 +1,7 @@
 #' Prepare a BED for plotting: filter peaks, choose display order, lay out tracks.
 
 #' @param bed Validated BED data frame
-#' @param filter Named list: `chr`, `start`, `end`, `strand`, `omit`, `collapse`.
+#' @param filter Named list: `chr`, `start`, `end`, `strand`, `collapse`.
 #' @param order  Named list: `by` (`"Count"` or `"Alphabetical"`), `in_`,
 #'   `max_proteins`.
 #' @param track_height Vertical height (y units) of each protein track row.
@@ -11,7 +11,7 @@
 #' @family bed
 prepare_bed <- function(bed,
                         filter = list(chr = NULL, start = NULL, end = NULL,
-                                      strand = NULL, omit = NULL, collapse = 0),
+                                      strand = NULL, collapse = 0),
                         order  = list(by = "Count", in_ = NULL, max_proteins = 40),
                         track_height = 0.3) {
 
@@ -34,7 +34,7 @@ prepare_bed <- function(bed,
   #Filter Bed
   bed <- tryCatch(
     filter_bed(bed, filter$chr, filter$start, filter$end,
-               filter$strand, filter$omit, filter$collapse),
+               filter$strand, filter$collapse),
     error = function(e) cli::cli_abort(
       "Filtering stage failed.",
       parent = e,
@@ -90,14 +90,13 @@ prepare_bed <- function(bed,
   return(bed)
 }
 
-#' Restrict a validated BED to a chromosome / strand / coordinate window,
-#' drop omitted targets, and merge nearby peaks per target.
+#' Restrict a validated BED to a chromosome / strand / coordinate window
+#' and merge nearby peaks per target.
 #'
 #' @param bed A BED data frame returned by `check_bed()`.
 #' @param chr Chromosome to retain; `"chr"` prefix and case are normalized.
 #' @param start,end Region bounds (numeric, `start <= end`, both `>= 0`).
 #' @param strand Strand to retain: `"+"` or `"-"`.
-#' @param omit Optional character vector of `target` values to drop.
 #' @param collapse Min gap width (bp) for merging adjacent peaks.
 #'
 #' @return Data frame of reduced peaks with a `group_name` column
@@ -105,7 +104,7 @@ prepare_bed <- function(bed,
 #'
 #' @noRd
 #' @family bed
-filter_bed <- function(bed, chr, start, end, strand, omit, collapse) {
+filter_bed <- function(bed, chr, start, end, strand, collapse) {
 
   #checking if start and end are numeric and then converting them to numeric
   if (length(start) != 1L || is.na(start)) {
@@ -156,9 +155,6 @@ filter_bed <- function(bed, chr, start, end, strand, omit, collapse) {
       "x" = "You supplied {.val {strand}}."
     ))
   }
-  if (!is.null(omit) && (!is.character(omit) || anyNA(omit))) {
-    abort_invalid_arg("{.arg omit} must be a character vector or {.code NULL}.")
-  }
   if (!is.numeric(collapse) || length(collapse) != 1L ||
       is.na(collapse) || collapse < 0) {
     abort_invalid_arg("{.arg collapse} must be a single non-negative number.")
@@ -181,16 +177,10 @@ filter_bed <- function(bed, chr, start, end, strand, omit, collapse) {
     bed$end   <- pmin(bed$end, end)
   }
 
-  if (length(omit) > 0L) {
-    bed <- bed[!bed$target %in% omit, , drop = FALSE]
-  }
-
   if (nrow(bed) == 0L) {
-    cli::cli_alert_info(c(
-      "No peaks found in {.field {chr}:{start}-{end}} ({strand}).",
-      "i" = if (length(omit) > 0L)
-        "After omitting target{?s}: {.field {omit}}." else NULL
-    ))
+    cli::cli_alert_info(
+      "No peaks found in {.field {chr}:{start}-{end}} ({strand})."
+    )
     return(NULL)
   }
 
