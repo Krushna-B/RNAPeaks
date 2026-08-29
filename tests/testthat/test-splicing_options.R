@@ -6,7 +6,7 @@ test_that("defaults produce a valid list with documented values", {
   opt <- splicing_options()
   expect_type(opt, "list")
   expect_equal(opt$psi_cutoff, c(-0.1, 0.1))
-  expect_equal(opt$stat_test, "fisher")
+  expect_equal(opt$stat_test, "fisher-all")
   expect_true(opt$use_fdr)
 })
 
@@ -76,8 +76,11 @@ test_that("control_multiplier must be strictly positive and iterations a positiv
 
 # --- significance ---------------------------------------------------------
 
-test_that("stat_test is limited to fisher / binomial and flags/thresholds are validated", {
-  expect_equal(splicing_options(stat_test = "binomial")$stat_test, "binomial")
+test_that("stat_test is limited to the fisher variants and flags/thresholds are validated", {
+  expect_equal(splicing_options(stat_test = "fisher-all")$stat_test, "fisher-all")
+  expect_equal(splicing_options(stat_test = "fisher-bootstrap")$stat_test, "fisher-bootstrap")
+  expect_equal(splicing_options(stat_test = "fisher")$stat_test, "fisher-all")  # back-compat alias
+  expect_error(splicing_options(stat_test = "binomial"), class = "rnapeaks_error_invalid_arg")
   expect_error(splicing_options(stat_test = "ttest"), class = "rnapeaks_error_invalid_arg")
   expect_error(splicing_options(use_fdr = "yes"), class = "rnapeaks_error_invalid_arg")
   expect_error(splicing_options(fdr_threshold = 2), class = "rnapeaks_error_invalid_arg")

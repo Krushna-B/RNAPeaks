@@ -95,7 +95,7 @@ event_map_pipeline <- function(events = NULL, schema, scorer, opts, style,
 
   #Build significance df
   cli::cli_progress_step("Computing significance")
-  sig_df <- .significance_table(per_group, opts, style)
+  sig_df <- .significance_table(per_group, opts, style, control_stats)
 
   #Build frequency df + smoothing
   cli::cli_progress_step("Assembling frequency table")
@@ -272,7 +272,7 @@ prepare_event_map <- function(events, schema, opts) {
 #Inputs: Named list for groups of counts for each position
 #And input params for options and style
 #Return dataframe with signficance per position
-.significance_table <- function(per_group, opts, style) {
+.significance_table <- function(per_group, opts, style, control_stats = NULL) {
   #Skips if signifance shoudl be skipped or empty
   if (!isTRUE(style$show_significance))      return(NULL)
   if (!"Control" %in% names(per_group))      return(NULL)
@@ -291,6 +291,7 @@ prepare_event_map <- function(events, schema, opts) {
       n_group        = per_group[[g]]$n,
       control_counts = per_group$Control$counts,
       n_control      = per_group$Control$n,
+      control_stats  = control_stats,
       opts           = opts
     )
     out$group <- g

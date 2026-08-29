@@ -29,7 +29,8 @@ bootstrap_control <- function(ctrl_hits, n_control, n_positions,
   #Build empty mean and st dev list
   zeros <- list(
     mean_per_position = rep(0, n_positions),
-    sd_per_position   = rep(0, n_positions)
+    sd_per_position   = rep(0, n_positions),
+    sample_size       = 0L
   )
 
   #Exit on empty controls
@@ -60,7 +61,8 @@ bootstrap_control <- function(ctrl_hits, n_control, n_positions,
     )
     return(list(
       mean_per_position = ctrl_counts / n_control,
-      sd_per_position   = rep(0, n_positions)
+      sd_per_position   = rep(0, n_positions),
+      sample_size       = n_control
     ))
   }
 
@@ -107,6 +109,7 @@ bootstrap_control <- function(ctrl_hits, n_control, n_positions,
   cli::cli_progress_done()
   list(
     mean_per_position = mean_per_position,
-    sd_per_position   = sd_per_position
+    sd_per_position   = sd_per_position,
+    sample_size       = sample_size
   )
 }

@@ -31,7 +31,12 @@
 #' @param moving_average Window size for moving-average smoothing.
 #'   `NULL` or `0` disables smoothing.
 #' @param stat_test Per-position significance test for Positive / Negative
-#'   vs. Control. One of `"fisher"` (Fisher's exact test) or `"binomial"`.
+#'   vs. Control. One of `"fisher-all"` or `"fisher-bootstrap"`. Both run the
+#'   same one-sided hypergeometric (Fisher) test and differ only in the
+#'   Control numbers fed to it: `"fisher-all"` uses the full raw Control pool,
+#'   while `"fisher-bootstrap"` uses the resampled Control mean (rounded to a
+#'   whole count) sized to the tested groups. `"fisher"` is accepted as an
+#'   alias for `"fisher-all"`.
 #' @param use_fdr If `TRUE`, apply Benjamini-Hochberg FDR correction to the
 #'   per-position p-values before thresholding. If `FALSE`, threshold the raw
 #'   p-values.
@@ -65,7 +70,7 @@ splicing_options <- function(
   moving_average      = 10,
 
   # Significance
-  stat_test           = "fisher",
+  stat_test           = "fisher-all",
   use_fdr             = TRUE,
   fdr_threshold       = 0.05,
 
@@ -139,7 +144,9 @@ splicing_options <- function(
   check_scalar_int(moving_average, "moving_average", min = 0)
 
   # Significance
-  check_string(stat_test, "stat_test", choices = c("fisher", "binomial"))
+  if (identical(stat_test, "fisher")) stat_test <- "fisher-all"
+  check_string(stat_test, "stat_test",
+               choices = c("fisher-all", "fisher-bootstrap"))
   check_flag(use_fdr, "use_fdr")
   check_unit_interval(fdr_threshold, "fdr_threshold")
 
