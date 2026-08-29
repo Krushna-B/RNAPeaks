@@ -114,25 +114,40 @@ test_that("score_utr_side validates n_bins and bed_gr", {
 
 # --- .score_one_side ------------------------------------------------------
 
-test_that(".score_one_side builds a per-bin frame per track", {
+test_that(".score_one_side builds a per-bin frame per (track, group)", {
+  events <- data.frame(gene_id = "g1", utr5_len = 100L, stringsAsFactors = FALSE)
   df <- .score_one_side(list(A = peak_gr(120, 129)), single_event_pieces(),
-                        n_events = 1, n_bins = 100)
+                        events, group_events = list(`All genes` = 1L),
+                        len_col = "utr5_len", n_bins = 100)
   expect_equal(nrow(df), 100)
-  expect_equal(unique(df$group), "A")
+  expect_equal(unique(df$track), "A")
+  expect_equal(unique(df$gene_group), "All genes")
   expect_equal(which(df$frequency == 1), 21:30)
   expect_true(all(df$n_events == 1))
+})
+
+test_that(".score_one_side yields a row block per group x track", {
+  events <- data.frame(gene_id = "g1", utr5_len = 100L, stringsAsFactors = FALSE)
+  df <- .score_one_side(list(A = peak_gr(120, 129)), single_event_pieces(),
+                        events,
+                        group_events = list(High = 1L, Low = 1L),
+                        len_col = "utr5_len", n_bins = 100)
+  expect_equal(nrow(df), 200)
+  expect_setequal(unique(df$gene_group), c("High", "Low"))
 })
 
 # --- .smooth_side ---------------------------------------------------------
 
 test_that(".smooth_side is a no-op when smoothing is disabled", {
-  df <- data.frame(group = "A", frequency = c(0, 1, 0, 1, 0))
+  df <- data.frame(track = "A", gene_group = "All genes",
+                   frequency = c(0, 1, 0, 1, 0))
   expect_equal(.smooth_side(df, window = 0, n_bins = 5), df$frequency)
   expect_equal(.smooth_side(df, window = NULL, n_bins = 5), df$frequency)
   expect_equal(.smooth_side(df, window = 1, n_bins = 5), df$frequency)
 })
 
 test_that(".smooth_side preserves a constant curve", {
-  df <- data.frame(group = "A", frequency = rep(0.5, 20))
+  df <- data.frame(track = "A", gene_group = "All genes",
+                   frequency = rep(0.5, 20))
   expect_true(all(abs(.smooth_side(df, window = 3, n_bins = 20) - 0.5) < 1e-9))
 })

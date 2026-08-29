@@ -24,6 +24,12 @@
 #'   track name, each track gets its mapped color regardless of order.
 #' @param single_track_color Color used when `track_colors` is `NULL` and
 #'   exactly one BED track is plotted.
+#' @param linetypes Character vector of ggplot2 line types for the curves
+#'   when more than one gene group is plotted. If unnamed it is applied
+#'   positionally (recycled when there are more groups than line types). If
+#'   *named* by gene-group name, each group gets its mapped line type
+#'   regardless of order.
+#' @param linetype_legend_name Legend title for the gene-group line types.
 #' @param title_size,title_color Plot title appearance.
 #' @param axis_text_size Font size for axis tick labels.
 #' @param ylab Y-axis label.
@@ -51,6 +57,11 @@ utr_style <- function(
   palette            = c("black", "red", "blue", "darkgreen",
                          "purple", "orange", "brown", "magenta"),
   single_track_color = "blue",
+
+  # Gene-group line types
+  linetypes            = c("solid", "dashed", "dotted", "dotdash",
+                           "longdash", "twodash"),
+  linetype_legend_name = "Gene group",
 
   # Title
   title_size         = 20,
@@ -88,6 +99,16 @@ utr_style <- function(
     check_color(palette[i], paste0("palette[", i, "]"), allow_na = FALSE)
   }
   check_color(single_track_color, "single_track_color", allow_na = FALSE)
+
+  # Line types
+  if (!is.character(linetypes) || length(linetypes) == 0L || anyNA(linetypes) ||
+      any(!nzchar(linetypes))) {
+    abort_invalid_arg(c(
+      "{.arg linetypes} must be a non-empty character vector of line types.",
+      "x" = "Got {.cls {class(linetypes)[1]}} of length {length(linetypes)}."
+    ))
+  }
+  check_string(linetype_legend_name, "linetype_legend_name")
 
   # Title
   check_scalar_number(title_size, "title_size", min = 0)

@@ -8,6 +8,7 @@ plot_utr_binding(
   bed,
   gtf = NULL,
   transcripts = NULL,
+  gene_groups = NULL,
   species = "hg38",
   moving_average = 5L,
   style = utr_style(),
@@ -24,7 +25,15 @@ annotation for \code{species} is used.}
 \item{transcripts}{Optional character vector restricting which transcripts
 contribute. Accepts Ensembl transcript ids (\verb{ENST…}), gene ids (\verb{ENSG…}),
 or gene symbols (e.g. \code{"CXCR4"}); gene-level ids expand to all of that
-gene's transcripts. Default uses every protein-coding transcript.}
+gene's transcripts. Default uses every protein-coding transcript. Draws a
+single pooled curve per BED track; use \code{gene_groups} for split curves.
+Mutually exclusive with \code{gene_groups}.}
+
+\item{gene_groups}{Optional \emph{named} list of id vectors (same id forms as
+\code{transcripts}), one curve per group drawn with its own line type and
+labelled in the legend. A gene may appear in more than one group. Ids
+that match nothing are skipped; a group with no usable UTRs is dropped
+with a warning. Mutually exclusive with \code{transcripts}.}
 
 \item{species}{One of \code{"hg38"}, \code{"mm10"}, \code{"mm39"}. Ignored when
 \code{gtf} is supplied.}

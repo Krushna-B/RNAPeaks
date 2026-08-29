@@ -225,3 +225,37 @@ resolve_transcript_ids <- function(gtf, ids) {
   }
   out
 }
+
+
+# Gene-level sibling of resolve_transcript_ids(): tx / gene / symbol ids all
+# collapse to gene_id. Returns unmatched instead of aborting so the caller can
+# drop empty groups.
+resolve_gene_ids <- function(gtf, ids) {
+  species  <- detect_species(gtf)
+  tx_pat   <- if (species == "human") "^ENST\\d"  else "^ENSMUST\\d"
+  gene_pat <- if (species == "human") "^ENSG\\d"  else "^ENSMUSG\\d"
+
+  ids   <- trimws(ids)
+  ids_u <- toupper(ids)
+  kind  <- ifelse(grepl(tx_pat, ids_u), "tx",
+                  ifelse(grepl(gene_pat, ids_u), "gene", "symbol"))
+
+  out       <- character(0)
+  unmatched <- character(0)
+  for (i in seq_along(ids)) {
+    g <- switch(kind[i],
+      tx     = gtf$gene_id[!is.na(gtf$transcript_id) &
+                             gtf$transcript_id == ids_u[i]],
+      gene   = gtf$gene_id[!is.na(gtf$gene_id) &
+                             gtf$gene_id == ids_u[i]],
+      symbol = gtf$gene_id[!is.na(gtf$gene_name) &
+                             gtf$gene_name == normalize_label(ids[i], species)]
+    )
+    if (length(g)) out <- c(out, g) else unmatched <- c(unmatched, ids[i])
+  }
+
+  list(
+    gene_ids  = unique(stats::na.omit(out)),
+    unmatched = unmatched
+  )
+}

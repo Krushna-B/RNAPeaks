@@ -17,7 +17,14 @@
 #' @param transcripts Optional character vector restricting which transcripts
 #'   contribute. Accepts Ensembl transcript ids (`ENST…`), gene ids (`ENSG…`),
 #'   or gene symbols (e.g. `"CXCR4"`); gene-level ids expand to all of that
-#'   gene's transcripts. Default uses every protein-coding transcript.
+#'   gene's transcripts. Default uses every protein-coding transcript. Draws a
+#'   single pooled curve per BED track; use `gene_groups` for split curves.
+#'   Mutually exclusive with `gene_groups`.
+#' @param gene_groups Optional *named* list of id vectors (same id forms as
+#'   `transcripts`), one curve per group drawn with its own line type and
+#'   labelled in the legend. A gene may appear in more than one group. Ids
+#'   that match nothing are skipped; a group with no usable UTRs is dropped
+#'   with a warning. Mutually exclusive with `transcripts`.
 #' @param species One of `"hg38"`, `"mm10"`, `"mm39"`. Ignored when
 #'   `gtf` is supplied.
 #' @param moving_average Window size for moving-average smoothing of the
@@ -38,6 +45,7 @@
 plot_utr_binding <- function(bed,
                              gtf            = NULL,
                              transcripts    = NULL,
+                             gene_groups    = NULL,
                              species        = "hg38",
                              moving_average = 5L,
                              style          = utr_style(),
@@ -60,16 +68,23 @@ plot_utr_binding <- function(bed,
       if (!is.null(moving_average)) {
         check_scalar_int(moving_average, "moving_average", min = 0)
       }
+      groups_spec <- .resolve_utr_group_spec(gene_groups, transcripts)
 
       cli::cli_progress_step("Loading GTF")
       gtf <- get_GTF(species = species, file = gtf)
 
       cli::cli_progress_step("Building UTR event table")
-      built <- build_utr_events(gtf, transcripts = transcripts)
+      build_ids <- if (is.null(groups_spec)) NULL
+                   else unique(unlist(groups_spec, use.names = FALSE))
+      built <- build_utr_events(gtf, transcripts = build_ids)
       events <- built$events
       if (nrow(events) == 0L) {
         abort_not_found("No genes with usable UTRs were found.")
       }
+
+      group_events      <- .assign_group_events(groups_spec, events, gtf)
+      show_group_legend <- length(group_events) > 1L
+
       n5 <- sum(events$utr5_len > 0)
       n3 <- sum(events$utr3_len > 0)
       cli::cli_alert_info(
@@ -87,10 +102,10 @@ plot_utr_binding <- function(bed,
 
       cli::cli_progress_step("Scoring utr region")
       n_bins <- event_schema_utr$n_bins
-      side5 <- .score_one_side(tracks, built$utr5_pieces, n_events = n5,
-                               n_bins = n_bins)
-      side3 <- .score_one_side(tracks, built$utr3_pieces, n_events = n3,
-                               n_bins = n_bins)
+      side5 <- .score_one_side(tracks, built$utr5_pieces, events,
+                               group_events, "utr5_len", n_bins)
+      side3 <- .score_one_side(tracks, built$utr3_pieces, events,
+                               group_events, "utr3_len", n_bins)
       cli::cli_progress_done()
 
       # Per-track moving average within each (single-region) panel.
@@ -101,9 +116,9 @@ plot_utr_binding <- function(bed,
       ttl5 <- if (nzchar(title)) paste0(title, " \u2014 5' UTR") else "5' UTR"
       ttl3 <- if (nzchar(title)) paste0(title, " \u2014 3' UTR") else "3' UTR"
       p5 <- plot_utr_side_map(side5, event_schema_utr, style, "utr5",
-                              title = ttl5)
+                              title = ttl5, show_group_legend = show_group_legend)
       p3 <- plot_utr_side_map(side3, event_schema_utr, style, "utr3",
-                              title = ttl3)
+                              title = ttl3, show_group_legend = show_group_legend)
       cli::cli_progress_done()
 
       list(
@@ -195,28 +210,95 @@ plot_utr_binding <- function(bed,
   })
 }
 
-# Build the per-bin frequency frame for one UTR side across all tracks.
-.score_one_side <- function(tracks, pieces, n_events, n_bins) {
-  rows <- lapply(names(tracks), function(g) {
-    s <- score_utr_side(pieces, tracks[[g]],
-                        n_events = n_events, n_bins = n_bins)
-    data.frame(
-      position_in_region = seq_len(n_bins),
-      frequency          = s$density,
-      group              = g,
-      n_events           = s$n,
-      stringsAsFactors   = FALSE
-    )
-  })
+# Normalize the grouping args to a named list of id vectors, or NULL when no
+# grouping is requested (all protein-coding genes as one pooled curve).
+# transcripts is the single-group shorthand; the two args are exclusive.
+.resolve_utr_group_spec <- function(gene_groups, transcripts) {
+  if (!is.null(gene_groups) && !is.null(transcripts)) {
+    abort_invalid_arg(c(
+      "Pass either {.arg transcripts} or {.arg gene_groups}, not both.",
+      "i" = "{.arg transcripts} is the single-group case of {.arg gene_groups}."
+    ))
+  }
+  if (!is.null(gene_groups)) {
+    nm <- names(gene_groups)
+    if (!is.list(gene_groups) || length(gene_groups) == 0L ||
+        is.null(nm) || any(!nzchar(nm)) || anyDuplicated(nm)) {
+      abort_invalid_arg(
+        "{.arg gene_groups} must be a non-empty, uniquely named list of id vectors."
+      )
+    }
+    ok <- vapply(gene_groups, function(v) {
+      is.character(v) && length(v) > 0L && !anyNA(v)
+    }, logical(1L))
+    if (!all(ok)) {
+      abort_invalid_arg(c(
+        "Each element of {.arg gene_groups} must be a non-empty character vector.",
+        "x" = "Bad group{?s}: {.val {nm[!ok]}}."
+      ))
+    }
+    return(gene_groups)
+  }
+  if (!is.null(transcripts)) return(list(`All genes` = transcripts))
+  NULL
+}
+
+# Map each group to the event rows it covers. NULL spec -> one group over all
+# events. Groups that resolve to no usable UTR are warned and dropped; an
+# all-empty result aborts.
+.assign_group_events <- function(groups_spec, events, gtf) {
+  if (is.null(groups_spec)) {
+    return(list(`All genes` = seq_len(nrow(events))))
+  }
+  out <- list()
+  for (g in names(groups_spec)) {
+    res <- resolve_gene_ids(gtf, groups_spec[[g]])
+    if (length(res$unmatched)) {
+      cli::cli_alert_info("Group {.val {g}}: no match for {.val {res$unmatched}}.")
+    }
+    idx <- which(events$gene_id %in% res$gene_ids)
+    if (length(idx) == 0L) {
+      cli::cli_warn("Dropping group {.val {g}}: no genes with usable UTRs.")
+      next
+    }
+    out[[g]] <- idx
+  }
+  if (length(out) == 0L) {
+    abort_not_found("No gene groups had genes with usable UTRs.")
+  }
+  out
+}
+
+# Build the per-bin frequency frame for one UTR side across every
+# (BED track, gene group) pair. Each group is averaged over its own events.
+.score_one_side <- function(tracks, pieces, events, group_events, len_col, n_bins) {
+  rows <- list()
+  for (g in names(group_events)) {
+    evt_idx <- group_events[[g]]
+    n_ev    <- sum(events[[len_col]][evt_idx] > 0)
+    sub     <- pieces[pieces$event_idx %in% evt_idx, , drop = FALSE]
+    for (t in names(tracks)) {
+      s <- score_utr_side(sub, tracks[[t]], n_events = n_ev, n_bins = n_bins)
+      rows[[paste(g, t, sep = "\r")]] <- data.frame(
+        position_in_region = seq_len(n_bins),
+        frequency          = s$density,
+        track              = t,
+        gene_group         = g,
+        n_events           = s$n,
+        stringsAsFactors   = FALSE
+      )
+    }
+  }
   do.call(rbind, rows)
 }
 
-# Per-track moving average within a single-region panel.
+# Moving average within each (track, group) curve of a single-region panel.
 .smooth_side <- function(df, window, n_bins) {
   if (is.null(window) || window <= 1L) return(df$frequency)
-  out <- df$frequency
-  for (g in unique(df$group)) {
-    idx <- df$group == g
+  out   <- df$frequency
+  combo <- interaction(df$track, df$gene_group, drop = TRUE)
+  for (g in levels(combo)) {
+    idx <- combo == g
     out[idx] <- apply_moving_average(df$frequency[idx], window,
                                      n_regions = 1L, region_width = n_bins)
   }
@@ -232,11 +314,13 @@ plot_utr_binding <- function(bed,
 #'
 #' @keywords internal
 #' @noRd
-plot_utr_side_map <- function(data, schema, style, side, title = "") {
+plot_utr_side_map <- function(data, schema, style, side, title = "",
+                              show_group_legend = FALSE) {
   layout <- schema$plot_layout(n_bins = schema$n_bins)
 
   data$schematic_position <- layout$region_start + data$position_in_region
-  data$group <- factor(data$group, levels = unique(data$group))
+  data$track      <- factor(data$track,      levels = unique(data$track))
+  data$gene_group <- factor(data$gene_group, levels = unique(data$gene_group))
 
   # Size the schematic to the displayed height. UTR curves sit on an
   # elevated baseline, so scaling boxes to the data range (as the splicing
@@ -247,11 +331,12 @@ plot_utr_side_map <- function(data, schema, style, side, title = "") {
   exon_height <- y_max * (style$schematic_height %||% 0.06)
   y_top       <- 0
 
-  # Resolve per-track colors from the style. A named palette maps colors
-  # to tracks by name; an unnamed palette is positional; a lone track
-  # falls back to single_track_color.
-  track_levels <- levels(data$group)
-  pal          <- style$palette
+  track_levels <- levels(data$track)
+  group_levels <- levels(data$gene_group)
+
+  # Per-track colors: named palette maps by name, unnamed is positional, a
+  # lone track falls back to single_track_color.
+  pal <- style$palette
   colors <- if (!is.null(names(pal)) && any(nzchar(names(pal)))) {
     missing <- setdiff(track_levels, names(pal))
     if (length(missing) > 0L) {
@@ -264,14 +349,40 @@ plot_utr_side_map <- function(data, schema, style, side, title = "") {
   } else if (length(track_levels) == 1L) {
     stats::setNames(style$single_track_color, track_levels)
   } else {
-    stats::setNames(rep(pal, length.out = length(track_levels)),
-                    track_levels)
+    stats::setNames(rep(pal, length.out = length(track_levels)), track_levels)
   }
 
-  legend_labels <- vapply(track_levels, function(g) {
-    n <- data$n_events[data$group == g][1L]
-    sprintf("%s [n = %s]", g, format(n, big.mark = ","))
-  }, character(1L))
+  # Per-group line types, same named / positional rule as the palette.
+  lty <- style$linetypes
+  linetypes <- if (!is.null(names(lty)) && any(nzchar(names(lty)))) {
+    missing <- setdiff(group_levels, names(lty))
+    if (length(missing) > 0L) {
+      abort_invalid_arg(c(
+        "{.arg linetypes} is missing entries for some gene groups.",
+        "x" = "Missing: {.val {missing}}."
+      ))
+    }
+    lty[group_levels]
+  } else {
+    stats::setNames(rep(lty, length.out = length(group_levels)), group_levels)
+  }
+
+  # The event count varies by gene group but not by track, so it annotates
+  # whichever legend distinguishes the groups. With one group it stays on
+  # the track legend, matching the ungrouped plot.
+  with_n <- function(x, col) {
+    vapply(x, function(v) {
+      n <- data$n_events[data[[col]] == v][1L]
+      sprintf("%s [n = %s]", v, format(n, big.mark = ","))
+    }, character(1L))
+  }
+  if (show_group_legend) {
+    track_labels <- track_levels
+    group_labels <- with_n(group_levels, "gene_group")
+  } else {
+    track_labels <- with_n(track_levels, "track")
+    group_labels <- group_levels
+  }
 
   # x range includes the CDS block on the side-appropriate end.
   if (identical(side, "utr5")) {
@@ -282,16 +393,22 @@ plot_utr_side_map <- function(data, schema, style, side, title = "") {
 
   ggplot2::ggplot(
     data,
-    ggplot2::aes(x = schematic_position, y = moving_avg, color = group,
-                  group = group)
+    ggplot2::aes(x = schematic_position, y = moving_avg, color = track,
+                  linetype = gene_group,
+                  group = interaction(track, gene_group))
   ) +
     ggplot2::geom_line(linewidth = style$line_width,
                        alpha     = style$line_alpha) +
     schema$build_schematic_layers(layout, style, y_top, exon_height, side) +
     ggplot2::geom_hline(yintercept = 0, color = "black", linewidth = 0.5) +
     ggplot2::scale_fill_identity() +
-    ggplot2::scale_color_manual(values = colors, labels = legend_labels,
+    ggplot2::scale_color_manual(values = colors, labels = track_labels,
                                  name = "BED track") +
+    ggplot2::scale_linetype_manual(
+      values = linetypes, labels = group_labels,
+      name   = style$linetype_legend_name %||% "Gene group",
+      guide  = if (show_group_legend) "legend" else "none"
+    ) +
     ggplot2::scale_x_continuous(limits = x_lim,
                                 expand = ggplot2::expansion(mult = 0.02)) +
     ggplot2::scale_y_continuous(

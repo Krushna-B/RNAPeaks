@@ -121,7 +121,7 @@ utils::globalVariables(c(
   "x_start", "x_end", "group_name", "xpos", "label_y", "Label", "X", "Y",
   "label_x", "label", "xintercept", "xmin", "xmax", "ymin", "ymax", "fill",
   "linetype", "type", "schematic_position", "moving_avg", "group",
-  "pos", "y_bot", "y_top", "track", "text",
+  "pos", "y_bot", "y_top", "track", "gene_group", "text",
   # dplyr variables
   "global_position", "bin", "frequency", "event_id", "bin_index", "position",
   "PValue", "FDR", "IncLevelDifference", "BEDFILE",

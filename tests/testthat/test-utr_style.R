@@ -56,6 +56,8 @@ test_that("every argument rejects a known-bad value with an invalid_arg error", 
     pct_label_color    = "notacolor",
     palette            = character(0),
     single_track_color = "notacolor",
+    linetypes            = character(0),
+    linetype_legend_name = 1,          # must be a string
     title_size         = -1,
     title_color        = "notacolor",
     axis_text_size     = -1,

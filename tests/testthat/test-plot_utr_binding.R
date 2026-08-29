@@ -32,7 +32,8 @@ test_that(".prep_utr_bed_tracks rejects duplicate names and bad elements", {
 one_track_side <- function() {
   d <- data.frame(position_in_region = 1:100,
                   frequency = c(rep(0, 20), rep(1, 10), rep(0, 70)),
-                  group = "A", n_events = 5L, stringsAsFactors = FALSE)
+                  track = "A", gene_group = "All genes", n_events = 5L,
+                  stringsAsFactors = FALSE)
   d$moving_avg <- d$frequency
   d
 }
@@ -45,10 +46,31 @@ test_that("plot_utr_side_map returns a ggplot for a single track", {
 
 test_that("plot_utr_side_map aborts when a named palette misses a track", {
   d <- rbind(one_track_side(),
-             transform(one_track_side(), group = "B"))
+             transform(one_track_side(), track = "B"))
   style <- utr_style(palette = c(A = "red"))   # no entry for track B
   expect_error(plot_utr_side_map(d, event_schema_utr, style, "utr5"),
                class = "rnapeaks_error_invalid_arg")
+})
+
+test_that("plot_utr_side_map draws a group linetype legend for multiple groups", {
+  d <- rbind(one_track_side(),
+             transform(one_track_side(), gene_group = "Low"))
+  d$gene_group[d$gene_group == "All genes"] <- "High"
+  p <- plot_utr_side_map(d, event_schema_utr, utr_style(), "utr5",
+                         show_group_legend = TRUE)
+  expect_s3_class(p, "ggplot")
+})
+
+test_that(".resolve_utr_group_spec rejects both args and bad group lists", {
+  expect_error(.resolve_utr_group_spec(list(A = "X"), "Y"),
+               class = "rnapeaks_error_invalid_arg")
+  expect_error(.resolve_utr_group_spec(list("X"), NULL),          # unnamed
+               class = "rnapeaks_error_invalid_arg")
+  expect_error(.resolve_utr_group_spec(list(A = character(0)), NULL),
+               class = "rnapeaks_error_invalid_arg")
+  expect_null(.resolve_utr_group_spec(NULL, NULL))
+  expect_equal(.resolve_utr_group_spec(NULL, "CXCR4"),
+               list(`All genes` = "CXCR4"))
 })
 
 # --- plot_utr_binding entry point -----------------------------------------

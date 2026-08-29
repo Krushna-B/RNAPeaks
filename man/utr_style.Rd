@@ -17,6 +17,8 @@ utr_style(
   palette = c("black", "red", "blue", "darkgreen", "purple", "orange", "brown",
     "magenta"),
   single_track_color = "blue",
+  linetypes = c("solid", "dashed", "dotted", "dotdash", "longdash", "twodash"),
+  linetype_legend_name = "Gene group",
   title_size = 20,
   title_color = "black",
   axis_text_size = 11,
@@ -56,6 +58,14 @@ track name, each track gets its mapped color regardless of order.}
 
 \item{single_track_color}{Color used when \code{track_colors} is \code{NULL} and
 exactly one BED track is plotted.}
+
+\item{linetypes}{Character vector of ggplot2 line types for the curves
+when more than one gene group is plotted. If unnamed it is applied
+positionally (recycled when there are more groups than line types). If
+\emph{named} by gene-group name, each group gets its mapped line type
+regardless of order.}
+
+\item{linetype_legend_name}{Legend title for the gene-group line types.}
 
 \item{title_size, title_color}{Plot title appearance.}
 
