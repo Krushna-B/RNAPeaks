@@ -105,5 +105,6 @@ splicing_style <- function(
   check_string(legend_position, "legend_position",
                choices = c("bottom", "top", "left", "right", "none"))
 
-  as.list(environment())
+  # Return only the declared parameters, not the helper locals used for validation.
+  mget(names(formals(splicing_style)))
 }

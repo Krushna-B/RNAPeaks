@@ -153,5 +153,7 @@ splicing_options <- function(
   # Diagnostics
   check_flag(verbose, "verbose")
 
-  as.list(environment())
+  # Return only the declared parameters (with any normalized values), not the
+  # helper locals used above for validation.
+  mget(names(formals(splicing_options)))
 }
