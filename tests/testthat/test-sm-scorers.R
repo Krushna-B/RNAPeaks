@@ -173,3 +173,33 @@ test_that(".dedupe_hits returns empty structure for empty input", {
   expect_equal(length(out$event_id), 0)
   expect_equal(length(out$col_idx), 0)
 })
+
+# --- .align_seqnames_to_genome --------------------------------------------
+# Reconciles event chromosome naming ("1") with the genome's ("chr1"). A plain
+# GRanges stands in for the genome here: the helper only reads its seqinfo.
+genome_stub <- function() {
+  GenomicRanges::GRanges(
+    seqnames = c("chr1", "chr2"),
+    ranges   = IRanges::IRanges(1, c(1000, 1000))
+  )
+}
+
+test_that(".align_seqnames_to_genome adds the missing 'chr' prefix", {
+  gr <- GenomicRanges::GRanges("1", IRanges::IRanges(10, 20), strand = "+")
+  out <- .align_seqnames_to_genome(gr, genome_stub())
+  expect_length(out, 1L)
+  expect_equal(as.character(GenomeInfoDb::seqnames(out)), "chr1")
+})
+
+test_that(".align_seqnames_to_genome leaves already-matching seqnames alone", {
+  gr <- GenomicRanges::GRanges("chr2", IRanges::IRanges(5, 15), strand = "-")
+  out <- .align_seqnames_to_genome(gr, genome_stub())
+  expect_equal(as.character(GenomeInfoDb::seqnames(out)), "chr2")
+})
+
+test_that(".align_seqnames_to_genome warns and drops chromosomes not in the genome", {
+  gr <- GenomicRanges::GRanges("99", IRanges::IRanges(1, 5), strand = "+")
+  expect_warning(out <- .align_seqnames_to_genome(gr, genome_stub()),
+                 regexp = "not in")
+  expect_length(out, 0L)
+})

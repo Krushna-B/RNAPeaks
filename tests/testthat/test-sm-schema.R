@@ -100,3 +100,28 @@ test_that("all trio schemas expose the expected structure", {
   expect_equal(event_schema_se$n_regions, 4L)
   expect_equal(event_schema_ri$n_regions, 2L)
 })
+
+# --- .schematic_ext -------------------------------------------------------
+# The a5ss / a3ss cartoon draws the long-isoform extension. Its length is the
+# rounded median real extension, capped to the intron side of the window; with
+# no usable stat it falls back to max(8, 12% of bin_width).
+# a5ss layout at (10, 20): boundary_offsets = c(10, 20) so intron_w = 20,
+# bin_width = 30 -> fallback = max(8, round(3.6)) = 8.
+
+test_that(".schematic_ext uses the rounded median extension when available", {
+  layout <- event_schema_a5ss$plot_layout(10, 20)
+  expect_equal(.schematic_ext(list(median_ext = 15.4), layout), 15)   # rounds
+})
+
+test_that(".schematic_ext caps the extension at the intron width", {
+  layout <- event_schema_a5ss$plot_layout(10, 20)
+  expect_equal(.schematic_ext(list(median_ext = 50), layout), 20)     # capped
+})
+
+test_that(".schematic_ext falls back when the stat is missing or non-positive", {
+  small <- event_schema_a5ss$plot_layout(10, 20)     # bin_width 30 -> floor 8
+  large <- event_schema_a5ss$plot_layout(50, 250)    # bin_width 300 -> 12% = 36
+  expect_equal(.schematic_ext(NULL, small), 8L)
+  expect_equal(.schematic_ext(list(median_ext = 0), small), 8L)
+  expect_equal(.schematic_ext(list(median_ext = NA_real_), large), 36)
+})
