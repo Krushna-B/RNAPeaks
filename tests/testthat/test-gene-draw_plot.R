@@ -69,12 +69,14 @@ test_that("add_highlight_band adds a layer only when a visible highlight is set"
 test_that("region_gene_labels builds one label per gene at the visual-left edge", {
   region <- data.frame(gene_id = c("G1", "G1", "G2"),
                        gene_name = c("A", "A", "B"),
-                       y_start = c(0, 0.5, 1))
+                       y_start = c(0, 0.5, 1),
+                       y_end   = c(0.3, 0.8, 1.3))
   layer <- region_gene_labels(region, xlim = c(100, 1000), style = peaks_plot_style())
   expect_s3_class(layer, "LayerInstance")
   d <- layer$data
   expect_setequal(d$label, c("A", "B"))
-  expect_equal(d$y_start[d$label == "A"], 0.25)  # mean(0, 0.5) for gene G1
+  # center = (min y_start(0) + max y_end(0.8)) / 2 for gene G1
+  expect_equal(d$y[d$label == "A"], 0.4)
   # x = xlim[1] - axis_pad_bp(500) * gene_label_x_offset(0.25) = 100 - 125
   expect_true(all(d$x == -25))
 })

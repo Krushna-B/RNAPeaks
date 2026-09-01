@@ -141,7 +141,7 @@ test_that("make_strand_labels places 5'/3' tags offset from the gene ends", {
   expect_equal(labs$left$X, 0)       # gene_min(100) - 100
   expect_equal(labs$right$Label, "3'")
   expect_equal(labs$right$X, 1200)   # gene_max(1100) + 100
-  expect_equal(labs$left$Y, -0.25)
+  expect_equal(labs$left$Y, -0.25)   # box bottom, slightly below the name
 })
 
 test_that("make_strand_labels caps x_offset at axis_pad_bp and flips labels on - strand", {

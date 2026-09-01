@@ -367,7 +367,15 @@ gene_label_text <- function(region) {
 
 # Per-transcript labels for a region plot
 region_gene_labels <- function(region, xlim, style, flip = FALSE) {
-  agg <- stats::aggregate(y_start ~ gene_id, region, mean)
+  # Center the label on the gene box: midpoint between its lowest y_start
+  # and highest y_end, matching the protein row labels.
+  agg <- stats::aggregate(cbind(y_start, y_end) ~ gene_id, region,
+                          function(v) c(min = min(v), max = max(v)))
+  agg <- data.frame(
+    gene_id = agg$gene_id,
+    y       = (agg$y_start[, "min"] + agg$y_end[, "max"]) / 2,
+    stringsAsFactors = FALSE
+  )
 
   lab_map <- unique(data.frame(
     gene_id = as.character(region$gene_id),
@@ -383,7 +391,7 @@ region_gene_labels <- function(region, xlim, style, flip = FALSE) {
 
   ggplot2::geom_text(
     data    = df,
-    mapping = ggplot2::aes(x = x, y = y_start, label = label),
+    mapping = ggplot2::aes(x = x, y = y, label = label),
     hjust = 1,
     size  = style$gene_label_size,
     color = style$gene_label_color

@@ -189,6 +189,8 @@ make_strand_labels <- function(transcript, axis_pad_bp, x_offset = axis_pad_bp, 
 
   gene_min <- min(transcript$start)
   gene_max <- max(transcript$end)
+  # Anchor at the box bottom so the tags sit slightly below the (centered)
+  # gene name rather than overlapping it. Nudge with strand_label_y_offset.
   y_pos    <- min(transcript$y_start) + y_offset
   off      <- min(x_offset, axis_pad_bp)
 
