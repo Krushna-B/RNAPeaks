@@ -56,7 +56,7 @@ splicing_options <- function(
   event_fdr           = 0.05,
   control_pval        = 0.95,
   psi_cutoff          = c(-0.1, 0.1),
-  psi_control_max     = 0.005,
+  psi_control_max     = 1,
   min_count           = 50,
 
   # Groups
@@ -105,14 +105,6 @@ splicing_options <- function(
     ))
   }
 
-  check_scalar_number(psi_control_max, "psi_control_max", min = 0, max = 1)
-  if (psi_control_max >= min(abs(psi_cutoff))) {
-    abort_invalid_arg(c(
-      "{.arg psi_control_max} must be strictly less than {.code min(abs(psi_cutoff))}.",
-      "x" = "Got {.val {psi_control_max}}; {.code min(abs(psi_cutoff))} is {.val {min(abs(psi_cutoff))}}.",
-      "i" = "Otherwise the Control pool would overlap with Positive / Negative."
-    ))
-  }
 
   # Coverage filter: NULL or non-negative int (0 disables)
   if (is.null(min_count)) {
