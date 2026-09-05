@@ -114,17 +114,17 @@ event_schema_utr <- list(
         mapping = ggplot2::aes(x = x, y = y, label = label),
         hjust = label_df$hjust, size = label_size,
         fontface = "bold", inherit.aes = FALSE
-      ),
-      ggplot2::geom_segment(
-        data    = tick_df,
-        mapping = ggplot2::aes(x = x, xend = x, y = y, yend = yend),
-        color = pct_col, linewidth = 0.4, inherit.aes = FALSE
-      ),
-      ggplot2::geom_text(
-        data    = pct_df,
-        mapping = ggplot2::aes(x = x, y = y, label = label),
-        size = pct_size, color = pct_col, inherit.aes = FALSE
       )
+      #ggplot2::geom_segment(
+      #  data    = tick_df,
+      #  mapping = ggplot2::aes(x = x, xend = x, y = y, yend = yend),
+      #  color = pct_col, linewidth = 0.4, inherit.aes = FALSE
+      #),
+      #ggplot2::geom_text(
+      #  data    = pct_df,
+      #  mapping = ggplot2::aes(x = x, y = y, label = label),
+      #  size = pct_size, color = pct_col, inherit.aes = FALSE
+      #)
     )
   }
 )

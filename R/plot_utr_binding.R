@@ -400,7 +400,7 @@ plot_utr_side_map <- function(data, schema, style, side, title = "",
     ggplot2::geom_line(linewidth = style$line_width,
                        alpha     = style$line_alpha) +
     schema$build_schematic_layers(layout, style, y_top, exon_height, side) +
-    ggplot2::geom_hline(yintercept = 0, color = "black", linewidth = 0.5) +
+    #ggplot2::geom_hline(yintercept = 0, color = "black", linewidth = 0.5) +
     ggplot2::scale_fill_identity() +
     ggplot2::scale_color_manual(values = colors, labels = track_labels,
                                  name = "BED track") +
@@ -411,9 +411,13 @@ plot_utr_side_map <- function(data, schema, style, side, title = "",
     ) +
     ggplot2::scale_x_continuous(limits = x_lim,
                                 expand = ggplot2::expansion(mult = 0.02)) +
+
     ggplot2::scale_y_continuous(
       limits = c(-exon_height * 3.2, y_max * 1.1)
     ) +
     ggplot2::labs(x = NULL, y = style$ylab, title = title) +
-    .plot_theme(style)
+    .plot_theme(style)+
+    ggplot2::theme(axis.line.x  = ggplot2::element_blank(),
+                   axis.text.x  = ggplot2::element_blank(),
+                   axis.ticks.x = ggplot2::element_blank())
 }
