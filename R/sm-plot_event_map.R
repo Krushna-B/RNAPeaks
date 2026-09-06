@@ -36,7 +36,6 @@ plot_event_map <- function(data, schema, style, opts,
                                   schematic_data) +
     ggplot2::scale_fill_identity() +
     .significance_bars(significance, schema, layout, opts, y, style) +
-    ggplot2::geom_hline(yintercept = 0, color = "black", linewidth = 0.5) +
     .group_color_scale(data, style, opts) +
     ggplot2::scale_y_continuous(
       limits = c(y$y_min - y$exon_height * 1.5,
@@ -173,7 +172,8 @@ plot_event_map <- function(data, schema, style, opts,
       panel.grid.major = ggplot2::element_blank(),
       panel.grid.minor = ggplot2::element_blank(),
       panel.border     = ggplot2::element_blank(),
-      axis.line        = ggplot2::element_blank(),
+      axis.line.x      = ggplot2::element_blank(),
+      axis.line.y      = ggplot2::element_line(color = "black"),
       axis.text.x      = ggplot2::element_blank(),
       axis.ticks.x     = ggplot2::element_blank(),
       axis.text.y      = ggplot2::element_text(size  = style$axis_text_size,
