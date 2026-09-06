@@ -41,8 +41,7 @@ kmer_enrichment <- function(set_a, set_b, k,
                             top_n   = 20,
                             style   = kmer_style(),
                             title   = "") {
-  # Capture the symbols the caller passed so `set_a = PCBP1` labels itself
-  # "PCBP1"; fall back to a generic name for non-symbol inputs.
+  # use the passed variable name as the label, else a generic fallback
   label_a <- label_a %||% .default_set_label(substitute(set_a), "Set A")
   label_b <- label_b %||% .default_set_label(substitute(set_b), "Set B")
   wrap_sm_errors("k-mer enrichment", {
@@ -102,8 +101,7 @@ kmer_enrichment <- function(set_a, set_b, k,
 }
 
 
-# Derive a set label from the captured argument expression: use the name
-# when the caller passed a bare variable, otherwise the generic fallback.
+# label from the passed symbol, else the fallback
 .default_set_label <- function(sym, fallback) {
   if (is.symbol(sym)) as.character(sym) else fallback
 }

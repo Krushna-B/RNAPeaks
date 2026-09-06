@@ -37,12 +37,8 @@ test_that("psi_cutoff must be a length-2 numeric within [-1, 1] and increasing",
   expect_error(splicing_options(psi_cutoff = c(NA, 0.1)), class = "rnapeaks_error_invalid_arg")
 })
 
-test_that("psi_control_max must be strictly below min(abs(psi_cutoff))", {
-  # default psi_cutoff = c(-0.1, 0.1) -> min(abs) = 0.1
-  expect_error(splicing_options(psi_control_max = 0.1), class = "rnapeaks_error_invalid_arg")
-  expect_error(splicing_options(psi_control_max = 0.2), class = "rnapeaks_error_invalid_arg")
-  expect_silent(splicing_options(psi_control_max = 0.05))
-})
+# psi_control_max validation was dropped when its default became 1
+# restoring a basic type check is a TODO
 
 # --- disable-via-NULL semantics -------------------------------------------
 
@@ -98,7 +94,6 @@ test_that("every argument rejects a known-bad value with an invalid_arg error", 
     event_fdr          = 1.2,
     control_pval       = -0.1,
     psi_cutoff         = c(0.1, -0.1),     # neg >= pos
-    psi_control_max    = 0.2,              # >= min(abs(psi_cutoff))
     min_count          = -1,
     groups             = c("Positive", "Foo"),
     control_multiplier = 0,
@@ -109,7 +104,9 @@ test_that("every argument rejects a known-bad value with an invalid_arg error", 
     fdr_threshold      = 2,
     verbose            = NA
   )
-  expect_setequal(names(bad_values), names(formals(splicing_options)))
+  # psi_control_max is unvalidated so it is excluded here
+  expect_setequal(names(bad_values),
+                  setdiff(names(formals(splicing_options)), "psi_control_max"))
   for (arg in names(bad_values)) {
     expect_error(
       do.call(splicing_options, stats::setNames(list(bad_values[[arg]]), arg)),

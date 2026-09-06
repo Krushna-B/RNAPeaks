@@ -126,8 +126,7 @@ plot_event_map <- function(data, schema, style, opts,
     data.frame(x = min(d$x), xend = max(d$x),
                group = d$group[1L], stringsAsFactors = FALSE)
   }))
-  # Stack each group's significance bars on its own row so bars from
-  # different event groups don't overlap at a single y level.
+  # stack each group on its own row so bars don't overlap
   groups  <- unique(bars$group)
   offsets <- stats::setNames(seq_along(groups) - 1L, groups)
   step    <- y$y_range * 0.05

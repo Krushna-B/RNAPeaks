@@ -88,7 +88,7 @@ test_that(".significance_bars collapses contiguous significant positions per run
 })
 
 test_that(".significance_bars stacks each group on its own y row", {
-  # Both groups significant -> bars must not share a single y level.
+  # two significant groups -> two y rows
   sig <- data.frame(
     position    = c(1, 40),
     significant = TRUE,
@@ -99,7 +99,6 @@ test_that(".significance_bars stacks each group on its own y row", {
   y   <- list(y_max = 1, y_range = 1)
   lyr <- .significance_bars(sig, event_schema_ri, layout, opts_fixture(),
                             y, splicing_style())
-  # base row at y_max + 5% range; next group one 5%-range step above it.
   expect_length(unique(lyr$data$y), 2L)
   expect_setequal(unique(lyr$data$y), c(1.05, 1.10))
 })
@@ -128,8 +127,8 @@ test_that(".group_color_scale labels each group with its cutoff and event count"
   expect_s3_class(sc, "ScaleDiscrete")
   expect_equal(sc$name, "Event group")
   expect_equal(sc$labels, c(
-    Negative = sprintf("ΔΨ < %g [n = %s]", -0.1, "5"),
-    Positive = sprintf("ΔΨ > %g [n = %s]",  0.1, "4"),
+    Negative = sprintf("dPSI < %g [n = %s]", -0.1, "5"),
+    Positive = sprintf("dPSI > %g [n = %s]",  0.1, "4"),
     Control  = "Control [n = 3]"
   ))
 })

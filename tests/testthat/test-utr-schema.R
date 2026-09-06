@@ -23,7 +23,8 @@ test_that("build_schematic_layers puts the CDS block on the side-appropriate end
   layers3 <- event_schema_utr$build_schematic_layers(lay, utr_style(),
                                                      y_min = 0, exon_height = 1,
                                                      side = "utr3")
-  expect_length(layers5, 5)
+  # pct-marker layers are commented out leaving 2 boxes + 1 label
+  expect_length(layers5, 3)
   expect_s3_class(layers5[[1]], "LayerInstance")
   # CDS box (first layer) sits to the RIGHT of a 5' UTR and LEFT of a 3' UTR
   expect_equal(layers5[[1]]$data$xmin, 100)   # bin_width

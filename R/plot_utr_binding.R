@@ -228,8 +228,7 @@ plot_utr_binding <- function(bed,
     ))
   }
   if (!is.null(gene_groups)) {
-    # A file path or two-column data frame is normalized to the named-list
-    # form the rest of the pipeline consumes; a list is left as-is.
+    # normalize a path or data frame to the named-list form
     gene_groups <- .normalize_gene_groups(gene_groups)
     nm <- names(gene_groups)
     if (!is.list(gene_groups) || length(gene_groups) == 0L ||
@@ -253,9 +252,7 @@ plot_utr_binding <- function(bed,
   NULL
 }
 
-# Normalize the accepted gene_groups forms to a named list of id vectors.
-# A file path or two-column data frame becomes group -> genes; an existing
-# (named) list is returned unchanged for downstream validation.
+# normalize gene_groups (path or data frame) to a named list
 .normalize_gene_groups <- function(gene_groups) {
   if (is.data.frame(gene_groups)) {
     return(.gene_group_table_to_list(gene_groups))
@@ -266,8 +263,7 @@ plot_utr_binding <- function(bed,
   gene_groups
 }
 
-# Read a two-column gene/group table, auto-detecting the delimiter (tab or
-# comma) and an optional header row.
+# read a two-column gene/group table, sniffing delimiter and header
 .read_gene_groups_file <- function(path) {
   if (!file.exists(path)) {
     abort_not_found(c("{.arg gene_groups} file does not exist.",
@@ -290,7 +286,7 @@ plot_utr_binding <- function(bed,
       "x" = "Found {ncol(df)} column{?s} with the detected delimiter."
     ))
   }
-  # Drop a header row when the first row looks like column names.
+  # drop a header row if row 1 looks like column names
   h1 <- tolower(trimws(as.character(df[[1L]][1L])))
   h2 <- tolower(trimws(as.character(df[[2L]][1L])))
   hdr1 <- c("gene", "genes", "gene_id", "geneid", "gene_name", "symbol",
@@ -301,8 +297,7 @@ plot_utr_binding <- function(bed,
   df
 }
 
-# Split a two-column (gene, group) data frame into a named list of id
-# vectors, preserving the order groups first appear.
+# split a two-column table into group -> genes
 .gene_group_table_to_list <- function(df) {
   if (ncol(df) < 2L) {
     abort_invalid_arg(

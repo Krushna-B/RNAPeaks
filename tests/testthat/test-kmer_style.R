@@ -1,9 +1,4 @@
 # Tests for kmer_style() in R/params-kmer_style.R
-#
-# Contract: validated named list of visual settings for the kmer_enrichment()
-# scatter / rank plots. Colors reject NA / invalid; sizes must be non-negative;
-# point_alpha is a unit interval; ref_line_type is a fixed choice;
-# label_check_overlap is a flag.
 
 test_that("defaults produce a valid list with documented values", {
   st <- kmer_style()
