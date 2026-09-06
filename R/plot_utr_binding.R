@@ -367,22 +367,8 @@ plot_utr_side_map <- function(data, schema, style, side, title = "",
     stats::setNames(rep(lty, length.out = length(group_levels)), group_levels)
   }
 
-  # The event count varies by gene group but not by track, so it annotates
-  # whichever legend distinguishes the groups. With one group it stays on
-  # the track legend, matching the ungrouped plot.
-  with_n <- function(x, col) {
-    vapply(x, function(v) {
-      n <- data$n_events[data[[col]] == v][1L]
-      sprintf("%s [n = %s]", v, format(n, big.mark = ","))
-    }, character(1L))
-  }
-  if (show_group_legend) {
-    track_labels <- track_levels
-    group_labels <- with_n(group_levels, "gene_group")
-  } else {
-    track_labels <- with_n(track_levels, "track")
-    group_labels <- group_levels
-  }
+  track_labels <- track_levels
+  group_labels <- group_levels
 
   # x range includes the CDS block on the side-appropriate end.
   if (identical(side, "utr5")) {
