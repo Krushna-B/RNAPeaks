@@ -17,9 +17,14 @@
 #' @param genome A BSgenome object or a genome key (`"hg38"` / `"mm10"` /
 #'   `"mm39"`) used for sequence extraction. Defaults to `species`.
 #' @param label_a,label_b Display names for the two sets, used in the table
-#'   context and plot axes.
+#'   context and plot axes. If `NULL` (the default) and the corresponding
+#'   `set_a` / `set_b` argument is passed as a bare variable (e.g.
+#'   `set_a = PCBP1`), that variable name is used as the label; otherwise a
+#'   generic `"Set A"` / `"Set B"` is used.
 #' @param top_n Number of most strongly enriched k-mers (by absolute
 #'   difference) to label in the scatter plot
+#' @param style Output of [kmer_style()]: visual settings for the scatter and
+#'   rank plots.
 #' @param title Plot title.
 #'
 #' @return A list with `table` (a data frame sorted by `difference`, one row per
@@ -31,10 +36,15 @@ kmer_enrichment <- function(set_a, set_b, k,
                             gtf     = NULL,
                             species = "hg38",
                             genome  = NULL,
-                            label_a = "Set A",
-                            label_b = "Set B",
+                            label_a = NULL,
+                            label_b = NULL,
                             top_n   = 20,
+                            style   = kmer_style(),
                             title   = "") {
+  # Capture the symbols the caller passed so `set_a = PCBP1` labels itself
+  # "PCBP1"; fall back to a generic name for non-symbol inputs.
+  label_a <- label_a %||% .default_set_label(substitute(set_a), "Set A")
+  label_b <- label_b %||% .default_set_label(substitute(set_b), "Set B")
   wrap_sm_errors("k-mer enrichment", {
     #Ensure required args
     if (missing(set_a) || missing(set_b)) {
@@ -83,12 +93,19 @@ kmer_enrichment <- function(set_a, set_b, k,
     #Assemble the sorted enrichment table and the two plots.
     tbl <- .build_kmer_table(kf_a, kf_b)
     plots <- list(
-      scatter = .plot_kmer_scatter(tbl, label_a, label_b, top_n, title),
-      rank    = .plot_kmer_rank(tbl, label_a, label_b, title)
+      scatter = .plot_kmer_scatter(tbl, label_a, label_b, top_n, title, style),
+      rank    = .plot_kmer_rank(tbl, label_a, label_b, title, style)
     )
 
     list(table = tbl, plots = plots)
   })
+}
+
+
+# Derive a set label from the captured argument expression: use the name
+# when the caller passed a bare variable, otherwise the generic fallback.
+.default_set_label <- function(sym, fallback) {
+  if (is.symbol(sym)) as.character(sym) else fallback
 }
 
 
@@ -221,7 +238,7 @@ kmer_enrichment <- function(set_a, set_b, k,
 
 #Scatter of per-k-mer frequencies with a y = x reference line
 #Points above the diagonal are enriched in set A, below in set B
-.plot_kmer_scatter <- function(tbl, label_a, label_b, top_n, title) {
+.plot_kmer_scatter <- function(tbl, label_a, label_b, top_n, title, style) {
   labels <- if (top_n > 0L) {
     tbl[order(-abs(tbl$difference)), , drop = FALSE][seq_len(min(top_n, nrow(tbl))), , drop = FALSE]
   } else {
@@ -230,32 +247,47 @@ kmer_enrichment <- function(set_a, set_b, k,
 
   ggplot2::ggplot(tbl, ggplot2::aes(x = freq_b, y = freq_a)) +
     ggplot2::geom_abline(slope = 1, intercept = 0,
-                         linetype = "dashed", color = "grey60") +
-    ggplot2::geom_point(color = "#3B6FB6", alpha = 0.6, size = 1.4) +
+                         linetype = style$ref_line_type,
+                         color = style$ref_line_color) +
+    ggplot2::geom_point(color = style$point_color, alpha = style$point_alpha,
+                        size = style$point_size) +
     ggplot2::geom_text(
       data    = labels,
       mapping = ggplot2::aes(label = kmer),
-      size    = 3, vjust = -0.6, check_overlap = TRUE
+      size    = style$label_size, vjust = -0.6,
+      check_overlap = style$label_check_overlap
     ) +
     ggplot2::labs(
       x     = sprintf("%s k-mer frequency", label_b),
       y     = sprintf("%s k-mer frequency", label_a),
       title = title
     ) +
-    ggplot2::theme_classic()
+    .kmer_theme(style)
 }
 
 
 #Rank curve: k-mers ordered by enrichment against their difference
 #Shows the spread from the most A-enriched down to the most B-enriched.
-.plot_kmer_rank <- function(tbl, label_a, label_b, title) {
+.plot_kmer_rank <- function(tbl, label_a, label_b, title, style) {
   ggplot2::ggplot(tbl, ggplot2::aes(x = rank, y = difference)) +
-    ggplot2::geom_hline(yintercept = 0, color = "grey60") +
-    ggplot2::geom_point(color = "#3B6FB6", alpha = 0.6, size = 1.2) +
+    ggplot2::geom_hline(yintercept = 0, color = style$ref_line_color) +
+    ggplot2::geom_point(color = style$point_color, alpha = style$point_alpha,
+                        size = style$point_size) +
     ggplot2::labs(
       x     = "k-mer rank (by enrichment)",
       y     = sprintf("frequency difference (%s - %s)", label_a, label_b),
       title = title
     ) +
-    ggplot2::theme_classic()
+    .kmer_theme(style)
+}
+
+
+#Shared theme for the k-mer plots.
+.kmer_theme <- function(style) {
+  ggplot2::theme_classic() +
+    ggplot2::theme(
+      plot.title = ggplot2::element_text(size  = style$title_size,
+                                         color = style$title_color),
+      axis.text  = ggplot2::element_text(size = style$axis_text_size)
+    )
 }

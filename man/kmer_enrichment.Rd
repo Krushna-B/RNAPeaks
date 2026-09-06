@@ -11,9 +11,10 @@ kmer_enrichment(
   gtf = NULL,
   species = "hg38",
   genome = NULL,
-  label_a = "Set A",
-  label_b = "Set B",
+  label_a = NULL,
+  label_b = NULL,
   top_n = 20,
+  style = kmer_style(),
   title = ""
 )
 }
@@ -35,10 +36,16 @@ supplied.}
 \code{"mm39"}) used for sequence extraction. Defaults to \code{species}.}
 
 \item{label_a, label_b}{Display names for the two sets, used in the table
-context and plot axes.}
+context and plot axes. If \code{NULL} (the default) and the corresponding
+\code{set_a} / \code{set_b} argument is passed as a bare variable (e.g.
+\code{set_a = PCBP1}), that variable name is used as the label; otherwise a
+generic \code{"Set A"} / \code{"Set B"} is used.}
 
 \item{top_n}{Number of most strongly enriched k-mers (by absolute
 difference) to label in the scatter plot}
+
+\item{style}{Output of \code{\link[=kmer_style]{kmer_style()}}: visual settings for the scatter and
+rank plots.}
 
 \item{title}{Plot title.}
 }
