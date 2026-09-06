@@ -126,7 +126,12 @@ plot_event_map <- function(data, schema, style, opts,
     data.frame(x = min(d$x), xend = max(d$x),
                group = d$group[1L], stringsAsFactors = FALSE)
   }))
-  bars$y    <- y$y_max + y$y_range * 0.05
+  # Stack each group's significance bars on its own row so bars from
+  # different event groups don't overlap at a single y level.
+  groups  <- unique(bars$group)
+  offsets <- stats::setNames(seq_along(groups) - 1L, groups)
+  step    <- y$y_range * 0.05
+  bars$y    <- y$y_max + y$y_range * 0.05 + offsets[bars$group] * step
   bars$yend <- bars$y
 
   ggplot2::geom_segment(
