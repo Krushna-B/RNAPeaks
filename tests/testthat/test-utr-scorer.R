@@ -13,17 +13,17 @@ test_that(".short_utr_resample keeps each bp in place and zero-pads the rest", {
   expect_equal(.short_utr_resample(c(1, 0, 1), 5), c(1, 0, 1, 0, 0))
 })
 
-# --- .bin_mean ------------------------------------------------------------
+# --- .bin_any -------------------------------------------------------------
 
-test_that(".bin_mean down-samples with the within-bin mean when L >= n_bins", {
-  expect_equal(.bin_mean(c(1, 1, 0, 0), 2), c(1, 0))
-  expect_equal(.bin_mean(c(1, 0, 1, 0), 2), c(0.5, 0.5))
-  expect_equal(.bin_mean(c(0, 0, 1, 1), 2), c(0, 1))
+test_that(".bin_any down-samples to a binary any when L >= n_bins", {
+  expect_equal(.bin_any(c(1, 1, 0, 0), 2), c(1, 0))
+  expect_equal(.bin_any(c(1, 0, 1, 0), 2), c(1, 1))   # any covered bp -> 1
+  expect_equal(.bin_any(c(0, 0, 1, 1), 2), c(0, 1))
 })
 
-test_that(".bin_mean falls back to bp-in-place when L < n_bins, and handles L == 0", {
-  expect_equal(.bin_mean(c(1, 1), 5), c(1, 1, 0, 0, 0))
-  expect_equal(.bin_mean(integer(0), 3), c(0, 0, 0))
+test_that(".bin_any falls back to bp-in-place when L < n_bins, and handles L == 0", {
+  expect_equal(.bin_any(c(1, 1), 5), c(1, 1, 0, 0, 0))
+  expect_equal(.bin_any(integer(0), 3), c(0, 0, 0))
 })
 
 # --- .score_one_event: single-piece projection ----------------------------

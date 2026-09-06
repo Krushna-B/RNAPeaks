@@ -4,7 +4,7 @@
 #'   1. drop peaks whose width is not fully covered by the event's exonic
 #'      UTR pieces (any base in an intronic gap disqualifies the peak);
 #'   2. project retained peaks onto spliced (mRNA-order) coordinates;
-#'   3. binarize per-bp and resample to `n_bins` via the within-bin mean.
+#'   3. binarize per-bp and resample to `n_bins` via within-bin any (0/1).
 #'
 #'
 #' @param pieces Data frame from `build_utr_events()` (one of
@@ -130,24 +130,20 @@ score_utr_side <- function(pieces, bed_gr, n_events, n_bins = 100L) {
     }
   }
 
-  .bin_mean(cov_bp, n_bins)
+  .bin_any(cov_bp, n_bins)
 }
 
 # Resample length-L 0/1 vector to n_bins.
-# - L >= n_bins: within-bin mean (down-sample).
+# - L >= n_bins: binary any (1 if the bin holds any covered bp)
 # - L <  n_bins: hand off to .short_utr_resample.
-.bin_mean <- function(x, n_bins) {
+.bin_any <- function(x, n_bins) {
   L <- length(x)
   if (L == 0L) return(rep(0, n_bins))
   if (L >= n_bins) {
     bin <- as.integer(ceiling(seq_len(L) * n_bins / L))
     bin[bin > n_bins] <- n_bins
-    sums   <- tabulate(bin[x > 0L], nbins = n_bins)
-    counts <- tabulate(bin,         nbins = n_bins)
-    out <- numeric(n_bins)
-    nz <- counts > 0L
-    out[nz] <- sums[nz] / counts[nz]
-    return(out)
+    sums <- tabulate(bin[x > 0L], nbins = n_bins)
+    return(as.numeric(sums > 0L))
   }
   .short_utr_resample(x, n_bins)
 }
