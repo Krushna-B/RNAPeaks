@@ -29,11 +29,20 @@ gene's transcripts. Default uses every protein-coding transcript. Draws a
 single pooled curve per BED track; use \code{gene_groups} for split curves.
 Mutually exclusive with \code{gene_groups}.}
 
-\item{gene_groups}{Optional \emph{named} list of id vectors (same id forms as
-\code{transcripts}), one curve per group drawn with its own line type and
-labelled in the legend. A gene may appear in more than one group. Ids
-that match nothing are skipped; a group with no usable UTRs is dropped
-with a warning. Mutually exclusive with \code{transcripts}.}
+\item{gene_groups}{Optional grouping of genes into curves, drawn one per
+group with its own line type and labelled in the legend. Accepts any of:
+\itemize{
+\item a \emph{named} list of id vectors (same id forms as \code{transcripts});
+\item a two-column \code{data.frame} (column 1 = gene, column 2 = group);
+\item a path to a two-column file (column 1 = gene, column 2 = group). The
+delimiter (tab or comma) and an optional header row are auto-detected,
+so a plain gene-expression table (e.g. gene, cluster) drops straight
+in.
+}
+
+A gene may appear in more than one group. Ids that match nothing are
+skipped; a group with no usable UTRs is dropped with a warning. Mutually
+exclusive with \code{transcripts}.}
 
 \item{species}{One of \code{"hg38"}, \code{"mm10"}, \code{"mm39"}. Ignored when
 \code{gtf} is supplied.}
@@ -67,8 +76,8 @@ own schematic (a thin UTR box abutting the CDS) and percentage markers
 running 5' -> 3' along the window.
 }
 \seealso{
-Other plot: 
-\code{\link{plot_gene}()},
-\code{\link{plot_region}()}
+Other plot:
+\code{\link[=plot_gene]{plot_gene()}},
+\code{\link[=plot_region]{plot_region()}}
 }
 \concept{plot}

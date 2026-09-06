@@ -20,11 +20,18 @@
 #'   gene's transcripts. Default uses every protein-coding transcript. Draws a
 #'   single pooled curve per BED track; use `gene_groups` for split curves.
 #'   Mutually exclusive with `gene_groups`.
-#' @param gene_groups Optional *named* list of id vectors (same id forms as
-#'   `transcripts`), one curve per group drawn with its own line type and
-#'   labelled in the legend. A gene may appear in more than one group. Ids
-#'   that match nothing are skipped; a group with no usable UTRs is dropped
-#'   with a warning. Mutually exclusive with `transcripts`.
+#' @param gene_groups Optional grouping of genes into curves, drawn one per
+#'   group with its own line type and labelled in the legend. Accepts any of:
+#'   * a *named* list of id vectors (same id forms as `transcripts`);
+#'   * a two-column `data.frame` (column 1 = gene, column 2 = group);
+#'   * a path to a two-column file (column 1 = gene, column 2 = group). The
+#'     delimiter (tab or comma) and an optional header row are auto-detected,
+#'     so a plain gene-expression table (e.g. gene, cluster) drops straight
+#'     in.
+#'
+#'   A gene may appear in more than one group. Ids that match nothing are
+#'   skipped; a group with no usable UTRs is dropped with a warning. Mutually
+#'   exclusive with `transcripts`.
 #' @param species One of `"hg38"`, `"mm10"`, `"mm39"`. Ignored when
 #'   `gtf` is supplied.
 #' @param moving_average Window size for moving-average smoothing of the
@@ -221,6 +228,9 @@ plot_utr_binding <- function(bed,
     ))
   }
   if (!is.null(gene_groups)) {
+    # A file path or two-column data frame is normalized to the named-list
+    # form the rest of the pipeline consumes; a list is left as-is.
+    gene_groups <- .normalize_gene_groups(gene_groups)
     nm <- names(gene_groups)
     if (!is.list(gene_groups) || length(gene_groups) == 0L ||
         is.null(nm) || any(!nzchar(nm)) || anyDuplicated(nm)) {
@@ -241,6 +251,73 @@ plot_utr_binding <- function(bed,
   }
   if (!is.null(transcripts)) return(list(`All genes` = transcripts))
   NULL
+}
+
+# Normalize the accepted gene_groups forms to a named list of id vectors.
+# A file path or two-column data frame becomes group -> genes; an existing
+# (named) list is returned unchanged for downstream validation.
+.normalize_gene_groups <- function(gene_groups) {
+  if (is.data.frame(gene_groups)) {
+    return(.gene_group_table_to_list(gene_groups))
+  }
+  if (is.character(gene_groups) && length(gene_groups) == 1L) {
+    return(.gene_group_table_to_list(.read_gene_groups_file(gene_groups)))
+  }
+  gene_groups
+}
+
+# Read a two-column gene/group table, auto-detecting the delimiter (tab or
+# comma) and an optional header row.
+.read_gene_groups_file <- function(path) {
+  if (!file.exists(path)) {
+    abort_not_found(c("{.arg gene_groups} file does not exist.",
+                      "x" = "Path: {.path {path}}."))
+  }
+  probe <- readLines(path, n = 20L, warn = FALSE)
+  probe <- probe[nzchar(trimws(probe))]
+  if (!length(probe)) {
+    abort_invalid_arg("{.arg gene_groups} file is empty.")
+  }
+  sep <- if (grepl("\t", probe[[1L]])) "\t"
+         else if (grepl(",", probe[[1L]])) ","
+         else ""
+  df <- utils::read.table(path, sep = sep, header = FALSE,
+                          stringsAsFactors = FALSE, fill = TRUE,
+                          quote = "\"", comment.char = "")
+  if (ncol(df) < 2L) {
+    abort_invalid_arg(c(
+      "{.arg gene_groups} file needs at least two columns (gene, group).",
+      "x" = "Found {ncol(df)} column{?s} with the detected delimiter."
+    ))
+  }
+  # Drop a header row when the first row looks like column names.
+  h1 <- tolower(trimws(as.character(df[[1L]][1L])))
+  h2 <- tolower(trimws(as.character(df[[2L]][1L])))
+  hdr1 <- c("gene", "genes", "gene_id", "geneid", "gene_name", "symbol",
+            "id", "name", "transcript", "transcript_id")
+  hdr2 <- c("group", "groups", "cluster", "class", "label", "category",
+            "condition", "expression", "set", "bin")
+  if (h1 %in% hdr1 || h2 %in% hdr2) df <- df[-1L, , drop = FALSE]
+  df
+}
+
+# Split a two-column (gene, group) data frame into a named list of id
+# vectors, preserving the order groups first appear.
+.gene_group_table_to_list <- function(df) {
+  if (ncol(df) < 2L) {
+    abort_invalid_arg(
+      "{.arg gene_groups} data frame needs at least two columns (gene, group)."
+    )
+  }
+  genes  <- trimws(as.character(df[[1L]]))
+  groups <- trimws(as.character(df[[2L]]))
+  keep   <- !is.na(genes) & !is.na(groups) & nzchar(genes) & nzchar(groups)
+  genes  <- genes[keep]
+  groups <- groups[keep]
+  if (!length(genes)) {
+    abort_invalid_arg("{.arg gene_groups} has no usable (gene, group) rows.")
+  }
+  split(genes, factor(groups, levels = unique(groups)))
 }
 
 # Map each group to the event rows it covers. NULL spec -> one group over all
