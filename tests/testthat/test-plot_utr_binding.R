@@ -73,6 +73,68 @@ test_that(".resolve_utr_group_spec rejects both args and bad group lists", {
                list(`All genes` = "CXCR4"))
 })
 
+# --- gene_groups from a data frame / file ---------------------------------
+
+test_that(".gene_group_table_to_list splits genes by group in first-seen order", {
+  df <- data.frame(g = c("A", "B", "C", "D"),
+                   grp = c("High", "High", "Low", "High"),
+                   stringsAsFactors = FALSE)
+  spec <- .gene_group_table_to_list(df)
+  expect_equal(names(spec), c("High", "Low"))
+  expect_equal(spec$High, c("A", "B", "D"))
+  expect_equal(spec$Low, "C")
+})
+
+test_that(".gene_group_table_to_list drops blank rows and needs two columns", {
+  df <- data.frame(g = c("A", "", "C"), grp = c("High", "Low", ""),
+                   stringsAsFactors = FALSE)
+  expect_equal(.gene_group_table_to_list(df), list(High = "A"))
+  expect_error(.gene_group_table_to_list(data.frame(x = 1)),
+               class = "rnapeaks_error_invalid_arg")
+  expect_error(.gene_group_table_to_list(data.frame(g = "", grp = "")),
+               class = "rnapeaks_error_invalid_arg")
+})
+
+test_that(".read_gene_groups_file auto-detects delimiter and header", {
+  p1 <- tempfile(fileext = ".csv"); on.exit(unlink(p1), add = TRUE)
+  writeLines(c("gene,group", "A,High", "B,Low"), p1)
+  df1 <- .read_gene_groups_file(p1)
+  expect_equal(nrow(df1), 2L)                       # header row dropped
+  expect_equal(df1[[1]], c("A", "B"))
+  expect_equal(df1[[2]], c("High", "Low"))
+
+  p2 <- tempfile(fileext = ".tsv"); on.exit(unlink(p2), add = TRUE)
+  writeLines(c("A\tHigh", "B\tLow"), p2)            # tab, no header
+  df2 <- .read_gene_groups_file(p2)
+  expect_equal(nrow(df2), 2L)
+  expect_equal(df2[[1]], c("A", "B"))
+})
+
+test_that(".read_gene_groups_file errors on missing / empty / one-column files", {
+  expect_error(.read_gene_groups_file("/no/such/file.csv"),
+               class = "rnapeaks_error_not_found")
+  p <- tempfile(); on.exit(unlink(p), add = TRUE)
+  file.create(p)                                    # empty
+  expect_error(.read_gene_groups_file(p), class = "rnapeaks_error_invalid_arg")
+  writeLines(c("A", "B"), p)                        # single column
+  expect_error(.read_gene_groups_file(p), class = "rnapeaks_error_invalid_arg")
+})
+
+test_that(".normalize_gene_groups routes list / data frame / path", {
+  L <- list(High = "A", Low = "B")
+  expect_identical(.normalize_gene_groups(L), L)    # list passes through
+  df <- data.frame(g = c("A", "B"), grp = c("High", "Low"),
+                   stringsAsFactors = FALSE)
+  expect_equal(.normalize_gene_groups(df), list(High = "A", Low = "B"))
+})
+
+test_that(".resolve_utr_group_spec accepts a two-column data frame", {
+  df <- data.frame(g = c("A", "B", "C"), grp = c("High", "Low", "High"),
+                   stringsAsFactors = FALSE)
+  expect_equal(.resolve_utr_group_spec(df, NULL),
+               list(High = c("A", "C"), Low = "B"))
+})
+
 # --- plot_utr_binding entry point -----------------------------------------
 
 test_that("plot_utr_binding reports missing bed / bad species via the error boundary", {

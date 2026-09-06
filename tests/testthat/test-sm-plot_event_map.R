@@ -87,6 +87,23 @@ test_that(".significance_bars collapses contiguous significant positions per run
   expect_equal(unique(lyr$data$y), 1.05)          # y_max + 5% of range
 })
 
+test_that(".significance_bars stacks each group on its own y row", {
+  # Both groups significant -> bars must not share a single y level.
+  sig <- data.frame(
+    position    = c(1, 40),
+    significant = TRUE,
+    group       = c("Negative", "Positive"),
+    stringsAsFactors = FALSE
+  )
+  layout <- event_schema_ri$plot_layout(10, 20)
+  y   <- list(y_max = 1, y_range = 1)
+  lyr <- .significance_bars(sig, event_schema_ri, layout, opts_fixture(),
+                            y, splicing_style())
+  # base row at y_max + 5% range; next group one 5%-range step above it.
+  expect_length(unique(lyr$data$y), 2L)
+  expect_setequal(unique(lyr$data$y), c(1.05, 1.10))
+})
+
 test_that(".significance_bars returns NULL when nothing is significant", {
   expect_null(.significance_bars(NULL, event_schema_ri,
                                  event_schema_ri$plot_layout(10, 20),

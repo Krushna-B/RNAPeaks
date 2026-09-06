@@ -59,9 +59,17 @@ test_that("the k-mer plotters return ggplots for labelled and unlabelled cases",
     list(count = c(AA = 3, AC = 1), freq = c(AA = 0.75, AC = 0.25)),
     list(count = c(AA = 1, AC = 3), freq = c(AA = 0.25, AC = 0.75))
   )
-  expect_s3_class(.plot_kmer_scatter(tbl, "A", "B", top_n = 1, ""), "ggplot")
-  expect_s3_class(.plot_kmer_scatter(tbl, "A", "B", top_n = 0, ""), "ggplot")
-  expect_s3_class(.plot_kmer_rank(tbl, "A", "B", ""), "ggplot")
+  expect_s3_class(.plot_kmer_scatter(tbl, "A", "B", top_n = 1, "", kmer_style()), "ggplot")
+  expect_s3_class(.plot_kmer_scatter(tbl, "A", "B", top_n = 0, "", kmer_style()), "ggplot")
+  expect_s3_class(.plot_kmer_rank(tbl, "A", "B", "", kmer_style()), "ggplot")
+})
+
+# --- .default_set_label ---------------------------------------------------
+
+test_that(".default_set_label uses a captured symbol, else the fallback", {
+  expect_equal(.default_set_label(quote(PCBP1), "Set A"), "PCBP1")
+  expect_equal(.default_set_label(quote(c("x", "y")), "Set A"), "Set A")  # a call
+  expect_equal(.default_set_label("literal", "Set A"), "Set A")           # not a symbol
 })
 
 # --- .bed_set_to_granges --------------------------------------------------
@@ -116,4 +124,22 @@ test_that("kmer_enrichment returns a ranked table and two plots for BED sets", {
   expect_equal(res$table$rank, seq_len(nrow(res$table)))   # ranked 1..n
   expect_s3_class(res$plots$scatter, "ggplot")
   expect_s3_class(res$plots$rank, "ggplot")
+})
+
+test_that("kmer_enrichment auto-labels axes from the set variable names", {
+  skip_no_hg38()
+  PCBP1 <- kbed("chr1", 100000, 100200)
+  PTBP1 <- kbed("chr1", 200000, 200200)
+  res <- suppressMessages(kmer_enrichment(PCBP1, PTBP1, k = 2))
+  expect_match(res$plots$scatter$labels$y, "PCBP1")   # label_a -> y axis
+  expect_match(res$plots$scatter$labels$x, "PTBP1")   # label_b -> x axis
+})
+
+test_that("kmer_enrichment honors explicit labels over captured names", {
+  skip_no_hg38()
+  PCBP1 <- kbed("chr1", 100000, 100200)
+  res <- suppressMessages(kmer_enrichment(PCBP1, PCBP1, k = 2,
+                                          label_a = "up", label_b = "down"))
+  expect_match(res$plots$scatter$labels$y, "up")
+  expect_match(res$plots$scatter$labels$x, "down")
 })
